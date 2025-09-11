@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\V1\Player;
+namespace App\Http\Controllers\Api\Player;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePlayerRequest;

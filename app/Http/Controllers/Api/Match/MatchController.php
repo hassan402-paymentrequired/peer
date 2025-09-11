@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\V1\Match;
+namespace App\Http\Controllers\Api\Match;
 
 use App\Http\Controllers\Controller;
 use App\Utils\Service\V1\Match\MatchService;

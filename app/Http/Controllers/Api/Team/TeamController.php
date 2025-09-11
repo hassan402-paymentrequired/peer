@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\V1\Team;
+namespace App\Http\Controllers\Api\Team;
 
 use App\Utils\Service\V1\Team\TeamService;
 use Illuminate\Support\Facades\Artisan;
