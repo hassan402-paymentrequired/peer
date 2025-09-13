@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Match;
 
 use App\Http\Controllers\Controller;
-use App\Utils\Service\V1\Match\MatchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -12,10 +11,13 @@ use App\Models\Fixture;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\PlayerStatistic;
+use App\Utils\Services\Match\MatchService;
+use Carbon\Carbon;
 
 class MatchController extends Controller
 {
     private MatchService $matchService;
+
 
     public function __construct(MatchService $matchService)
     {
@@ -40,6 +42,8 @@ class MatchController extends Controller
         $to = $request->to;
 
         Artisan::call('fetch:weekly-fixtures', ['league' => $league, 'season' => $season, 'from' => $from, 'to' => $to]);
+
+
         return $this->respondWithCustomData([
             'message' => 'Statistics refetched successfully'
         ], 200);
@@ -73,7 +77,7 @@ class MatchController extends Controller
 
         // Check if any players already have matches on the same date
         $existingPlayerMatches = PlayerMatch::whereIn('player_id', $playerIds)
-            ->where('date', $fixture->date->format('Y-m-d'))
+            ->where('date', Carbon::parse($fixture->date)->format('Y-m-d'))
             ->get();
 
         if ($existingPlayerMatches->isNotEmpty()) {
@@ -120,12 +124,12 @@ class MatchController extends Controller
             $team = Team::where('external_id', $matchData['againstTeam'])->firstOrFail();
 
             $playerMatch = PlayerMatch::create([
-                'date' => $fixture->date->format('Y-m-d'),
-                'time' => $fixture->date->format('H:i:s'),
+                'date' => Carbon::parse($fixture->date)->format('Y-m-d'),
+                'time' => Carbon::parse($fixture->date)->format('H:i:s'),
                 'player_id' => $matchData['playerId'],
-                'team_id' => $team->id,
+                'opponent_team_id' => $team->id,
                 'fixture_id' => $fixture->id,
-                'event_id' => $request->fixture_id,
+                // 'event_id' => $request->fixture_id,
                 'is_completed' => false,
             ]);
 
@@ -135,34 +139,26 @@ class MatchController extends Controller
                     'fixture_id' => $fixture->id,
                 ],
                 [
-                    'match_date' => now(),
-                    'team_id' => $team->id,
-                    'minutes' => 0,
-                    'number' => 0,
-                    'rating' => '0',
-                    'captain' => 0,
-                    'substitute' => 0,
-                    'offsides' => 0,
-                    'shots_total' => 0,
-                    'shots_on' => 0,
-                    'goals_total' => 0,
-                    'goals_conceded' => 0,
-                    'goals_assists' => 0,
-                    'goals_saves' => 0,
-                    'passes_total' => 0,
-                    'passes_key' => 0,
-                    'tackles_total' => 0,
-                    'tackles_blocks' => 0,
-                    'tackles_interceptions' => 0,
-                    'duels_total' => 0,
-                    'duels_won' => 0,
-                    'dribbles_attempts' => 0,
-                    'dribbles_success' => 0,
-                    'dribbles_past' => 0,
-                    'fouls_drawn' => 0,
-                    'fouls_committed' => 0,
-                    'cards_yellow' => 0,
-                    'cards_red' => 0,
+                    'match_date'       => now(),
+                    'team_id'          => $team->id,
+                    'minutes'          => 0,
+                    'number'           => 0,
+                    'rating'           => '0',
+                    'captain'          => 0,
+                    'substitute'       => 0,
+                    'offsides'         => 0,
+                    'shots_total'      => 0,
+                    'shots_on_target'  => 0,   
+                    'goals_total'      => 0,
+                    'goals_conceded'   => 0,
+                    'goals_assists'    => 0,   
+                    'goals_saves'      => 0,
+                    'passes_total'     => 0,
+                    'position'         => null,
+                    'tackles_total'    => 0,
+                    'yellow_cards'     => 0,   // ✅ matches your table
+                    'is_injured'       => false,
+                    'did_play'         => true,
                 ]
             );
         }

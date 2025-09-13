@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\Team;
 
-use App\Utils\Service\V1\Team\TeamService;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\fetchTeams;
 use Illuminate\Http\Request;
 use App\Models\Team;
+use App\Utils\Services\Team\TeamService;
 
 class TeamController extends \App\Http\Controllers\Controller
 {
@@ -24,8 +24,11 @@ class TeamController extends \App\Http\Controllers\Controller
 
     public function refetch(Request $request)
     {
-        $league = $request->league;
-        Artisan::call('fetch:teams', ['league' => $league]);
+        $request->validate([
+            'league_id' => ['required']
+        ]);
+        $league = $request->league_id;
+        fetchTeams::dispatch($league);
         return $this->respondWithCustomData(
             [
                 'message' => 'Teams refetched successfully'

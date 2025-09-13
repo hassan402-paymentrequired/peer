@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('country_flag');
             $table->json('season')->nullable();
             $table->boolean('status')->default(1);
+            $table->json('current_season')->nullable();
             $table->timestamps();
         });
     }

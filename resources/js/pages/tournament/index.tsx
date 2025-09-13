@@ -48,6 +48,7 @@ const Tournament = ({ tournament, users }) => {
                             <Link
                                 className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
                                 prefetch
+                                // href={tournambbbbbbbbbbbbbbb}
                             >
                                 <Button className="text-foreground">
                                     <span>Join {tournament.name}</span>

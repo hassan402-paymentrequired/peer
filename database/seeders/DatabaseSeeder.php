@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Admin;
 use App\Models\Peer;
 use App\Models\Tournament;
 use App\Models\User;
@@ -17,7 +18,15 @@ class DatabaseSeeder extends Seeder
     {
         User::factory(10)->create();
         Peer::factory(40)->create();
+        Admin::updateOrCreate([
+            'email' => 'admin@admin.com',
+        ], [
+            'name' => 'Admin',
+            'email' => 'admin@admin.com',
+            'phone' => '1234567890',
+            'password' => 'password',
+        ]);
 
-       $this->call([TournamentSeeder::class]);
+        $this->call([TournamentSeeder::class]);
     }
 }

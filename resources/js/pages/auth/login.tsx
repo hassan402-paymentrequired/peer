@@ -9,7 +9,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Loader } from 'lucide-react';
 
 interface LoginProps {
     status?: string;
@@ -67,7 +67,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             </div>
 
                             <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
-                                {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                {processing && <Loader className="h-4 w-4 animate-spin" />}
                                 Log in
                             </Button>
                         </div>

@@ -24,7 +24,7 @@ class PlayerMatch extends Model
 
     public function team(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(Team::class, 'opponent_team_id', 'id');
     }
 
     public function league(): BelongsTo

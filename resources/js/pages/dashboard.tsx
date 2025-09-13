@@ -10,7 +10,8 @@ import "swiper/css";
 import { Head, Link } from '@inertiajs/react';
 import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Sword, Target, Users } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { create, index, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { show } from '@/routes/peers';
 
 export default function Dashboard({ tournament, recents, peers }) {
     return (
@@ -34,24 +35,24 @@ export default function Dashboard({ tournament, recents, peers }) {
                     <CardHeader className="relative z-10 pb-0">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-3xl font-semibold text-white capitalize">{tournament?.name}</h3>
-                                <p className="text-gray-100">
+                                <h3 className="lg:text-3xl md:text-2xl text-lg font-semibold text-white capitalize">{tournament?.name}</h3>
+                                <p className="text-gray-100 text-xs md:text-sm">
                                     Join other users in todays tournament <Sword size={16} />
                                 </p>
                             </div>
                             <div className="text-right">
-                                <div className="font-bold text-foreground">₦{tournament?.amount ?? 500}</div>
-                                <div className="text-foreground">Prize Pool</div>
+                                <div className="font-bold text-white text-sm md:text-base">₦{tournament?.amount ?? 500}</div>
+                                <div className="text-white text-[8px] md:text-sm">Prize Pool</div>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="relative z-10 pt-0">
                         <div className="grid grid-cols-2 gap-3">
                             <Link href={'#'} prefetch>
-                                <Button className="w-full font-bold tracking-wider text-white">Join {tournament.name}</Button>
+                                <Button size={'sm'} className="w-full rounded-sm lg:font-bold tracking-wider">Join {tournament.name}</Button>
                             </Link>
-                            <Link href={'#'} prefetch>
-                                <Button variant="outline" className="w-full font-bold tracking-wider text-white">
+                            <Link href={create()} prefetch>
+                                <Button size={'sm'} variant="outline" className="w-full rounded-sm lg:font-bold tracking-wider ">
                                     Create Peer
                                 </Button>
                             </Link>
@@ -62,7 +63,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                 {/* Recent Peers Section */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold tracking-wider text-[var(--clr-light-a0)]">Recent Peers</h3>
+                        <h3 className="md:text-lg text-sm font-semibold tracking-wider">Recent Peers</h3>
                     </div>
 
                     <div className="mb-10">
@@ -94,7 +95,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                                                                 {peer.name}
                                                             </h4>
                                                         </div>
-                                                        <p className="text-xs text-gray-600">by @{peer.created_by.username}</p>
+                                                        <p className="text-xs text-gray-600">by @{peer.created_by.name}</p>
                                                     </div>
                                                     <Badge className={`text-default rounded bg-background px-2 py-1 text-xs tracking-wider`}>
                                                         ₦{Number(peer.amount).toFixed()}
@@ -120,14 +121,14 @@ export default function Dashboard({ tournament, recents, peers }) {
 
                                                 {/* Action Button */}
                                                 <div className="grid grid-cols-2 gap-3">
-                                                    <Link href={'#'} prefetch>
-                                                        <Button className="w-full text-sm font-medium text-foreground hover:bg-blue-600" size="sm">
+                                                    <Link href={show(peer?.peer_id)} prefetch>
+                                                        <Button className="w-full text-sm rounded-sm" size="sm">
                                                             <Target className="mr-1 h-3 w-3" />
                                                             View Peer
                                                         </Button>
                                                     </Link>
                                                     <Link href={joinPeer(peer.peer_id)} prefetch>
-                                                        <Button className="w-full text-sm font-medium text-foreground hover:bg-blue-600" size="sm">
+                                                        <Button className="w-full text-sm rounded-sm" size="sm">
                                                             Join Peer
                                                             <ArrowDownRightSquareIcon className="mr-1 h-3 w-3 transition duration-100 group-hover:-rotate-45" />
                                                         </Button>
@@ -142,9 +143,9 @@ export default function Dashboard({ tournament, recents, peers }) {
                     </div>
                 </div>
 
-                <div className="mt-3 space-y-3">
+                <div className="lg:mt-3 space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="flex text-lg font-semibold text-[var(--clr-light-a0)]">
+                        <h3 className="flex text-base mg:text-lg font-semibold text-[var(--clr-light-a0)]">
                             <CupSoda /> Top Peers
                         </h3>
                     </div>
@@ -155,22 +156,22 @@ export default function Dashboard({ tournament, recents, peers }) {
                                 <Collapsible>
                                     <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between rounded p-2 transition hover:bg-[var(--clr-surface-a10)]">
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--clr-surface-a20)]">
-                                                <AvatarFallback className="rounded shadow ring-2 ring-foreground">
+                                            <Avatar className="flex ring ring-[#c4c4c4] shadow-sm h-8 w-8 items-center justify-center rounded-full bg-[var(--clr-surface-a20)]">
+                                                <AvatarFallback className="rounded   shadow-md">
                                                     {peer.name.substring(0, 2).toUpperCase()}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col items-start">
-                                                <div className="text-gray-600 text-base font-semibold">{peer.name}</div>
-                                                <div className="text-gray-600 text-xs">by @{peer.created_by.username}</div>
+                                                <div className="text-gray-600 text-sm md:text-base font-semibold">{peer.name}</div>
+                                                <div className="text-gray-600 text-[10px] lg:text-xs">by @{peer.created_by.name}</div>
                                             </div>
                                         </div>
-                                        <span className="font-medium text-gray-600">{new Date(peer.created_at).toLocaleDateString()}</span>
+                                        <span className="font-medium text-sm md:text-base text-gray-600">{new Date(peer.created_at).toLocaleDateString()}</span>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                         <div className="grid grid-cols-2 gap-4 border-t border-border px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex size-10 items-center justify-center rounded-full bg-foreground shadow ring ring-background">
+                                                <div className="flex size-10 items-center justify-center rounded-full bg-default shadow ring ring-background">
                                                     <Users size={18} />
                                                 </div>
                                                 <div className="flex flex-col items-start">
@@ -192,14 +193,14 @@ export default function Dashboard({ tournament, recents, peers }) {
 
                                         </div> */}
                                         <div className="flex gap-3 border-t border-border px-4 py-3">
-                                            <Link href={'#'} className="w-full" prefetch>
+                                            <Link href={show(peer?.peer_id)} className="w-full" prefetch>
                                                 <Button className="w-full text-sm font-medium" size="sm" variant="outline">
                                                     <Target className="mr-1 h-3 w-3" />
                                                     View Peer
                                                 </Button>
                                             </Link>
                                             <Link href={joinPeer(peer.peer_id)} className="w-full" prefetch>
-                                                <Button className="w-full text-sm font-medium text-foreground" size="sm">
+                                                <Button className="w-full text-sm font-medium " size="sm">
                                                     Join Peer
                                                     <ArrowDownRightSquareIcon className="mr-1 h-3 w-3 transition duration-100 group-hover:-rotate-45" />
                                                 </Button>

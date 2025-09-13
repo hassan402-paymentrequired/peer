@@ -33,11 +33,6 @@ class fetchLeagues implements ShouldQueue
         do {
             Log::info("Fetching page $page...");
 
-            $params = [
-                'season' => 2023,
-            ];
-
-
             $response = Http::withHeaders([
                 'x-rapidapi-key' => env('SPORT_API_KEY')
             ])->get("https://v3.football.api-sports.io/leagues", [
@@ -45,6 +40,8 @@ class fetchLeagues implements ShouldQueue
             ]);
 
             $body = $response->json();
+
+            // dd($body);
 
             Log::info("Fetching page $response...");
 
@@ -70,17 +67,10 @@ class fetchLeagues implements ShouldQueue
                 );
 
                 foreach ($item['seasons'] as $season) {
-                    $l->seasons()->updateOrCreate(
-                        [
-                            'external_id'      => $season['year'] ?? now()->year,
-                        ],
-                        [
-                            'is_current' => $season['current'] ?? false,
-                            'start_date' => $season['start'] ?? null,
-                            'end_date'   => $season['end'] ?? null,
-                            'year'   => $season['year'] ?? null,
-                        ]
-                    );
+                    if ($season['current']) {
+                        $l->update(['current_season' => $season]);
+                        break;
+                    }
                 }
             }
 

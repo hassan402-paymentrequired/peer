@@ -1,3 +1,4 @@
+import { storeJoinPeer } from "@/actions/App/Http/Controllers/Peer/PeerController";
 import { FloatingBetSlip } from "@/components/features/floating-bet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppLayout from "@/layouts/app-layout";
 import { cn } from "@/lib/utils";
+import join from "@/routes/join";
 import { router } from "@inertiajs/react";
 import { Check, Clock, Star, Users } from "lucide-react";
 import { useState } from "react";
@@ -153,7 +155,7 @@ export default function JoinPeer({
 
         try {
             // Use Inertia router to submit the form
-            router.post(`/peers/join/${peer.id}`, formData, {
+            router.post(storeJoinPeer(peer.id), formData, {
                 onError: (errors) => {
                     console.error("Validation errors:", errors);
                     alert(`Error: ${Object.values(errors).join(", ")}`);

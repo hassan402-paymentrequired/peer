@@ -8,9 +8,10 @@ interface AppShellProps {
 
 export function AppShell({ children, variant = 'header' }: AppShellProps) {
     return (
-        <div className="grid shadow  w-full lg:max-w-4xl mx-auto h-screen lg:grid-cols-3 overflow-hidden">
+        // grid shadow  w-full lg:max-w-4xl mx-auto h-screen lg:grid-cols-3 overflow-hidden
+        <div className="w-full grid grid-cols-3 h-screen lg:max-w-4xl shadow mx-auto">
             {/* Left panel (branding / tagline / illustration) */}
-            <div className="relative hidden flex-col justify-center bg-muted p-12 text-white lg:col-span-1 lg:flex">
+            <div className="relative hidden flex-col justify-center bg-muted p-12 text-white md:col-span-1 md:flex">
                 <Link href={'#'} className="mb-8 flex items-center text-lg font-medium text-black">
                     <AppLogoIcon className="mr-2 size-8 fill-current" />
                     Starpick
@@ -20,9 +21,9 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
                     <h1 className="text-3xl leading-tight font-bold text-black">Play. Compete. Win.</h1>
                     <ul className="space-y-2 text-sm text-muted-foreground/90">
                         {/* <li>✅ Organize tasks effortlessly</li> */}
-                        <li>🎯 Pick 5 Star Players</li>
-                        <li>⚡ Compete with Friends</li>
-                        <li>🏆 Win Big with Real Stats</li>
+                        <li className="text-xs">🎯 Pick 5 Star Players</li>
+                        <li className="text-xs">⚡ Compete with Friends</li>
+                        <li className="text-xs">🏆 Win Big with Real Stats</li>
                     </ul>
                 </div>
 
@@ -31,7 +32,7 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
             </div>
 
             {/* Right panel (form area) */}
-            <div className="flex flex-col  min-h-screen w-full flex-col col-span-3 lg:col-span-2">{children}</div>
+            <div className="flex min-h-screen w-full flex-col col-span-3 md:col-span-2">{children}</div>
         </div>
     );
 }

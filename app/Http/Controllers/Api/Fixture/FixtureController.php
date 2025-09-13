@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Fixture;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\fetchWeeklyFixtures;
 use App\Models\Fixture;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,7 +25,9 @@ class FixtureController extends Controller
         $from = $request->from ?? '2021-07-01';
         $to = $request->to ?? '2023-10-31';
 
-        Artisan::call('fetch:weekly-fixtures', ['league' => $league, 'season' => $season, 'from' => $from, 'to' => $to]);
+
+        fetchWeeklyFixtures::dispatch($league, $season, $to, $from);
+
         return $this->respondWithCustomData([
             'message' => 'Fixtures refetched successfully'
         ], 200);

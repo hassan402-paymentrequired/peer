@@ -13,4 +13,19 @@ class PeerUser extends Model
     {
         return ['peer_user_id'];
     }
+
+     public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function peer()
+    {
+        return $this->belongsTo(Peer::class);
+    }
+
+    public function squads()
+    {
+        return $this->hasMany(PeerUserSquard::class);
+    }
 }

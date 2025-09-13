@@ -109,8 +109,11 @@ class PlayerController extends Controller
 
     public function refetch(Request $request)
     {
-        $league = $request->league;
-        fetchPlayers::dispatch();
+        $request->validate([
+            'league_id' => ['required']
+        ]);
+        $league = $request->league_id;
+        fetchPlayers::dispatch($league);
         return $this->respondWithCustomData([
             'message' => 'Players refetched successfully'
         ], 200);

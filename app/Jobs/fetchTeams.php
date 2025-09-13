@@ -24,11 +24,7 @@ class fetchTeams implements ShouldQueue
      */
     public function handle(): void
     {
-         $leagueSeason = League::with('seasons')
-            ->whereHas('seasons', function ($query) {
-                $query->where('is_current', true);
-            })
-            ->first();
+        $leagueSeason = League::query()->first();
         Log::info('Fetching teams for league: ' . json_encode($leagueSeason->toArray()));
         $leagueId = $this->league;
         $season = '2023';

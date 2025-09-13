@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Leagues;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\fetchLeagues;
 use App\Models\League;
 use App\Models\Season;
 use Illuminate\Http\Request;
@@ -12,9 +13,7 @@ class LeagueController extends Controller
 {
     public function index(Request $request)
     {
-        $leagues = League::with(['seasons' => function ($query) {
-            $query->where('is_current', true);
-        }])
+        $leagues = League::query()
             ->when($request->status, function ($query) use ($request) {
                 return $query->where('status', $request->status);
             })
@@ -39,9 +38,12 @@ class LeagueController extends Controller
 
     public function refetch(Request $request)
     {
-        $id = $request->country_id ?? '';
+        $request->validate([
+            'country_name' => ['required']
+        ]);
+        $name = $request->country_name ?? '';
 
-        Artisan::call('fetch:leagues', ['country' => $id]);
+        fetchLeagues::dispatch($name);
 
         return $this->respondWithCustomData(
             [

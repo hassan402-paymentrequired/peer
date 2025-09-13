@@ -111,10 +111,10 @@ class TournamentController extends Controller
         $today = now()->toDateString();
         $tournament = Tournament::whereDate('created_at', $today)->withCount('users')->first();
         $players = $this->playerService->groupedByStar();
-        return Inertia::render('peers/global/create', [
+        return Inertia::render('tournament/create', [
             'tournament' => $tournament,
             'players' => $players,
-            'balance' => getUserBalance()
+            'balance' => optional(request()->user())->load('wallet')->balance
         ]);
     }
 

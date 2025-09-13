@@ -17,7 +17,7 @@ function generateOtp($length = 6)
     return implode(array_slice($numbers, 0, $length));
 }
 
-function hasEnoughBalance($amount, $guard): bool
+function hasEnoughBalance($amount, $guard = WEB): bool
 {
     return AuthUser($guard)->wallet->balance >= $amount;
 }
@@ -37,3 +37,4 @@ function increaseWallet($amount, $guard = WEB)
 {
     AuthUser($guard)->wallet()->increment('balance', $amount);
 }
+

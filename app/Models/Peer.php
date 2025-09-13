@@ -17,11 +17,11 @@ class Peer extends Model
     {
         return ['peer_id'];
     }
-
     public function created_by(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+
 
 
     public function users(): BelongsToMany
@@ -43,5 +43,10 @@ class Peer extends Model
     public function winner()
     {
         return $this->belongsTo(User::class, 'winner_user_id');
+    }
+
+    public function getIsOwnerAttribute()
+    {
+        return $this->created_by === authUser()->id();
     }
 }
