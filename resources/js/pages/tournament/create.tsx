@@ -3,12 +3,7 @@ import {
     Star,
     Check,
     Users,
-    DollarSign,
     Clock,
-    Trophy,
-    Loader,
-    LoaderIcon,
-    BatteryWarning,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -19,9 +14,9 @@ import { cn } from "@/lib/utils";
 import { router } from "@inertiajs/react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import MainLayout from "@/Pages/layouts/main-layout";
-import { FloatingBetSlip } from "@/Pages/components/floating-bet";
-import FormError from "@/components/error";
+import AppLayout from "@/layouts/app-layout";
+import { FloatingBetSlip } from "@/components/features/floating-bet";
+import { store } from "@/routes/tournament";
 
 interface Player {
     player_avatar: string;
@@ -174,7 +169,7 @@ export default function JoinPeer({
 
         try {
             // Use Inertia router to submit the form
-            router.post(route("tournament.store"), formData, {
+            router.post(store(), formData, {
                 onError: (errors) => {
                     console.error("Validation errors:", errors);
                     alert(`Error: ${Object.values(errors).join(", ")}`);
@@ -206,14 +201,14 @@ export default function JoinPeer({
     };
 
     return (
-        <MainLayout
-            alert={
-                Number(balance) < Number(tournament.amount) && (
-                    <div className="mt-3 flex items-center gap-2">
-                       <BatteryWarning size={17} color="red" />  <FormError message="Insufficient balance to join tournament. Please fund your wallet." />
-                    </div>
-                )
-            }
+        <AppLayout
+            // alert={
+            //     Number(balance) < Number(tournament.amount) && (
+            //         <div className="mt-3 flex items-center gap-2">
+            //            <BatteryWarning size={17} color="red" />  <FormError message="Insufficient balance to join tournament. Please fund your wallet." />
+            //         </div>
+            //     )
+            // }
         >
             <main className="p-5 relative">
                 {/* Peer Info */}
@@ -561,7 +556,7 @@ export default function JoinPeer({
                 </div>
 
                 {/* Submit Button */}
-               
+
             <FloatingBetSlip
                 selectedPlayers={selectedPlayers}
                 onRemovePlayer={(playerId) => {
@@ -575,6 +570,6 @@ export default function JoinPeer({
             />
             </main>
 
-        </MainLayout>
+        </AppLayout>
     );
 }
