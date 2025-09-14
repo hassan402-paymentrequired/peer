@@ -1,31 +1,17 @@
 // resources/js/Components/WithdrawModal.jsx
-import { useEffect, useState } from "react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { router, useForm, usePage } from "@inertiajs/react";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
-import { Loader } from "lucide-react";
+import { initiateWithdrawal, verifyBankAccount } from '@/actions/App/Http/Controllers/Wallet/WalletController';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { router, useForm, usePage } from '@inertiajs/react';
+import { Loader } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function WithdrawModal() {
-    const { data: a, flash } = usePage<{
+    const { data:  flash } = usePage<{
         data: {
             account_name: string;
             account_number: string;
@@ -34,61 +20,67 @@ export default function WithdrawModal() {
         flash: { success: string; error: string };
     }>().props;
 
-    const [code, setCode] = useState("");
-    const [accN, setAccN] = useState("");
+    const [code, setCode] = useState('');
+    const [accN, setAccN] = useState('');
+    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
-    const [banks, setBanks] = useState<
-        { id: number; name: string; code: string, slug: string }[]
-    >([]);
+
+    const [banks, setBanks] = useState<{ id: number; name: string; code: string; slug: string }[]>([]);
+
+    const themagicthing = import.meta.env.VITE_PAYSTACK_SEC;
 
     const { data, setData, post, processing, reset, transform } = useForm({
-        amount: "",
-        account_number: "",
-        bank_code: "",
-        account_name: "",
+        amount: '',
+        account_number: '',
+        bank_code: '',
+        account_name: '',
     });
 
     useEffect(() => {
-        if (a) {
-            setData("account_name", a.account_name);
-            setData("account_number", a.account_number);
-            setAccN(a.account_number);
-            // Find and set the bank code based on bank_id
-            const selectedBank = banks.find(
-                (bank) => bank.id.toString() === a.bank_id.toString()
-            );
-            if (selectedBank) {
-                setCode(selectedBank.code);
-                setData('bank_code', selectedBank.code)
-            }
-        }
+      getBanks()
+    }, [])
 
-        if (flash?.error) {
-            toast.error(flash.error);
-        }
-
-        if (flash?.success) {
-            toast.success(flash.success);
-        }
-
-        getBanks();
-    }, [a, flash, banks.length]);
 
     const getBanks = async () => {
         try {
-            const res = await fetch(
-                "https://api.paystack.co/bank?currency=NGN"
-            );
+            const res = await fetch('https://api.paystack.co/bank?currency=NGN');
             const responseData = await res.json();
 
             if (responseData.status) {
                 setBanks(responseData.data);
             } else {
-                toast.error("Failed to fetch banks");
+                toast.error('Failed to fetch banks');
             }
         } catch (error) {
-            console.error("Error fetching banks:", error);
-            toast.error("Failed to fetch banks");
+            console.error('Error fetching banks:', error);
+            toast.error('Failed to fetch banks');
+        }
+    };
+
+    const verifyBank = async () => {
+        setLoading(true)
+        try {
+            const res = await fetch(`https://api.paystack.co/bank/resolve?account_number=${accN}&bank_code=001`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${themagicthing}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await res.json();
+            setData('account_name', result.data.account_name);
+            setData('account_number', result.data.account_number);
+            setAccN(result.data.account_number);
+            const selectedBank = banks.find((bank) => bank.id.toString() === result.data.bank_id.toString());
+            if (selectedBank) {
+                setCode(selectedBank.code);
+                setData('bank_code', selectedBank.code);
+            }
+        } catch (error) {
+            console.error('Error verifying bank:', error);
+        }finally{
+            setLoading(false)
         }
     };
 
@@ -98,80 +90,46 @@ export default function WithdrawModal() {
         transform((data) => ({
             ...data,
             account_number: accN,
-            bank_account_id: code,
+            bank_code: code,
         }));
 
-        post(route("fund.withdraw"), {
+        post(initiateWithdrawal(), {
             onSuccess: () => {
                 reset();
-                setCode("");
-                setAccN("");
-                toast.success("Withdrawal request submitted successfully");
+                setCode('');
+                setAccN('');
+                toast.success('Withdrawal request submitted successfully');
             },
             onError: (errors) => {
-                console.error("Withdrawal errors:", errors);
+                if(errors.bank_code)
+                {
+                    toast.error(errors.bank_code)
+                }
+                console.error('Withdrawal errors:', errors);
             },
         });
     };
 
-    const VerifyBank = async (e) => {
-        e.preventDefault();
 
-        if (!accN || !code) {
-            toast.error("Please select a bank and enter account number");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            await router.post(
-                route("bank.account.verify"),
-                {
-                    accountNumber: accN,
-                    bankCode: code,
-                },
-                {
-                    onSuccess: (response) => {
-                        toast.success("Bank account verified successfully");
-                    },
-                    onError: (errors) => {
-                        console.error("Verification errors:", errors);
-                        toast.error("Failed to verify bank account");
-                    },
-                    onFinish: () => {
-                        setLoading(false);
-                    },
-                }
-            );
-        } catch (error) {
-            console.error("Verification error:", error);
-            toast.error("Failed to verify bank account");
-            setLoading(false);
-        }
-    };
 
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" size={'sm'}>Withdraw</Button>
+                <Button variant="outline" size={'sm'}>
+                    Withdraw
+                </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Withdraw Funds</DialogTitle>
                 </DialogHeader>
-                <form
-                    onSubmit={a?.account_name ? handleWithdraw : VerifyBank}
-                    className="space-y-4"
-                >
+                <form onSubmit={handleWithdraw} className="space-y-4">
                     <div>
                         <Label>Bank Name</Label>
                         <Select
                             value={code}
                             onValueChange={(value) => {
                                 setCode(value);
-                                // Update form data when bank changes
-                                setData("bank_account_id", value);
                             }}
                             required
                         >
@@ -182,11 +140,7 @@ export default function WithdrawModal() {
                                 <SelectGroup>
                                     <SelectLabel>Nigerian Banks</SelectLabel>
                                     {banks.map((bank) => (
-                                        <SelectItem
-                                            key={bank.slug}
-                                            value={bank.code}
-                                            className="text-black"
-                                        >
+                                        <SelectItem key={bank.slug} value={bank.code} className="text-black">
                                             {bank.name}
                                         </SelectItem>
                                     ))}
@@ -202,7 +156,7 @@ export default function WithdrawModal() {
                             value={accN}
                             onChange={(e) => {
                                 setAccN(e.target.value);
-                                setData("account_number", e.target.value);
+                                setData('account_number', e.target.value);
                             }}
                             placeholder="Enter account number"
                             maxLength={10}
@@ -210,25 +164,18 @@ export default function WithdrawModal() {
                         />
                     </div>
 
-                    {a?.account_name && (
+                    {data.account_name && (
                         <>
                             <div>
                                 <Label>Account Name</Label>
-                                <Input
-                                    type="text"
-                                    value={data.account_name}
-                                    readOnly
-                                    className="bg-gray-100"
-                                />
+                                <Input type="text" value={data.account_name} readOnly className="bg-gray-100" />
                             </div>
                             <div>
                                 <Label>Amount</Label>
                                 <Input
                                     type="number"
                                     value={data.amount}
-                                    onChange={(e) =>
-                                        setData("amount", e.target.value)
-                                    }
+                                    onChange={(e) => setData('amount', e.target.value)}
                                     required
                                     placeholder="Enter amount"
                                     min="1"
@@ -239,31 +186,15 @@ export default function WithdrawModal() {
                     )}
 
                     <DialogFooter>
-                        {a?.account_name ? (
-                            <Button
-                                className="w-full"
-                                type="submit"
-                                disabled={
-                                    processing || !data.amount || !accN || !code
-                                }
-                            >
-                                {processing && (
-                                    <Loader className="animate-spin mr-2 h-4 w-4" />
-                                )}
-                                {processing ? "Processing..." : "Withdraw"}
+                        {data?.account_name ? (
+                            <Button className="w-full" type="submit" disabled={processing || !data.amount || !accN || !code}>
+                                {processing && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                {processing ? 'Processing...' : 'Withdraw'}
                             </Button>
                         ) : (
-                            <Button
-                                className="w-full"
-                                type="submit"
-                                disabled={loading || !accN || !code}
-                            >
-                                {loading && (
-                                    <Loader className="animate-spin mr-2 h-4 w-4" />
-                                )}
-                                {loading
-                                    ? "Verifying..."
-                                    : "Verify Bank Account"}
+                            <Button className="w-full" type="button" onClick={verifyBank} disabled={loading || !accN || !code}>
+                                {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                {loading ? 'Verifying...' : 'Verify Bank Account'}
                             </Button>
                         )}
                     </DialogFooter>

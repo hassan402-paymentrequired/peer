@@ -259,7 +259,7 @@ class WalletService
     public function initiateWithdrawal(array $manualBankDetails)
     {
         try {
-            $user = auth('web')->user();
+            $user = authUser();
             $recipientCode = null;
             $recipientCode = $this->initiateRecipient($manualBankDetails['account_name'], $manualBankDetails['account_number'], $manualBankDetails['bank_code']);
 
@@ -307,6 +307,8 @@ class WalletService
             if (!$data['status'] || !isset($data['data'])) {
                 throw new ClientErrorException('Failed to initiate transfer: ' . ($data['message'] ?? 'Unknown error'), 400);
             }
+
+            // TODO: create transaction
 
             return $data['data'];
         } catch (\Throwable $th) {
