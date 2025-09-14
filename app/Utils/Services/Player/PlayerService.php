@@ -88,7 +88,7 @@ class PlayerService
                         'player_match_id' => $match->id,
                         'player_id' => $match->player_id,
                         'player_team' => $match->player->team->name,
-                        'against_team_image' => $match->player->team->logo,
+                        'against_team_image' => $match->team->logo,
                         'player_name' => $match->player->name,
                         'against_team_name' => $match->team->name,
                         'date' => $match->date,

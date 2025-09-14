@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-import { router } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AppLayout from "@/layouts/app-layout";
@@ -61,6 +61,7 @@ export default function JoinPeer({
     players: PlayerGroup[];
     balance: string;
 }) {
+    const {flash} = usePage<{flash: {error: string}}>().props;
     const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>(
         []
     );
@@ -82,16 +83,6 @@ export default function JoinPeer({
         }
     };
 
-    const renderStars = (tier: number) => {
-        return Array.from({ length: 5 }, (_, i) => (
-            <Star
-                key={i}
-                className={`h-4 w-4 ${
-                    i < tier ? getTierColor(tier) : "text-muted-foreground"
-                } ${i < tier ? "fill-current" : ""}`}
-            />
-        ));
-    };
 
     const handlePlayerSelect = (player: Player, type: "main" | "sub") => {
         const isSelected = selectedPlayers.some(
@@ -131,6 +122,7 @@ export default function JoinPeer({
 
     const handleSubmitTeam = async () => {
         setProcessing(true);
+        console.log('clicked')
         if (selectedPlayers.length !== 10) {
             toast.error(
                 "Please select exactly 10 players (5 main + 5 substitutes)"
@@ -174,6 +166,12 @@ export default function JoinPeer({
                     console.error("Validation errors:", errors);
                     alert(`Error: ${Object.values(errors).join(", ")}`);
                 },
+                onFinish: () => {
+                    if(flash?.error)
+                    {
+toast.error(flash.error)
+                    }
+                }
             });
         } catch (error) {
             console.error("Error submitting team:", error);
@@ -217,7 +215,7 @@ export default function JoinPeer({
                         <h2 className="text-[var(--clr-surface-a50)] tracking-wider  font-bold">
                             {tournament?.name}
                         </h2>
-                        <Badge className="text-foreground">Joining</Badge>
+                        <Badge >Joining</Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-2">
                         <div className="flex items-center text-muted tracking-wider text-xs">
@@ -425,12 +423,12 @@ export default function JoinPeer({
                                                                     </AvatarFallback>
                                                                 </Avatar>
                                                                 <div>
-                                                                    <div className="font-bold text-muted-white text-base">
+                                                                    <div className="font-bold text-muted-white text-sm md:text-base">
                                                                         {
                                                                             player.player_name
                                                                         }
                                                                     </div>
-                                                                    <div className="text-xs text-muted">
+                                                                    <div className="text-[10px] md:text-xs text-muted">
                                                                         {
                                                                             player.player_position
                                                                         }

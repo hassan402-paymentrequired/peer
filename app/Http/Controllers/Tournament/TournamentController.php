@@ -80,7 +80,7 @@ class TournamentController extends Controller
 
             return [
                 'id' => $user->id,
-                'username' => $user->username,
+                'username' => $user->name,
                 'avatar' => $user->avatar,
                 'email' => $user->email,
                 'created_at' => $user->created_at,
@@ -109,7 +109,8 @@ class TournamentController extends Controller
         }
 
         $today = now()->toDateString();
-        $tournament = Tournament::whereDate('created_at', $today)->withCount('users')->first();
+        // $tournament = Tournament::whereDate('created_at', $today)->withCount('users')->first();
+        $tournament = Tournament::where('status', 'open')->withCount('users')->first();
         $players = $this->playerService->groupedByStar();
         return Inertia::render('tournament/create', [
             'tournament' => $tournament,
@@ -122,8 +123,9 @@ class TournamentController extends Controller
     public function store(Request $request)
     {
         $today = now()->toDateString();
-        $tournament = Tournament::whereDate('created_at', $today)->first();
-        if (!hasEnoughBalance($tournament->amount, 'web')) {
+       $tournament = Tournament::where('status', 'open')->withCount('users')->first();
+        // $tournament = Tournament::whereDate('created_at', $today)->first();
+        if (!hasEnoughBalance($tournament->amount)) {
             return back()->with('error', 'Insufficient balance to join tournament. Please fund your wallet.');
         }
 
@@ -135,7 +137,7 @@ class TournamentController extends Controller
             'peers.*.sub_player_match_id' => ['required', 'exists:player_matches,id'],
         ]);
 
-        if (!$this->tournamentService->create($request, $tournament, 'web')) {
+        if (!$this->tournamentService->create($request, $tournament, WEB)) {
             return to_route('tournament.index')->with('error', 'Tournament joining failed');
         }
 

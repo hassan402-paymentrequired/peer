@@ -43,6 +43,7 @@ export const FloatingBetSlip = ({
     handleSubmitTeam,
     processing
 }: FloatingBetSlipProps) => {
+
     const [isOpen, setIsOpen] = useState(false);
 
     const totalSelected = selectedPlayers.length;
@@ -59,18 +60,6 @@ export const FloatingBetSlip = ({
         return 1;
     };
 
-    const renderStars = (playerId: number) => {
-        const tier = getPlayerStarRating(playerId);
-        return Array.from({ length: 5 }, (_, i) => (
-            <Star
-                key={i}
-                className={cn(
-                    "h-3 w-3 transition-all duration-200",
-                    i < tier ? "text-yellow-500 fill-current" : "text-muted"
-                )}
-            />
-        ));
-    };
 
     // Group players by star rating
     const groupedPlayers = [5, 4, 3, 2, 1]
@@ -113,7 +102,7 @@ export const FloatingBetSlip = ({
             </SheetTrigger>
 
             <SheetContent side="bottom" className="h-[85vh]">
-                <SheetHeader className=" pb-1 bg-background">
+                <SheetHeader className=" pb-1">
                     <SheetTitle className="flex items-center gap-3">
                         <Trophy className="h-6 w-6 text-muted-white" />
                         <div>
@@ -128,7 +117,7 @@ export const FloatingBetSlip = ({
                     </SheetTitle>
                 </SheetHeader>
 
-                <div className="space-y-4 bg-foreground pt-4 overflow-y-auto h-full px-5 pb-10">
+                <div className="space-y-4  pt-4 overflow-y-auto h-full px-5 pb-10">
                     {groupedPlayers.map((group) => (
                         <Card
                             key={group.star}
@@ -353,7 +342,7 @@ export const FloatingBetSlip = ({
                         </Card>
                     )}
                             {selectedPlayers.length === 10 && (
-                               
+
                                     <Button
                                         onClick={handleSubmitTeam}
                                         disabled={processing}
@@ -364,7 +353,7 @@ export const FloatingBetSlip = ({
                                         )}
                                         Submit Team & Join Peer
                                     </Button>
-                               
+
                             )}
                 </div>
             </SheetContent>

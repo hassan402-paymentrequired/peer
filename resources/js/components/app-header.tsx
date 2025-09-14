@@ -54,7 +54,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     return (
         <>
             <div className="border-t border-sidebar-border/80">
-                <div className="mx-aut flex h-14 items-stretch w-full px-4 lg:max-w-7xl">
+                <div className="mx-aut flex h-16 md:h-14 items-stretch w-full px-4 lg:max-w-7xl">
 
                     {/* Desktop Navigation */}
                     {/* <div className="border flex-1 flex h-full"> */}
@@ -67,7 +67,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                             className={cn(
                                                 navigationMenuTriggerStyle(),
                                                 page.url === (typeof item.href === 'string' ? item.href : item.href.url) && activeItemStyles,
-                                                ' cursor-pointer px-3 text-xs md:text-sm ',
+                                                ' cursor-pointer px-3 text-center text-xs md:text-sm ',
                                             )}
                                         >
                                             {item.icon && page.url === (typeof item.href === 'string' ? item.href : item.href.url) && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}

@@ -105,7 +105,12 @@ class User extends Authenticatable implements JWTSubject
 
     public function daily_contests()
     {
-        return $this->belongsToMany(Tournament::class, 'daily_contest_users')->withTimestamps();
+        return $this->belongsToMany(Tournament::class, 'tournament_users')->withTimestamps();
+    }
+
+    public function tournaments()
+    {
+        return $this->belongsToMany(Tournament::class, 'tournament_users')->withTimestamps();
     }
 
 
@@ -130,6 +135,6 @@ class User extends Authenticatable implements JWTSubject
 
     function AlreadyJoinedTodayTournament()
     {
-        return $this->daily_contests()->whereDate('daily_contests.created_at', now()->toDateString())->exists();
+        return $this->tournaments()->whereDate('tournaments.created_at', now()->toDateString())->exists();
     }
 }

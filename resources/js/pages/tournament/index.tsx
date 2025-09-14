@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import AppLayout from "@/layouts/app-layout";
+import { create } from "@/routes/tournament";
 import { Head, Link,  usePage } from "@inertiajs/react";
 import React from "react";
 
@@ -48,9 +49,9 @@ const Tournament = ({ tournament, users }) => {
                             <Link
                                 className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
                                 prefetch
-                                // href={tournambbbbbbbbbbbbbbb}
+                                href={create()}
                             >
-                                <Button className="text-foreground">
+                                <Button className="">
                                     <span>Join {tournament.name}</span>
                                     <span className="text-lg">⚔️</span>
                                 </Button>
@@ -73,8 +74,8 @@ const Tournament = ({ tournament, users }) => {
                                     <span className="col-span-1">
                                         {i + 1}
                                     </span>
-                                    <h4 className="col-span-2">
-                                        @{user.username}
+                                    <h4 className="col-span-2 text-sm md:text-base ">
+                                        @{user.username.substring(0,17)}
                                     </h4>
                                     <div className="col-span-1 text-left">
                                         {user.total_point}
