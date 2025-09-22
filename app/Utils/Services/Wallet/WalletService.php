@@ -278,6 +278,7 @@ class WalletService
             ]);
 
             return $this->initiateTransfer($recipientCode['data']['recipient_code'], $manualBankDetails['amount'], 'Withdrawal from wallet');
+
         } catch (\Throwable $th) {
             Log::error('WalletService: Withdrawal initiation failed', [
                 'error' => $th->getMessage(),

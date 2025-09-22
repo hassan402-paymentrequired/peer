@@ -80,7 +80,7 @@ class WalletController extends Controller
       if (!$withdrawalData) {
         return back()->with('error', 'Unable to initiate withdrawal. Please check the bank details.');
       }
-      return back()->with('success', 'Withdrawal initiated successfully. Please wait for confirmation.');
+      return back()->with('success', 'Withdrawal initiated successfully. Please wait for while we confirm your process');
     } catch (\Exception $e) {
       return null;
     }
