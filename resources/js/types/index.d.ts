@@ -40,3 +40,40 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+
+export interface PeerUser {
+    id: number;
+    user: {
+        id: number;
+        username: string;
+        avatar?: string;
+    };
+    total_points: number;
+    is_winner: boolean;
+    created_at: string;
+}
+
+export interface Peer {
+    id: number;
+    peer_id: string;
+    name: string;
+    amount: string;
+    private: boolean;
+    limit: number;
+    sharing_ratio: number;
+    status: "open" | "closed" | "finished";
+    winner_user_id?: number;
+    created_by: {
+        id: number;
+        username: string;
+    };
+    users: PeerUser[];
+    users_count: number;
+    created_at: string;
+}
+
+export interface PeerShowProps {
+    peer: Peer;
+    users: any[];
+}

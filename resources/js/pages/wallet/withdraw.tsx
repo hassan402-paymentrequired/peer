@@ -45,6 +45,7 @@ export default function WithdrawModal() {
         try {
             const res = await fetch('https://api.paystack.co/bank?currency=NGN');
             const responseData = await res.json();
+            console.log(responseData)
 
             if (responseData.status) {
                 setBanks(responseData.data);
@@ -133,7 +134,7 @@ export default function WithdrawModal() {
                             }}
                             required
                         >
-                            <SelectTrigger className="w-full bg-amber-50">
+                            <SelectTrigger className="w-full rounded">
                                 <SelectValue placeholder="Select bank" />
                             </SelectTrigger>
                             <SelectContent>

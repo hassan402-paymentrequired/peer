@@ -1,74 +1,32 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     Trophy,
     Users,
-    DollarSign,
-    Target,
-    TrendingUp,
     Crown,
-    Medal,
-    ArrowLeft,
     ChevronDown,
     ChevronUp,
     Copy,
     Star,
-    Shield,
-    Zap,
-    Activity,
     Award,
     ArrowDownRight,
-    Timer,
     Flame
 } from "lucide-react";
 import {
     Collapsible,
     CollapsibleContent,
-    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import AppLayout from "@/layouts/app-layout";
 import { joinPeer } from "@/actions/App/Http/Controllers/Peer/PeerController";
+import { PeerShowProps } from "@/types";
 
-interface PeerUser {
-    id: number;
-    user: {
-        id: number;
-        username: string;
-        avatar?: string;
-    };
-    total_points: number;
-    is_winner: boolean;
-    created_at: string;
-}
 
-interface Peer {
-    id: number;
-    peer_id: string;
-    name: string;
-    amount: string;
-    private: boolean;
-    limit: number;
-    sharing_ratio: number;
-    status: "open" | "closed" | "finished";
-    winner_user_id?: number;
-    created_by: {
-        id: number;
-        username: string;
-    };
-    users: PeerUser[];
-    users_count: number;
-    created_at: string;
-}
-
-interface PeerShowProps  {
-    peer: Peer;
-    users: any[];
-}
 
 export default function PeerShow({ peer, users }: PeerShowProps) {
     const {
@@ -81,50 +39,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
         (a, b) => b.total_points - a.total_points
     );
 
-    const getMatch = async () => {
-        await fetch(
-            "https://www.sofascore.com/api/v1/event/12436883/player/975079/statistics",
-            {
-                headers: {
-                    "Access-Control-Allow-Origin": "*",
-                },
-            }
-        )
-            .then((response) => response.json())
-            .then((data) => console.log(data))
-            .catch((e) => console.log(e));
-    };
-
-    useEffect(() => {
-        const id = setInterval(() => {
-            getMatch();
-        }, 10000);
-
-        return () => {
-            clearInterval(id);
-        };
-    }, []);
-
-    const getRankIcon = (index) => {
-        switch (index) {
-            case 0:
-                return <Crown className="w-5 h-5 text-yellow-500" />;
-            case 1:
-                return <Medal className="w-5 h-5 text-gray-400" />;
-            case 2:
-                return <Medal className="w-5 h-5 text-amber-600" />;
-            default:
-                return (
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                        <span className="text-sm font-bold text-slate-600">
-                            {index + 1}
-                        </span>
-                    </div>
-                );
-        }
-    };
-
-    const getStatusColor = (status) => {
+    const getStatusColor = (status: string) => {
         switch (status) {
             case 'open':
                 return 'bg-green-100 text-green-800 border-green-200';
@@ -137,7 +52,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
         }
     };
 
-    const toggleUserExpanded = (userId) => {
+    const toggleUserExpanded = (userId: number) => {
         const newExpanded = new Set(expandedUsers);
         if (newExpanded.has(userId)) {
             newExpanded.delete(userId);
@@ -152,7 +67,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
         toast.success("Peer code copied ✅");
     };
 
-    const getPlayerStatusIcon = (didPlay) => {
+    const getPlayerStatusIcon = (didPlay: boolean) => {
         return didPlay ? (
             <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -438,8 +353,8 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                 </Card>
                             ))
                         ) : (
-                            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-                                <CardContent className="flex flex-col items-center justify-center py-16">
+
+                                <CardContent className="flex flex-col items-center justify-center">
                                     <div className="text-6xl mb-6 animate-bounce">🏆</div>
                                     <h3 className="text-xl font-bold text-slate-900 mb-2">
                                         Be the First Champion!
@@ -459,7 +374,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                         </Button>
                                     </Link>
                                 </CardContent>
-                            </Card>
+
                         )}
                     </div>
                 </div>

@@ -259,11 +259,12 @@ class WalletService
     public function initiateWithdrawal(array $manualBankDetails)
     {
         try {
+
             $user = authUser();
             $recipientCode = null;
             $recipientCode = $this->initiateRecipient($manualBankDetails['account_name'], $manualBankDetails['account_number'], $manualBankDetails['bank_code']);
-
             $reference = $this->generateTransactionRef();
+
 
             $transaction = Transaction::create([
                 'transaction_ref' => $reference,
@@ -274,11 +275,10 @@ class WalletService
                 'wallet_balance_before' => $user->wallet->balance,
                 'wallet_balance_after' => $user->wallet->balance,
                 'status' => TransactionStatusEnum::PENDING->value,
-                'meta_data' => $recipientCode['data']['details'],
+                'meta_data' => json_encode($recipientCode['data']['details']),
             ]);
 
             return $this->initiateTransfer($recipientCode['data']['recipient_code'], $manualBankDetails['amount'], 'Withdrawal from wallet');
-
         } catch (\Throwable $th) {
             Log::error('WalletService: Withdrawal initiation failed', [
                 'error' => $th->getMessage(),
@@ -306,10 +306,8 @@ class WalletService
             $data = json_decode($response->getBody()->getContents(), true);
 
             if (!$data['status'] || !isset($data['data'])) {
-                throw new ClientErrorException('Failed to initiate transfer: ' . ($data['message'] ?? 'Unknown error'), 400);
+                throw new Exception('Failed to initiate transfer: ' . ($data['message'] ?? 'Unknown error'));
             }
-
-            // TODO: create transaction
 
             return $data['data'];
         } catch (\Throwable $th) {
@@ -318,7 +316,7 @@ class WalletService
                 'recipient_code' => $recipientCode,
                 'amount' => $amount,
             ]);
-            throw new ClientErrorException('Failed to initiate transfer: ' . $th->getMessage(), 500);
+            throw new Exception('Failed to initiate transfer: ' . $th->getMessage());
         }
     }
 
@@ -401,9 +399,38 @@ class WalletService
 
     private function handleTransferSuccess(array $data)
     {
-
         Log::info('PaystackService: Transfer success webhook', [
             'data' => $data,
+        ]);
+
+        $transaction = Transaction::where('transaction_ref', $data['reference'])->first();
+
+        if (!$transaction) {
+            throw new ClientErrorException('Transaction not found', 404);
+        }
+
+        if ($transaction->status === TransactionStatusEnum::SUCCESSFUL->value) {
+            return false;
+        }
+
+        $user = $transaction->user;
+
+        $newBalance = (int)$user->wallet->balance - (int)$transaction->amount;
+
+        // Update user wallet balance
+        $user->wallet()->decrement('balance', $transaction->amount);
+
+        // Update transaction
+        $transaction->update([
+            'status' => TransactionStatusEnum::SUCCESSFUL->value,
+            'wallet_balance_after' => $newBalance,
+            'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                'paystack_transaction_id' => $data['id'],
+                'gateway_ref' => $data['reference'],
+                'paid_at' => $data['transferred_at'],
+                'transfer_code' => $data['transfer_code'],
+                'receiver' => $data['recipient']
+            ]),
         ]);
     }
 
@@ -412,6 +439,27 @@ class WalletService
     {
         Log::info('PaystackService: Transfer failed webhook', [
             'data' => $data,
+        ]);
+
+        $transaction = Transaction::where('transaction_ref', $data['reference'])->first();
+
+        if (!$transaction) {
+            throw new ClientErrorException('Transaction not found', 404);
+        }
+
+        if ($transaction->status === TransactionStatusEnum::SUCCESSFUL->value) {
+            return false;
+        }
+
+        $transaction->update([
+            'status' => TransactionStatusEnum::FAILED->value,
+            'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                'paystack_transaction_id' => $data['id'],
+                'gateway_ref' => $data['reference'],
+                'paid_at' => $data['transferred_at'],
+                'transfer_code' => $data['transfer_code'],
+                'receiver' => $data['recipient']
+            ]),
         ]);
     }
 }

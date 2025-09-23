@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-Route::prefix('webhooks')->group(function(){ 
+Route::prefix('webhooks')->group(function(){
     Route::post('/paystack/transfer-verify', [WalletController::class, 'processTransferWebhook']);
 });
 
