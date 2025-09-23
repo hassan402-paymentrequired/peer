@@ -19,14 +19,10 @@ export default function WithdrawModal() {
         };
         flash: { success: string; error: string };
     }>().props;
-
     const [code, setCode] = useState('');
     const [accN, setAccN] = useState('');
-    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
-
     const [banks, setBanks] = useState<{ id: number; name: string; code: string; slug: string }[]>([]);
-
     const themagicthing = import.meta.env.VITE_PAYSTACK_SEC;
 
     const { data, setData, post, processing, reset, transform } = useForm({
@@ -61,7 +57,7 @@ export default function WithdrawModal() {
     const verifyBank = async () => {
         setLoading(true)
         try {
-            const res = await fetch(`https://api.paystack.co/bank/resolve?account_number=${accN}&bank_code=001`, {
+            const res = await fetch(`https://api.paystack.co/bank/resolve?account_number=${accN}&bank_code=${code}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${themagicthing}`,
