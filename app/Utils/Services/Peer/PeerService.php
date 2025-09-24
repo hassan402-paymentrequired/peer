@@ -21,23 +21,14 @@ use Illuminate\Support\Facades\DB;
 
 class PeerService
 {
-    public function getPeers(): array
+    public function getPeers()
     {
         $page = request('page', 1);
         $ttl = now()->addHours(4);
 
-        $peers = Cache::remember(CacheKey::PEERS->value . "_page_{$page}", $ttl, function () use ($page) {
-            return Peer::with('created_by')->withCount('users')->paginate(10, ['*'], 'page', $page);
+        return Cache::remember(CacheKey::PEERS->value . "_page_{$page}", $ttl, function () {
+            return Peer::with('created_by')->withCount('users')->paginate(20);
         });
-
-        $recentPeers = Cache::remember(CacheKey::RECENT_PEERS->value, $ttl, function () {
-            return Peer::with('created_by')->latest()->limit(5)->get();
-        });
-
-        return [
-            'peers' => $peers,
-            'recents' => $recentPeers,
-        ];
     }
 
 

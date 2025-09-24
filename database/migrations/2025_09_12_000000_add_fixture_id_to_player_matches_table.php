@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('player_matches', function (Blueprint $table) {
             $table->foreignId('fixture_id')->nullable()->after('opponent_team_id')->constrained('fixtures')->cascadeOnDelete();
-            
         });
     }
 

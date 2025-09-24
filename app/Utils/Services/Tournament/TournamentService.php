@@ -2,7 +2,12 @@
 
 namespace App\Utils\Services\Tournament;
 
+use App\Exceptions\ClientErrorException;
+use App\Models\Tournament;
+use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TournamentService
 {
@@ -32,5 +37,37 @@ class TournamentService
             ]);
         }
         return true;
+    }
+
+    public function createNewTournament(array $payload)
+    {
+        try {
+            DB::beginTransaction();
+
+            $tourn = Tournament::active()->first();
+            $tourn->update(['is_active' => false]);
+
+            Tournament::create($payload);
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::info("TournamentService error:", [
+                'error' => $e->getMessage()
+            ]);
+            throw new ClientErrorException("Error occur while creating tournament");
+        }
+    }
+
+    public function getAllsTournament()
+    {
+        try {
+            return Tournament::query()->paginate(20);
+        } catch (\Throwable $e) {
+            Log::info("TournamentService error:", [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 }

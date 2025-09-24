@@ -58,4 +58,9 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'index']);
         Route::post('/refetch', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'refetch']);
     });
+
+      Route::prefix('tournament')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\Tournament\TournamentController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\Tournament\TournamentController::class, 'store']);
+    });
 });

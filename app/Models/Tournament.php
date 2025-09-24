@@ -18,4 +18,9 @@ class Tournament extends Model
     {
         return $this->belongsToMany(User::class, 'tournament_users')->withTimestamps();
     }
+
+    public function scopeActive($query)
+    {
+        $this->where('is_active', true);
+    }
 }

@@ -28,7 +28,7 @@ class PeerController extends Controller
         $user = authUser();
         $today = now()->toDateString();
         // $tournament = Tournament::whereDate('created_at', $today)->first();
-        $tournament = Tournament::where('status', 'open')->first();
+        $tournament = Tournament::active()->first();
         $recent = Peer::with('created_by')
             ->whereDoesntHave('users', function ($query) use ($user) {
                 $query->where('user_id', $user->id);

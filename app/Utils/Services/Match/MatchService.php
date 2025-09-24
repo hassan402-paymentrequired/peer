@@ -19,14 +19,14 @@ class MatchService
                 return PlayerMatch::with(
                     ['player' => function ($query) {
                         return $query->with('team');
-                    }, 'team', 'league']
+                    }, 'team', 'fixture']
                 )->get();
             }
         );
 
         $team = Team::select('id', 'name')->get();
         $leagues = League::select('id', 'name')->limit(50)->get();
-        $groupedMatches = $matches->groupBy('league.name');
+        $groupedMatches = $matches->groupBy('fixture.league.name');
         return [$groupedMatches, $team, $leagues];
     }
 }

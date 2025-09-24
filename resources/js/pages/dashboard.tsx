@@ -5,54 +5,65 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/app-layout';
 import { dashboardBreadcrumbs } from '@/lib/breadcrumbs';
-import "swiper/css";
+import 'swiper/css';
 
+import { create, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { show } from '@/routes/peers';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Sword, Target, Users } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { create, index, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
-import { show } from '@/routes/peers';
 
 export default function Dashboard({ tournament, recents, peers }) {
     return (
         <AppLayout breadcrumbs={dashboardBreadcrumbs}>
             <Head title="Peers" />
             <div className="mt-2 space-y-4 p-3">
-                {/* Global Challenge Card */}
-                <Card className="relative overflow-hidden rounded p-0 py-2">
-                    {/* Background Image */}
+                
+                <Card className="relative overflow-hidden rounded border-0 shadow-lg">
+                   
                     <div
                         className="absolute inset-0 z-0"
                         style={{
                             backgroundImage: "url('/images/tour.jpg')",
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
-                            // opacity: 0.5,
-                            pointerEvents: 'none',
                         }}
                         aria-hidden="true"
                     />
-                    <CardHeader className="relative z-10 pb-0">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="lg:text-3xl md:text-2xl text-lg font-semibold text-white capitalize">{tournament?.name}</h3>
-                                <p className="text-gray-100 text-xs md:text-sm">
-                                    Join other users in todays tournament <Sword size={16} />
+                    <div className="absolute inset-0 z-[1] bg-gradient-to-br from-black/60 via-black/40 to-black/60" />
+                    <CardHeader className="relative z-10 pb-2">
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                                <h3 className="text-lg leading-tight font-bold text-white capitalize md:text-2xl lg:text-3xl">
+                                    {tournament?.name}
+                                </h3>
+                                <p className="flex items-center gap-2 text-xs text-gray-200">
+                                    Join other users in today's tournament
                                 </p>
                             </div>
-                            <div className="text-right">
-                                <div className="font-bold text-white text-sm md:text-base">₦{tournament?.amount ?? 500}</div>
-                                <div className="text-white text-[8px] md:text-sm">Prize Pool</div>
+                            <div className="rounded-lg border border-white/20 bg-white/10 p-3 text-right backdrop-blur-sm">
+                                <div className="text-base font-bold text-white">₦{tournament?.amount}</div>
+                                <div className="text-xs text-gray-200 ">Prize Pool</div>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="relative z-10 pt-0">
-                        <div className="grid grid-cols-2 gap-3">
+
+                    <CardContent className="relative z-10 pt-0 ">
+                        <div className="grid grid-cols-2 gap-4">
                             <Link href={'#'} prefetch>
-                                <Button size={'sm'} className="w-full rounded-sm lg:font-bold tracking-wider">Join {tournament.name}</Button>
+                                <Button
+                                    size={'default'}
+                                    className="w-full transform rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"
+                                >
+                                    Join {tournament?.name}
+                                </Button>
                             </Link>
                             <Link href={create()} prefetch>
-                                <Button size={'sm'} variant="outline" className="w-full rounded-sm lg:font-bold tracking-wider ">
+                                <Button
+                                    size={'default'}
+                                    variant="outline"
+                                    className="w-full transform rounded-lg border-white/30 bg-white/10 font-semibold tracking-wide text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-white/50 hover:bg-white/20"
+                                >
                                     Create Peer
                                 </Button>
                             </Link>
@@ -63,7 +74,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                 {/* Recent Peers Section */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="md:text-lg text-sm font-semibold tracking-wider">Recent Peers</h3>
+                        <h3 className="text-sm font-semibold tracking-wider md:text-lg">Recent Peers</h3>
                     </div>
 
                     <div className="mb-10">
@@ -91,9 +102,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                                                 <div className="mb-3 flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="mb-1 flex items-center gap-2">
-                                                            <h4 className="text-gray-600 truncate text-sm font-semibold capitalize">
-                                                                {peer.name}
-                                                            </h4>
+                                                            <h4 className="truncate text-sm font-semibold text-gray-600 capitalize">{peer.name}</h4>
                                                         </div>
                                                         <p className="text-xs text-gray-600">by @{peer.created_by.name}</p>
                                                     </div>
@@ -122,13 +131,13 @@ export default function Dashboard({ tournament, recents, peers }) {
                                                 {/* Action Button */}
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <Link href={show(peer?.peer_id)} prefetch>
-                                                        <Button className="w-full text-sm rounded-sm" size="sm">
+                                                        <Button className="w-full rounded-sm text-sm" size="sm">
                                                             <Target className="mr-1 h-3 w-3" />
                                                             View Peer
                                                         </Button>
                                                     </Link>
                                                     <Link href={joinPeer(peer.peer_id)} prefetch>
-                                                        <Button className="w-full text-sm rounded-sm" size="sm">
+                                                        <Button className="w-full rounded-sm text-sm" size="sm">
                                                             Join Peer
                                                             <ArrowDownRightSquareIcon className="mr-1 h-3 w-3 transition duration-100 group-hover:-rotate-45" />
                                                         </Button>
@@ -143,9 +152,9 @@ export default function Dashboard({ tournament, recents, peers }) {
                     </div>
                 </div>
 
-                <div className="lg:mt-3 space-y-3">
+                <div className="space-y-3 lg:mt-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="flex text-base mg:text-lg font-semibold text-[var(--clr-light-a0)]">
+                        <h3 className="mg:text-lg flex text-base font-semibold text-[var(--clr-light-a0)]">
                             <CupSoda /> Top Peers
                         </h3>
                     </div>
@@ -156,22 +165,24 @@ export default function Dashboard({ tournament, recents, peers }) {
                                 <Collapsible>
                                     <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between rounded p-2 transition hover:bg-[var(--clr-surface-a10)]">
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="flex ring ring-[#c4c4c4] shadow-sm h-8 w-8 items-center justify-center rounded-full bg-[var(--clr-surface-a20)]">
-                                                <AvatarFallback className="rounded   shadow-md">
+                                            <Avatar className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--clr-surface-a20)] shadow-sm ring ring-[#c4c4c4]">
+                                                <AvatarFallback className="rounded shadow-md">
                                                     {peer.name.substring(0, 2).toUpperCase()}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col items-start">
-                                                <div className="text-gray-600 text-sm md:text-base font-semibold">{peer.name}</div>
-                                                <div className="text-gray-600 text-[10px] lg:text-xs">by @{peer.created_by.name}</div>
+                                                <div className="text-sm font-semibold text-gray-600 md:text-base">{peer.name}</div>
+                                                <div className="text-[10px] text-gray-600 lg:text-xs">by @{peer.created_by.name}</div>
                                             </div>
                                         </div>
-                                        <span className="font-medium text-sm md:text-base text-gray-600">{new Date(peer.created_at).toLocaleDateString()}</span>
+                                        <span className="text-sm font-medium text-gray-600 md:text-base">
+                                            {new Date(peer.created_at).toLocaleDateString()}
+                                        </span>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                         <div className="grid grid-cols-2 gap-4 border-t border-border px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex size-10 items-center justify-center rounded-full bg-default shadow ring ring-background">
+                                                <div className="bg-default flex size-10 items-center justify-center rounded-full shadow ring ring-background">
                                                     <Users size={18} />
                                                 </div>
                                                 <div className="flex flex-col items-start">
@@ -200,7 +211,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                                                 </Button>
                                             </Link>
                                             <Link href={joinPeer(peer.peer_id)} className="w-full" prefetch>
-                                                <Button className="w-full text-sm font-medium " size="sm">
+                                                <Button className="w-full text-sm font-medium" size="sm">
                                                     Join Peer
                                                     <ArrowDownRightSquareIcon className="mr-1 h-3 w-3 transition duration-100 group-hover:-rotate-45" />
                                                 </Button>

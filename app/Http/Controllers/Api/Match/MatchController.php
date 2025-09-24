@@ -28,7 +28,7 @@ class MatchController extends Controller
     {
         $matches =  $this->matchService->matches();
         return $this->respondWithCustomData([
-            'matches' => $matches[0],
+            'matches' => $matches,
             'team' => $matches[1],
             'leagues' => $matches[2],
         ], 200);
