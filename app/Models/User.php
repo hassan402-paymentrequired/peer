@@ -135,6 +135,6 @@ class User extends Authenticatable implements JWTSubject
 
     function AlreadyJoinedTodayTournament()
     {
-        return $this->tournaments()->whereDate('tournaments.created_at', now()->toDateString())->exists();
+        return $this->tournaments()->active()->exists();
     }
 }
