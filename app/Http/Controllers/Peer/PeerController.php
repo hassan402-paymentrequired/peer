@@ -26,8 +26,6 @@ class PeerController extends Controller
     public function index()
     {
         $user = authUser();
-        $today = now()->toDateString();
-        // $tournament = Tournament::whereDate('created_at', $today)->first();
         $tournament = Tournament::active()->first();
         $recent = Peer::with('created_by')
             ->whereDoesntHave('users', function ($query) use ($user) {
@@ -38,7 +36,7 @@ class PeerController extends Controller
             ->take(4)
             ->get();
 
-        // dd($recent);
+        // dd($tournament);
 
         $peers = Peer::with('created_by')->whereDoesntHave('users', function ($query) use ($user) {
             $query->where('user_id', $user->id);

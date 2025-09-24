@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/button";
-import AppLayout from "@/layouts/app-layout";
-import { create } from "@/routes/tournament";
-import { Head, Link,  usePage } from "@inertiajs/react";
-import React from "react";
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import { create } from '@/routes/tournament';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 const Tournament = ({ tournament, users }) => {
     console.log(users);
@@ -13,79 +12,78 @@ const Tournament = ({ tournament, users }) => {
     } = usePage().props;
 
     const isAmoung = () => {
-        return users.some((user) => user.id.toString() === id.toString());
+        return tournament && users?.some((user) => user.id.toString() === id.toString());
     };
 
     return (
         <AppLayout>
-            <Head title={tournament.name + 's' + ' Tournament'} />
+            <Head title={tournament?.name ? tournament.name + 's' + ' Tournament' : 'Tournament'} />
 
-            <div className="flex flex-col h-screen">
-                <div className="flex items-center justify-between p-3">
-                    <div className="flex flex-col items-start mt-3 mb-2">
-                        <h2 className="text-base capitalize  font-bold text-muted-white">
-                            {tournament.name}'s Tournament
-                        </h2>
-                        <p className="text-muted text-xs font-semibold">
-                            Join other users and compete globally!
+            {!tournament ? (
+                <div className="flex h-screen flex-col items-center justify-center">
+                    <div className="flex max-w-md flex-col items-center p-6 text-center">
+                        <span className="mb-4 text-6xl">🏆</span>
+                        <h2 className="text-muted-white mb-2 text-xl font-bold">No Tournament Today</h2>
+                        <p className="mb-6 text-muted">
+                            There's no active tournament at the moment. Check back later or stay tuned for upcoming competitions!
                         </p>
-                    </div>
-                    <div>₦{tournament.amount}</div>
-                </div>
-
-                {!isAmoung() ? (
-                    <div className="flex justify-center py-8">
-                        <div className="p-6 flex flex-col items-center max-w-xs">
-                            <span className="text-4xl mb-2 animate-bounce">
-                                🌍
-                            </span>
-                            <div className="text-center text-muted mb-3 font-semibold">
-                                You haven't joined {tournament.name} yet!
-                            </div>
-                            <p className="text-center text-muted mb-4">
-                                Be part of the excitement—join the contest and
-                                compete with other players.
+                        <div className="rounded-lg bg-gray-50 p-4">
+                            <p className="text-sm text-muted">
+                                💡 Tournaments are usually announced in advance. Make sure to follow updates so you don't miss out!
                             </p>
-                            <Link
-                                className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
-                                prefetch
-                                href={create()}
-                            >
-                                <Button className="">
-                                    <span>Join {tournament.name}</span>
-                                    <span className="text-lg">⚔️</span>
-                                </Button>
-                            </Link>
                         </div>
                     </div>
-                ) : (
-                    <div className="w-full h-screen bg-white">
-                        <div className="grid grid-cols-4 bg-gray-100 h-8 px-3 items-center">
-                            <div className="capitalize  text-sm font-semibold col-span-1">No.</div>
-                            <div className="capitalize  text-sm font-semibold col-span-2">Username.</div>
-                            <div className="capitalize  text-sm font-semibold col-span-1">Point.</div>
+                </div>
+            ) : (
+                <div className="flex h-screen flex-col">
+                    <div className="flex items-center justify-between p-3">
+                        <div className="mt-3 mb-2 flex flex-col items-start">
+                            <h2 className="text-muted-white text-base font-bold capitalize">{tournament.name}'s Tournament</h2>
+                            <p className="text-xs font-semibold text-muted">Join other users and compete globally!</p>
                         </div>
-                        <div className="divide-background divide-y">
-                            {users.map((user, i) => (
-                                <div
-                                    key={user.id}
-                                    className="grid grid-cols-4 items-center h-9 px-3"
+                        <div>₦{tournament.amount}</div>
+                    </div>
+
+                    {!isAmoung() ? (
+                        <div className="flex justify-center py-8">
+                            <div className="flex max-w-xs flex-col items-center p-6">
+                                <span className="mb-2 animate-bounce text-4xl">🌍</span>
+                                <div className="mb-3 text-center font-semibold text-muted">You haven't joined {tournament.name} yet!</div>
+                                <p className="mb-4 text-center text-muted">
+                                    Be part of the excitement—join the contest and compete with other players.
+                                </p>
+                                <Link
+                                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
+                                    prefetch
+                                    href={create()}
                                 >
-                                    <span className="col-span-1">
-                                        {i + 1}
-                                    </span>
-                                    <h4 className="col-span-2 text-sm md:text-base ">
-                                        @{user.username.substring(0,17)}
-                                    </h4>
-                                    <div className="col-span-1 text-left">
-                                        {user.total_point}
-                                    </div>
-                                </div>
-                            ))}
+                                    <Button className="">
+                                        <span>Join {tournament.name}</span>
+                                        <span className="text-lg">⚔️</span>
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    ) : (
+                        <div className="h-screen w-full bg-white">
+                            <div className="grid h-8 grid-cols-4 items-center bg-gray-100 px-3">
+                                <div className="col-span-1 text-sm font-semibold capitalize">No.</div>
+                                <div className="col-span-2 text-sm font-semibold capitalize">Username.</div>
+                                <div className="col-span-1 text-sm font-semibold capitalize">Point.</div>
+                            </div>
+                            <div className="divide-y divide-background">
+                                {users.map((user, i) => (
+                                    <div key={user.id} className="grid h-9 grid-cols-4 items-center px-3">
+                                        <span className="col-span-1">{i + 1}</span>
+                                        <h4 className="col-span-2 text-sm md:text-base">@{user.username.substring(0, 17)}</h4>
+                                        <div className="col-span-1 text-left">{user.total_point}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </AppLayout>
     );
 };

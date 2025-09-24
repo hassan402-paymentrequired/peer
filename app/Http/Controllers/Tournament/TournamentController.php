@@ -28,7 +28,14 @@ class TournamentController extends Controller
     public function index()
     {
         // $tournament = Tournament::whereDate('created_at', Carbon::today())->first();
-        $tournament = Tournament::where('status', 'open')->first();
+        $tournament = Tournament::active()->first();
+
+        if (!$tournament) {
+            return Inertia::render('tournament/index', [
+                'tournament' => $tournament,
+                'users' => []
+            ]);
+        }
 
         $users =  \App\Models\TournamentUser::with(['user', 'squads'])->where('tournament_id', $tournament->id)->get();
 
@@ -123,7 +130,7 @@ class TournamentController extends Controller
     public function store(Request $request)
     {
         $today = now()->toDateString();
-       $tournament = Tournament::where('status', 'open')->withCount('users')->first();
+        $tournament = Tournament::where('status', 'open')->withCount('users')->first();
         // $tournament = Tournament::whereDate('created_at', $today)->first();
         if (!hasEnoughBalance($tournament->amount)) {
             return back()->with('error', 'Insufficient balance to join tournament. Please fund your wallet.');

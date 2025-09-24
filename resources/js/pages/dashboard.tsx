@@ -10,7 +10,7 @@ import 'swiper/css';
 import { create, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
 import { show } from '@/routes/peers';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Sword, Target, Users } from 'lucide-react';
+import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Target, Users } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
 export default function Dashboard({ tournament, recents, peers }) {
@@ -18,59 +18,56 @@ export default function Dashboard({ tournament, recents, peers }) {
         <AppLayout breadcrumbs={dashboardBreadcrumbs}>
             <Head title="Peers" />
             <div className="mt-2 space-y-4 p-3">
-                
-                <Card className="relative overflow-hidden rounded border-0 shadow-lg">
-                   
-                    <div
-                        className="absolute inset-0 z-0"
-                        style={{
-                            backgroundImage: "url('/images/tour.jpg')",
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                        }}
-                        aria-hidden="true"
-                    />
-                    <div className="absolute inset-0 z-[1] bg-gradient-to-br from-black/60 via-black/40 to-black/60" />
-                    <CardHeader className="relative z-10 pb-2">
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <h3 className="text-lg leading-tight font-bold text-white capitalize md:text-2xl lg:text-3xl">
-                                    {tournament?.name}
-                                </h3>
-                                <p className="flex items-center gap-2 text-xs text-gray-200">
-                                    Join other users in today's tournament
-                                </p>
+                {tournament && (
+                    <Card className="relative overflow-hidden rounded border-0 shadow-lg">
+                        <div
+                            className="absolute inset-0 z-0"
+                            style={{
+                                backgroundImage: "url('/images/tour.jpg')",
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                            aria-hidden="true"
+                        />
+                        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-black/60 via-black/40 to-black/60" />
+                        <CardHeader className="relative z-10 pb-2">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <h3 className="text-lg leading-tight font-bold text-white capitalize md:text-2xl lg:text-3xl">
+                                        {tournament?.name}
+                                    </h3>
+                                    <p className="flex items-center gap-2 text-xs text-gray-200">Join other users in today's tournament</p>
+                                </div>
+                                <div className="rounded-lg border border-white/20 bg-white/10 p-3 text-right backdrop-blur-sm">
+                                    <div className="text-base font-bold text-white">₦{tournament?.amount}</div>
+                                    <div className="text-xs text-gray-200">Prize Pool</div>
+                                </div>
                             </div>
-                            <div className="rounded-lg border border-white/20 bg-white/10 p-3 text-right backdrop-blur-sm">
-                                <div className="text-base font-bold text-white">₦{tournament?.amount}</div>
-                                <div className="text-xs text-gray-200 ">Prize Pool</div>
+                        </CardHeader>
+
+                        <CardContent className="relative z-10 pt-0">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Link href={'#'} prefetch>
+                                    <Button
+                                        size={'default'}
+                                        className="w-full transform rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"
+                                    >
+                                        Join {tournament?.name}
+                                    </Button>
+                                </Link>
+                                <Link href={create()} prefetch>
+                                    <Button
+                                        size={'default'}
+                                        variant="outline"
+                                        className="w-full transform rounded-lg border-white/30 bg-white/10 font-semibold tracking-wide text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-white/50 hover:bg-white/20"
+                                    >
+                                        Create Peer
+                                    </Button>
+                                </Link>
                             </div>
-                        </div>
-                    </CardHeader>
-
-                    <CardContent className="relative z-10 pt-0 ">
-                        <div className="grid grid-cols-2 gap-4">
-                            <Link href={'#'} prefetch>
-                                <Button
-                                    size={'default'}
-                                    className="w-full transform rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"
-                                >
-                                    Join {tournament?.name}
-                                </Button>
-                            </Link>
-                            <Link href={create()} prefetch>
-                                <Button
-                                    size={'default'}
-                                    variant="outline"
-                                    className="w-full transform rounded-lg border-white/30 bg-white/10 font-semibold tracking-wide text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-white/50 hover:bg-white/20"
-                                >
-                                    Create Peer
-                                </Button>
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
-
+                        </CardContent>
+                    </Card>
+                )}
                 {/* Recent Peers Section */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">

@@ -21,6 +21,6 @@ class Tournament extends Model
 
     public function scopeActive($query)
     {
-        $this->where('is_active', true);
+        $query->where('is_active', true);
     }
 }
