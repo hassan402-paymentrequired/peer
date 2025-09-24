@@ -36,13 +36,13 @@ const Tournament = ({ tournament, users }) => {
                 </div>
             ) : (
                 <div className="flex h-screen flex-col">
-                    <div className="flex items-center justify-between p-3">
+                    {/* <div className="flex items-center justify-between p-3">
                         <div className="mt-3 mb-2 flex flex-col items-start">
                             <h2 className="text-muted-white text-base font-bold capitalize">{tournament.name}'s Tournament</h2>
                             <p className="text-xs font-semibold text-muted">Join other users and compete globally!</p>
                         </div>
                         <div>₦{tournament.amount}</div>
-                    </div>
+                    </div> */}
 
                     {!isAmoung() ? (
                         <div className="flex justify-center py-8">
@@ -65,21 +65,120 @@ const Tournament = ({ tournament, users }) => {
                             </div>
                         </div>
                     ) : (
-                        <div className="h-screen w-full bg-white">
-                            <div className="grid h-8 grid-cols-4 items-center bg-gray-100 px-3">
-                                <div className="col-span-1 text-sm font-semibold capitalize">No.</div>
-                                <div className="col-span-2 text-sm font-semibold capitalize">Username.</div>
-                                <div className="col-span-1 text-sm font-semibold capitalize">Point.</div>
+                        <div className="flex-1 bg-white pt-3 px-1">
+                            <div className="mx-3 mb-4">
+                                <h3 className="mb-1 text-lg font-semibold text-gray-800">🏆 Leaderboard</h3>
+                                <p className="text-sm text-muted">Current tournament standings</p>
                             </div>
-                            <div className="divide-y divide-background">
-                                {users.map((user, i) => (
-                                    <div key={user.id} className="grid h-9 grid-cols-4 items-center px-3">
-                                        <span className="col-span-1">{i + 1}</span>
-                                        <h4 className="col-span-2 text-sm md:text-base">@{user.username.substring(0, 17)}</h4>
-                                        <div className="col-span-1 text-left">{user.total_point}</div>
+
+                            <div className="mx-3 overflow-hidden rounded border border-gray-200 shadow-sm">
+                                {/* Header */}
+                                <div className="grid grid-cols-12 items-center border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3">
+                                    <div className="col-span-2 text-sm font-semibold text-gray-700">Rank</div>
+                                    <div className="col-span-7 text-sm font-semibold text-gray-700">Player</div>
+                                    <div className="col-span-3 text-right text-sm font-semibold text-gray-700">Points</div>
+                                </div>
+
+                                {/* Leaderboard Rows */}
+                                <div className="divide-y divide-gray-100">
+                                    {users.map((user, i) => {
+                                        const isCurrentUser = user.id.toString() === id.toString();
+                                        const getRankIcon = (position) => {
+                                            if (position === 1) return '🥇';
+                                            if (position === 2) return '🥈';
+                                            if (position === 3) return '🥉';
+                                            return `#${position}`;
+                                        };
+
+                                        return (
+                                            <div
+                                                key={user.id}
+                                                className={`grid grid-cols-12 items-center px-4 py-3 transition-colors hover:bg-gray-50 ${
+                                                    isCurrentUser ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''
+                                                }`}
+                                            >
+                                                {/* Rank */}
+                                                <div className="col-span-2">
+                                                    <span
+                                                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                                                            i < 3
+                                                                ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
+                                                                : isCurrentUser
+                                                                  ? 'bg-blue-100 text-blue-800'
+                                                                  : 'bg-gray-100 text-gray-600'
+                                                        }`}
+                                                    >
+                                                        {i < 3 ? getRankIcon(i + 1).slice(-1) : i + 1}
+                                                    </span>
+                                                </div>
+
+                                                {/* Player Info */}
+                                                <div className="col-span-7 flex items-center space-x-3">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-2">
+                                                            <h4
+                                                                className={`text-sm font-medium ${isCurrentUser ? 'text-blue-900' : 'text-gray-900'}`}
+                                                            >
+                                                                @{user.username.substring(0, 20)}
+                                                                {user.username.length > 20 && '...'}
+                                                            </h4>
+                                                            {isCurrentUser && (
+                                                                <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                                                                    You
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {i < 3 && (
+                                                            <p className="mt-0.5 text-xs text-gray-500">
+                                                                {i === 0 ? 'Tournament Leader' : i === 1 ? 'Runner Up' : 'Third Place'}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Points */}
+                                                <div className="col-span-3 text-right">
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold ${
+                                                            i === 0
+                                                                ? 'bg-yellow-100 text-yellow-800'
+                                                                : i < 3
+                                                                  ? 'bg-orange-100 text-orange-800'
+                                                                  : isCurrentUser
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-gray-100 text-gray-800'
+                                                        }`}
+                                                    >
+                                                        {user.total_point.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Empty state for no users */}
+                                {users.length === 0 && (
+                                    <div className="px-4 py-8 text-center">
+                                        <span className="mb-2 block text-4xl">👥</span>
+                                        <p className="text-sm text-gray-500">No players have joined yet</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
+
+                            {/* Tournament Stats */}
+                            {users.length > 0 && (
+                                <div className="mx-3 mt-4 rounded-lg bg-gray-50 p-3">
+                                    <div className="flex items-center justify-between text-sm text-gray-600">
+                                        <span>
+                                            Total Players: <strong>{users.length}</strong>
+                                        </span>
+                                        <span>
+                                            Prize Pool: <strong>₦{tournament.amount}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
