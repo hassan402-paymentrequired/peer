@@ -15,6 +15,16 @@ class fetchWeeklyFixtures implements ShouldQueue
     use Queueable;
 
     /**
+     * The number of seconds the job can run before timing out.
+     */
+    public int $timeout = 1800; // 30 minutes for weekly fixture fetch
+
+    /**
+     * The number of times the job may be attempted.
+     */
+    public int $tries = 2;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(public string $league, public string $season, public string $to, public string $from)
@@ -100,8 +110,9 @@ class fetchWeeklyFixtures implements ShouldQueue
                         'raw_json' => json_encode($item),
                     ]
                 );
-                $this->fetchLineupForFixture($fx);
-                sleep(1);
+
+                // Don't fetch lineup immediately - do it in batch later
+                // sleep(1); // Reduced sleep for fixture fetching
             }
 
             $page++;
@@ -110,7 +121,7 @@ class fetchWeeklyFixtures implements ShouldQueue
         Log::info('All fixtures fetched and upserted successfully.');
 
         // Now fetch lineups for all the fixtures we just fetched
-
+        $this->fetchLineupsForWeeklyFixtures($league, $season, $from, $to);
     }
 
     /**

@@ -20,6 +20,16 @@ class FetchLiveStatisticsJob implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * The number of seconds the job can run before timing out.
+     */
+    public int $timeout = 600; // 10 minutes
+
+    /**
+     * The number of times the job may be attempted.
+     */
+    public int $tries = 3;
+
     public function handle(): void
     {
         Log::info('FetchLiveStatisticsJob started');
@@ -35,12 +45,18 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
             Log::info('Found ' . $activeFixtures->count() . ' active fixtures to process');
 
-            foreach ($activeFixtures as $fixture) {
-                $this->processFixture($fixture);
+            // Process fixtures in chunks to avoid timeout
+            $activeFixtures->chunk(5)->each(function ($fixtureChunk) {
+                foreach ($fixtureChunk as $fixture) {
+                    $this->processFixture($fixture);
 
-                // Add delay to respect API rate limits
-                sleep(1);
-            }
+                    // Add delay to respect API rate limits
+                    sleep(1);
+                }
+
+                // Log progress
+                Log::info("Processed chunk of " . $fixtureChunk->count() . " fixtures");
+            });
 
             // Check if any competitions are now complete
             $this->checkCompletedCompetitions();

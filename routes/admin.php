@@ -28,6 +28,7 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('/refetch', [TeamController::class, 'refetch']);
         Route::patch('/{team}/status', [TeamController::class, 'updateStatus']);
         Route::get('/{team_id}/players', [TeamController::class, 'players']);
+        Route::get('/{team_id}/playing-players', [TeamController::class, 'playingPlayers']);
     });
 
     Route::prefix('match')->group(function () {

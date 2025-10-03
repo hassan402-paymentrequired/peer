@@ -17,8 +17,18 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * The number of seconds the job can run before timing out.
+     */
+    public int $timeout = 300; // 5 minutes
+
+    /**
+     * The number of times the job may be attempted.
+     */
+    public int $tries = 3;
+
     public function __construct(
-        public string $competitionType, 
+        public string $competitionType,
         public int $competitionId
     ) {}
 
