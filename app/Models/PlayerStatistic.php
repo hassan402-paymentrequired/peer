@@ -38,10 +38,33 @@ class PlayerStatistic extends Model
             return 0;
         }
 
-        return ($this->goals_total ?? 0) * config('point.goal') +
-            ($this->assists ?? 0) * config('point.assist') +
-            ($this->shots_total ?? 0) * config('point.shot') +
-            ($this->shots_on_target ?? 0) * config('point.shot_on_target') +
-            ($this->yellow_cards ?? 0) * config('point.yellow_card');
+        $points = 0;
+
+        // Goals (most important)
+        $points += ($this->goals_total ?? 0) * config('point.goal', 6);
+
+        // Assists
+        $points += ($this->goals_assists ?? 0) * config('point.assist', 4);
+
+        // Shots
+        $points += ($this->shots_total ?? 0) * config('point.shot', 1);
+
+        // Shots on target (bonus for accuracy)
+        $points += ($this->shots_on_target ?? 0) * config('point.shot_on_target', 2);
+
+        // Yellow cards (penalty)
+        $points += ($this->yellow_cards ?? 0) * config('point.yellow_card', -1);
+
+        // Goalkeeper saves (if applicable)
+        if ($this->position === 'G' && $this->goals_saves > 0) {
+            $points += ($this->goals_saves ?? 0) * config('point.save', 1);
+        }
+
+        // Clean sheet bonus for goalkeepers and defenders
+        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) === 0 && $this->minutes >= 60) {
+            $points += config('point.clean_sheet', 4);
+        }
+
+        return $points;
     }
 }

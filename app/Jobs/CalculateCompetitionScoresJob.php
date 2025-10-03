@@ -18,7 +18,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
     use Queueable;
 
     public function __construct(
-        public string $competitionType, // 'tournament' or 'peer'
+        public string $competitionType, 
         public int $competitionId
     ) {}
 
@@ -239,7 +239,13 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         }
 
         $totalPrizePool = $tournament->amount * $tournament->users()->count();
-        $prizePerWinner = $totalPrizePool / $winners->count();
+
+        // Deduct system fee (e.g., 10% for the platform)
+        $systemFeePercentage = config('tournament.system_fee_percentage', 10); // 10% default
+        $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
+        $netPrizePool = $totalPrizePool - $systemFee;
+
+        $prizePerWinner = $netPrizePool / $winners->count();
 
         foreach ($winners as $winner) {
             // Add to user's wallet
@@ -256,21 +262,36 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
             Log::info("Prize distributed to tournament winner", [
                 'user_id' => $winner->user_id,
-                'amount' => $prizePerWinner
+                'amount' => $prizePerWinner,
+                'system_fee_deducted' => $systemFee / $winners->count()
             ]);
         }
+
+        // Log system fee collection
+        Log::info("System fee collected from tournament", [
+            'tournament_id' => $tournament->id,
+            'total_prize_pool' => $totalPrizePool,
+            'system_fee' => $systemFee,
+            'net_prize_pool' => $netPrizePool,
+            'fee_percentage' => $systemFeePercentage
+        ]);
     }
 
     private function distributePeerPrizes(Peer $peer, $winner, $participants): void
     {
         $totalPrizePool = $peer->amount * $participants->count();
 
+        // Deduct system fee (e.g., 5% for peer competitions)
+        $systemFeePercentage = config('peer.system_fee_percentage', 5); // 5% default for peers
+        $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
+        $netPrizePool = $totalPrizePool - $systemFee;
+
         if ($peer->sharing_ratio === 1) {
-            // Winner takes all
-            $prizeAmount = $totalPrizePool;
+            // Winner takes all (after system fee)
+            $prizeAmount = $netPrizePool;
         } else {
             // Divide among participants (this logic might need adjustment based on your business rules)
-            $prizeAmount = $totalPrizePool * 0.7; // Winner gets 70%, for example
+            $prizeAmount = $netPrizePool * 0.7; // Winner gets 70% of net pool, for example
         }
 
         // Add to winner's wallet
@@ -288,7 +309,17 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         Log::info("Prize distributed to peer winner", [
             'user_id' => $winner->user_id,
             'amount' => $prizeAmount,
+            'system_fee_deducted' => $systemFee,
             'sharing_ratio' => $peer->sharing_ratio
+        ]);
+
+        // Log system fee collection
+        Log::info("System fee collected from peer", [
+            'peer_id' => $peer->id,
+            'total_prize_pool' => $totalPrizePool,
+            'system_fee' => $systemFee,
+            'net_prize_pool' => $netPrizePool,
+            'fee_percentage' => $systemFeePercentage
         ]);
     }
 }

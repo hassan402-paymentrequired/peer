@@ -55,13 +55,21 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function getActiveFixtures()
     {
-        // Get fixtures that are ongoing or recently finished and have players selected in active competitions
+        // Only fetch statistics for fixtures that are:
+        // 1. Currently ongoing (to get live updates)
+        // 2. Just finished (to get final stats)
         return Fixture::where(function ($query) {
-            $query->where('status', 'Match Finished')
-                ->orWhere('status', 'Second Half')
-                ->orWhere('status', 'First Half')
-                ->orWhere('status', 'Halftime');
+            $query->whereIn('status', [
+                'First Half',
+                'Second Half',
+                'Halftime',
+                'Extra Time',
+                'Penalty In Progress',
+                'Match Finished'  // Include just finished matches
+            ]);
         })
+            ->where('date', '>=', now()->subHours(6)) // Only recent matches
+            ->where('date', '<=', now()->addHours(3))  // Don't fetch future matches
             ->whereHas('playerMatches.tournamentSquads')
             ->orWhereHas('playerMatches.peerSquads')
             ->distinct()
@@ -154,7 +162,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function updateOrCreatePlayerStatistic(Fixture $fixture, array $player, array $statistics): void
     {
-        // Find the player in our database
+        // Find the player in our database using external_id
         $localPlayer = \App\Models\Player::where('external_id', $player['id'])->first();
 
         if (!$localPlayer) {
@@ -162,11 +170,16 @@ class FetchLiveStatisticsJob implements ShouldQueue
             return;
         }
 
+        // Extract statistics from API response structure
         $games = $statistics['games'] ?? [];
         $goals = $statistics['goals'] ?? [];
         $passes = $statistics['passes'] ?? [];
         $shots = $statistics['shots'] ?? [];
         $cards = $statistics['cards'] ?? [];
+        $tackles = $statistics['tackles'] ?? [];
+
+        // Determine which team this player belongs to
+        $teamId = $this->determinePlayerTeam($fixture, $player['id']);
 
         PlayerStatistic::updateOrCreate(
             [
@@ -174,26 +187,63 @@ class FetchLiveStatisticsJob implements ShouldQueue
                 'fixture_id' => $fixture->id,
             ],
             [
-                'team_id' => $fixture->home_team_id, // This should be determined properly
+                'team_id' => $teamId,
                 'match_date' => $fixture->date,
+
+                // Goals and assists (mapped correctly from API)
                 'goals_total' => $goals['total'] ?? 0,
                 'goals_assists' => $goals['assists'] ?? 0,
-                'assists' => $goals['assists'] ?? 0,
+                'assists' => $goals['assists'] ?? 0,  // Same as goals_assists
+
+                // Shots
                 'shots_total' => $shots['total'] ?? 0,
                 'shots_on_target' => $shots['on'] ?? 0,
+
+                // Cards
                 'yellow_cards' => $cards['yellow'] ?? 0,
+
+                // Game info
                 'minutes' => $games['minutes'] ?? 0,
                 'rating' => $games['rating'] ?? null,
                 'captain' => $games['captain'] ?? false,
                 'substitute' => $games['substitute'] ?? false,
-                'did_play' => ($games['minutes'] ?? 0) > 0,
-                'is_injured' => false, // This would need to be determined from API
-                'passes_total' => $passes['total'] ?? 0,
                 'position' => $games['position'] ?? null,
+                'number' => $games['number'] ?? null,
+
+                // Playing status
+                'did_play' => ($games['minutes'] ?? 0) > 0,
+                'is_injured' => false, // API doesn't provide this directly
+
+                // Additional stats
+                'passes_total' => $passes['total'] ?? 0,
                 'offsides' => $statistics['offsides'] ?? 0,
-                'tackles_total' => $statistics['tackles']['total'] ?? 0,
+                'tackles_total' => $tackles['total'] ?? 0,
+
+                // Goalkeeper specific
+                'goals_conceded' => $goals['conceded'] ?? 0,
+                'goals_saves' => $goals['saves'] ?? 0,
             ]
         );
+    }
+
+    /**
+     * Determine which team a player belongs to in this fixture
+     */
+    private function determinePlayerTeam(Fixture $fixture, int $playerExternalId): int
+    {
+        // Check if we have lineup data to determine team
+        $lineup = FixtureLineup::where('fixture_id', $fixture->id)
+            ->get()
+            ->first(function ($lineup) use ($playerExternalId) {
+                return $lineup->hasPlayer($playerExternalId);
+            });
+
+        if ($lineup) {
+            return $lineup->team_id;
+        }
+
+        // Fallback to home team if we can't determine
+        return $fixture->home_team_id;
     }
 
     private function checkCompletedCompetitions(): void
