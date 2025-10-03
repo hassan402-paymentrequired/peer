@@ -16,4 +16,9 @@ class Fixture extends Model
     {
         return $this->hasMany(PlayerMatch::class);
     }
+
+    public function lineups()
+    {
+        return $this->hasMany(FixtureLineup::class);
+    }
 }

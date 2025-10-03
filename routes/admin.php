@@ -35,6 +35,18 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('/create-from-fixture', [\App\Http\Controllers\Api\Match\MatchController::class, 'createFromFixture']);
         Route::post('/refetch-statistics', [\App\Http\Controllers\Api\Match\MatchController::class, 'refetchStatistics']);
         Route::get('/{playerMatch}/statistics', [\App\Http\Controllers\Api\Match\MatchController::class, 'getMatchStatistics']);
+
+        // Player availability endpoints
+        Route::get('/available-players/fixture', [\App\Http\Controllers\Api\Match\MatchController::class, 'getAvailablePlayersForFixture']);
+        Route::get('/available-players/date', [\App\Http\Controllers\Api\Match\MatchController::class, 'getAvailablePlayersForDate']);
+        Route::post('/check-availability', [\App\Http\Controllers\Api\Match\MatchController::class, 'checkPlayersAvailability']);
+        Route::get('/player-status', [\App\Http\Controllers\Api\Match\MatchController::class, 'getPlayerAvailabilityStatus']);
+        Route::get('/availability-summary', [\App\Http\Controllers\Api\Match\MatchController::class, 'getAvailabilitySummary']);
+        Route::get('/ongoing-matches', [\App\Http\Controllers\Api\Match\MatchController::class, 'getPlayersInOngoingMatches']);
+
+        // Lineup management endpoints
+        Route::post('/fetch-lineup', [\App\Http\Controllers\Api\Match\MatchController::class, 'fetchFixtureLineup']);
+        Route::get('/lineup', [\App\Http\Controllers\Api\Match\MatchController::class, 'getFixtureLineup']);
     });
 
     Route::prefix('countries')->group(function () {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Team;
 
 use App\Jobs\FetchTeams;
+use App\Models\Player;
 use Illuminate\Http\Request;
 use App\Models\Team;
 use App\Utils\Services\Team\TeamService;
@@ -56,9 +57,7 @@ class TeamController extends \App\Http\Controllers\Controller
      */
     public function players(string $team_id)
     {
-        $team = Team::where('external_id', $team_id)->orWhere('id', $team_id)->firstOrFail();
-
-        $players = $team->players;
+        $players = Player::where('team_id', $team_id)->get();
         return $this->respondWithCustomData([
             'players' => $players
         ], 200);

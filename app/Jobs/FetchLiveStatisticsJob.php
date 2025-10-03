@@ -7,7 +7,9 @@ use App\Models\PlayerMatch;
 use App\Models\PlayerStatistic;
 use App\Models\Tournament;
 use App\Models\Peer;
-use App\Jobs\CalculatScoresJob;
+use App\Models\FixtureLineup;
+use App\Jobs\CalculateCompetitionScoresJob;
+use App\Jobs\FetchFixtureLineupsJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
@@ -71,6 +73,8 @@ class FetchLiveStatisticsJob implements ShouldQueue
         try {
             Log::info("Processing fixture {$fixture->external_id}");
 
+            // Lineup data should already be available from weekly fetch
+
             $statisticsData = $this->fetchFixtureStatistics($fixture->external_id);
 
             if (!$statisticsData) {
@@ -79,6 +83,11 @@ class FetchLiveStatisticsJob implements ShouldQueue
             }
 
             $this->updatePlayerStatistics($fixture, $statisticsData);
+
+            // Mark player matches as completed if fixture is finished
+            if ($fixture->status === 'Match Finished') {
+                $this->markPlayerMatchesCompleted($fixture);
+            }
         } catch (\Exception $e) {
             Log::error("Failed to process fixture {$fixture->external_id}: " . $e->getMessage());
         }
@@ -268,5 +277,22 @@ class FetchLiveStatisticsJob implements ShouldQueue
             ->count();
 
         return $unfinishedCount === 0;
+    }
+
+
+
+    private function markPlayerMatchesCompleted(Fixture $fixture): void
+    {
+        try {
+            $updatedCount = PlayerMatch::where('fixture_id', $fixture->id)
+                ->where('is_completed', false)
+                ->update(['is_completed' => true]);
+
+            if ($updatedCount > 0) {
+                Log::info("Marked {$updatedCount} player matches as completed for fixture {$fixture->external_id}");
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to mark player matches as completed for fixture {$fixture->external_id}: " . $e->getMessage());
+        }
     }
 }

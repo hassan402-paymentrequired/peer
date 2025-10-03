@@ -14,10 +14,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Fetch live statistics every 5 minutes during match days
-        // $schedule->job(FetchLiveStatisticsJob::class)
-        //     ->everyFiveMinutes()
-        //     ->withoutOverlapping()
-        //     ->runInBackground();
+        $schedule->job(FetchLiveStatisticsJob::class)
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

@@ -3,10 +3,12 @@
 namespace App\Jobs;
 
 use App\Models\Fixture;
+use App\Models\FixtureLineup;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class fetchWeeklyFixtures implements ShouldQueue
 {
@@ -70,7 +72,7 @@ class fetchWeeklyFixtures implements ShouldQueue
                 $score = $item['score'] ?? [];
                 $halftime = $score['halftime'] ?? [];
                 $fulltime = $score['fulltime'] ?? [];
-                Fixture::updateOrCreate(
+                $fx = Fixture::updateOrCreate(
                     [
                         'external_id' => $fixture['id'],
                     ],
@@ -98,11 +100,127 @@ class fetchWeeklyFixtures implements ShouldQueue
                         'raw_json' => json_encode($item),
                     ]
                 );
+                $this->fetchLineupForFixture($fx);
+                sleep(1);
             }
 
             $page++;
         } while ($page <= $totalPages);
 
         Log::info('All fixtures fetched and upserted successfully.');
+
+        // Now fetch lineups for all the fixtures we just fetched
+
+    }
+
+    /**
+     * Fetch lineups for all fixtures in the date range
+     */
+    private function fetchLineupsForWeeklyFixtures(string $league, string $season, string $from, string $to): void
+    {
+        Log::info("Starting to fetch lineups for fixtures from $from to $to...");
+
+        // Get all fixtures for this date range that don't have lineups yet
+        $fixtures = Fixture::where('league_id', $league)
+            ->where('season', $season)
+            ->whereBetween('date', [$from, $to])
+            ->whereDoesntHave('lineups')
+            ->get();
+
+        Log::info("Found " . $fixtures->count() . " fixtures needing lineups");
+
+        $successCount = 0;
+        $errorCount = 0;
+
+        foreach ($fixtures as $fixture) {
+            try {
+                $this->fetchLineupForFixture($fixture);
+                $successCount++;
+
+                // Add delay to respect API rate limits
+                sleep(2); // 2 seconds between lineup requests
+
+            } catch (\Exception $e) {
+                $errorCount++;
+                Log::error("Failed to fetch lineup for fixture {$fixture->external_id}: " . $e->getMessage());
+            }
+        }
+
+        Log::info("Lineup fetching completed. Success: $successCount, Errors: $errorCount");
+    }
+
+    /**
+     * Fetch lineup for a specific fixture
+     */
+    private function fetchLineupForFixture(Fixture $fixture): void
+    {
+        $apiKey = env('SPORT_API_KEY');
+        $url = "https://v3.football.api-sports.io/fixtures/lineups";
+
+        Log::info("Fetching lineup for fixture {$fixture->external_id}");
+
+        $response = Http::timeout(30)
+            ->withHeaders([
+                'x-rapidapi-key' => $apiKey
+            ])
+            ->get($url, [
+                'fixture' => $fixture->external_id
+            ]);
+
+        if (!$response->successful()) {
+            Log::warning("Lineup API request failed for fixture {$fixture->external_id}", [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            return;
+        }
+
+        $data = $response->json();
+        $lineupData = $data['response'] ?? [];
+
+        if (empty($lineupData)) {
+            Log::info("No lineup data available for fixture {$fixture->external_id} (lineups may not be announced yet)");
+            return;
+        }
+
+        $this->storeLineupData($fixture, $lineupData);
+    }
+
+    /**
+     * Store lineup data in the database
+     */
+    private function storeLineupData(Fixture $fixture, array $lineupData): void
+    {
+        DB::beginTransaction();
+
+        try {
+            // Clear existing lineups for this fixture (in case of re-fetch)
+            FixtureLineup::where('fixture_id', $fixture->id)->delete();
+
+            foreach ($lineupData as $teamLineup) {
+                $team = $teamLineup['team'] ?? [];
+                $startingXI = $teamLineup['startXI'] ?? [];
+                $substitutes = $teamLineup['substitutes'] ?? [];
+                $coach = $teamLineup['coach'] ?? null;
+
+                FixtureLineup::create([
+                    'fixture_id' => $fixture->id,
+                    'team_id' => $team['id'] ?? 0,
+                    'team_name' => $team['name'] ?? 'Unknown',
+                    'formation' => $teamLineup['formation'] ?? null,
+                    'starting_xi' => $startingXI,
+                    'substitutes' => $substitutes,
+                    'coach' => $coach,
+                    'raw_data' => $teamLineup
+                ]);
+            }
+
+            DB::commit();
+            Log::info("Stored lineup data for fixture {$fixture->external_id}");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to store lineup data for fixture {$fixture->external_id}: " . $e->getMessage());
+            throw $e;
+        }
     }
 }

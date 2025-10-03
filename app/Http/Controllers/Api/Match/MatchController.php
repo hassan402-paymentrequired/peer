@@ -148,10 +148,10 @@ class MatchController extends Controller
                     'substitute'       => 0,
                     'offsides'         => 0,
                     'shots_total'      => 0,
-                    'shots_on_target'  => 0,   
+                    'shots_on_target'  => 0,
                     'goals_total'      => 0,
                     'goals_conceded'   => 0,
-                    'goals_assists'    => 0,   
+                    'goals_assists'    => 0,
                     'goals_saves'      => 0,
                     'passes_total'     => 0,
                     'position'         => null,
@@ -184,5 +184,69 @@ class MatchController extends Controller
             'statistics' => $statistics,
             'points' => $statistics ? $statistics->points : 0,
         ], 200);
+    }
+
+    /**
+     * Manually fetch lineup for a specific fixture
+     */
+    public function fetchFixtureLineup(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fixture_id' => 'required|exists:fixtures,external_id'
+        ]);
+
+        try {
+            $fixture = Fixture::where('external_id', $request->fixture_id)->firstOrFail();
+
+            \App\Jobs\FetchFixtureLineupsJob::dispatchSync($fixture->id);
+
+            $lineups = \App\Models\FixtureLineup::where('fixture_id', $fixture->id)
+                ->with('fixture')
+                ->get();
+
+            return $this->respondWithCustomData([
+                'message' => 'Lineup fetched successfully',
+                'fixture' => $fixture,
+                'lineups' => $lineups
+            ], 200);
+        } catch (\Exception $e) {
+            return $this->respondWithCustomData([
+                'message' => 'Failed to fetch lineup: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get lineup data for a specific fixture
+     */
+    public function getFixtureLineup(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fixture_id' => 'required|exists:fixtures,external_id'
+        ]);
+
+        try {
+            $fixture = Fixture::where('external_id', $request->fixture_id)->firstOrFail();
+
+            $lineups = \App\Models\FixtureLineup::where('fixture_id', $fixture->id)
+                ->with('fixture')
+                ->get();
+
+            $playersInLineup = [];
+            foreach ($lineups as $lineup) {
+                $playersInLineup = array_merge($playersInLineup, $lineup->getAllPlayerIds());
+            }
+
+            return $this->respondWithCustomData([
+                'fixture' => $fixture,
+                'lineups' => $lineups,
+                'total_players_in_lineup' => count(array_unique($playersInLineup)),
+                'players_in_lineup' => array_unique($playersInLineup)
+            ], 200);
+        } catch (\Exception $e) {
+            return $this->respondWithCustomData([
+                'message' => 'Failed to get lineup: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -20,7 +20,7 @@ class FixtureController extends Controller
 
     public function refetch(Request $request)
     {
-        $league = $request->league ?? '2';
+        $league = $request->league;
         $season = $request->season ?? '2025';
         $from = Carbon::now()->format('Y-m-d');
         $to = Carbon::now()->addDays(7)->format('Y-m-d');
