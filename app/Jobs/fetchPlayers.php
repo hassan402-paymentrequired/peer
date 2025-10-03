@@ -6,14 +6,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class fetchPlayers implements ShouldQueue
+class FetchPlayers implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public string $league)
+    public function __construct(public string $league,  public string $year)
     {
         //
     }
@@ -24,7 +24,7 @@ class fetchPlayers implements ShouldQueue
     public function handle(): void
     {
         $leagueId = $this->league;
-        $season = 2023;
+        $season = $this->year;
         $apiUrl = 'https://v3.football.api-sports.io/players';
         $apiKey = env('SPORT_API_KEY');
         $page = 1;
@@ -40,10 +40,7 @@ class fetchPlayers implements ShouldQueue
                 'page' => $page
             ]);
 
-            if (!$response->ok()) {
-                Log::error('Failed to fetch players: ' . $response->body());
-            }
-
+           
             $body = $response->json();
             Log::info('Fetch Players Response', $body);
             $players = $body['response'] ?? [];

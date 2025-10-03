@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class TournamentUser extends Model
 {
+    protected $fillable = [
+        'tournament_id',
+        'user_id',
+        'total_points',
+        'is_winner'
+    ];
     public function daily_contest()
     {
         return $this->belongsTo(Tournament::class);

@@ -46,9 +46,11 @@ class fetchWeeklyFixtures implements ShouldQueue
                 // 'page' => $page
             ]);
 
-            if (!$response->ok()) {
-                Log::error('Failed to fetch fixtures: ' . $response->body());
-            }
+            // Log::info("Status code: " ,[ $response]);
+
+            // if (!$response->ok()) {
+            //     Log::error('Failed to fetch fixtures: ' . $response->body());
+            // }
 
             $body = $response->json();
             $fixtures = $body['response'] ?? [];

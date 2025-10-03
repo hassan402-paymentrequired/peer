@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Team;
 
-use App\Jobs\fetchTeams;
+use App\Jobs\FetchTeams;
 use Illuminate\Http\Request;
 use App\Models\Team;
 use App\Utils\Services\Team\TeamService;
@@ -28,7 +28,7 @@ class TeamController extends \App\Http\Controllers\Controller
             'league_id' => ['required']
         ]);
         $league = $request->league_id;
-        fetchTeams::dispatch($league);
+        FetchTeams::dispatch($league);
         return $this->respondWithCustomData(
             [
                 'message' => 'Teams refetched successfully'

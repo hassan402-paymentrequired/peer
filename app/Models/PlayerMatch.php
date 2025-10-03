@@ -10,8 +10,8 @@ class PlayerMatch extends Model
 {
     use HasUlids;
 
-    
-     public function uniqueIds(): array
+
+    public function uniqueIds(): array
     {
         return ['player_match_id'];
     }
@@ -41,5 +41,17 @@ class PlayerMatch extends Model
     {
         return $this->belongsTo(PlayerStatistic::class, 'player_id', 'player_id')
             ->where('fixture_id', $this->fixture_id);
+    }
+
+    public function tournamentSquads()
+    {
+        return $this->hasMany(\App\Models\TournamentUserSquard::class, 'main_player_match_id')
+            ->orWhere('sub_player_match_id', $this->id);
+    }
+
+    public function peerSquads()
+    {
+        return $this->hasMany(\App\Models\PeerUserSquard::class, 'main_player_match_id')
+            ->orWhere('sub_player_match_id', $this->id);
     }
 }

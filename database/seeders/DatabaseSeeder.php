@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(10)->create();
-        Peer::factory(40)->create();
+        // User::factory(10)->create();
+        // Peer::factory(40)->create();
         Admin::updateOrCreate([
             'email' => 'admin@admin.com',
         ], [
@@ -27,6 +27,6 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
         ]);
 
-        $this->call([TournamentSeeder::class]);
+        // $this->call([TournamentSeeder::class]);
     }
 }

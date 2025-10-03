@@ -8,7 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class fetchCounties implements ShouldQueue
+class FetchCounties implements ShouldQueue
 {
     use Queueable;
 
@@ -30,7 +30,7 @@ class fetchCounties implements ShouldQueue
         $page = 1;
         $totalPages = 1;
         $updated = 0;
-
+        Log::info("Fetting started.");
         do {
             $response = Http::withHeaders([
                 'x-rapidapi-key' => $apiKey,

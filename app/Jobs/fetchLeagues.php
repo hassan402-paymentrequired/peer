@@ -8,14 +8,14 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class fetchLeagues implements ShouldQueue
+class FetchLeagues implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public string $country)
+    public function __construct(public ?string $country = '', public ?string $id = '')
     {
         //
     }
@@ -26,18 +26,16 @@ class fetchLeagues implements ShouldQueue
     public function handle(): void
     {
         $country = $this->country;
+        $id = $this->id;
         $page = 1;
         $totalPages = 1;
-        $insertBatch = [];
 
         do {
             Log::info("Fetching page $page...");
 
             $response = Http::withHeaders([
                 'x-rapidapi-key' => env('SPORT_API_KEY')
-            ])->get("https://v3.football.api-sports.io/leagues", [
-                'country' => strtolower($country ?? ''),
-            ]);
+            ])->get("https://v3.football.api-sports.io/leagues?id=2");
 
             $body = $response->json();
 
@@ -48,6 +46,7 @@ class fetchLeagues implements ShouldQueue
             $totalPages = $body['paging']['total'] ?? 1;
             $leagues = $body['response'] ?? [];
             $count = count($leagues);
+            // dd($count);
             Log::info("Total league $count...");
 
             foreach ($leagues as $item) {

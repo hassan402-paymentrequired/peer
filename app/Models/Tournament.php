@@ -9,6 +9,14 @@ class Tournament extends Model
 {
     use HasUlids;
 
+    protected $fillable = [
+        'name',
+        'is_active',
+        'amount',
+        'date',
+        'status'
+    ];
+
     public function uniqueIds(): array
     {
         return ['tournament_id'];

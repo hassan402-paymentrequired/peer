@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api\Country;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\fetchCounties;
+use App\Jobs\FetchCounties;
 use App\Models\Country;
-use Illuminate\Support\Facades\Artisan;
 
 class CountryController extends Controller
 {
@@ -23,7 +22,7 @@ class CountryController extends Controller
 
     public function refetch()
     {
-        fetchCounties::dispatch();
+        FetchCounties::dispatch();
 
         return $this->respondWithCustomData(
             [

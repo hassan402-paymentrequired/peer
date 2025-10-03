@@ -9,12 +9,19 @@ class PeerUser extends Model
 {
     use HasUlids;
 
+    protected $fillable = [
+        'peer_id',
+        'user_id',
+        'total_points',
+        'is_winner'
+    ];
+
     public function uniqueIds(): array
     {
         return ['peer_user_id'];
     }
 
-     public function user()
+    public function user()
     {
         return $this->belongsTo(User::class);
     }

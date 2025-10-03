@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class PeerUserSquard extends Model
 {
+    protected $fillable = [
+        'peer_user_id',
+        'star_rating',
+        'main_player_id',
+        'sub_player_id',
+        'main_player_match_id',
+        'sub_player_match_id'
+    ];
     public function peerUser()
     {
         return $this->belongsTo(PeerUser::class);

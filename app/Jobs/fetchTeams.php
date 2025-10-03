@@ -7,14 +7,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class fetchTeams implements ShouldQueue
+class FetchTeams implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public string $league)
+    public function __construct(public string $league, public string $year)
     {
         //
     }
@@ -27,7 +27,7 @@ class fetchTeams implements ShouldQueue
         $leagueSeason = League::query()->first();
         Log::info('Fetching teams for league: ' . json_encode($leagueSeason->toArray()));
         $leagueId = $this->league;
-        $season = '2023';
+        $season = $this->year;
         $apiUrl = 'https://v3.football.api-sports.io/teams';
         $apiKey = env('SPORT_API_KEY');
         $page = 1;

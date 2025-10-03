@@ -20,10 +20,10 @@ class FixtureController extends Controller
 
     public function refetch(Request $request)
     {
-        $league = $request->league ?? '39';
-        $season = $request->season ?? '2023';
-        $from = $request->from ?? '2021-07-01';
-        $to = $request->to ?? '2023-10-31';
+        $league = $request->league ?? '2';
+        $season = $request->season ?? '2025';
+        $from = Carbon::now()->format('Y-m-d');
+        $to = Carbon::now()->addDays(7)->format('Y-m-d');
 
 
         fetchWeeklyFixtures::dispatch($league, $season, $to, $from);

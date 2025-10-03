@@ -59,8 +59,15 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::post('/refetch', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'refetch']);
     });
 
-      Route::prefix('tournament')->group(function () {
+    Route::prefix('tournament')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\Tournament\TournamentController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\Api\Tournament\TournamentController::class, 'store']);
+    });
+
+    Route::prefix('scoring')->group(function () {
+        Route::post('/fetch-live-statistics', [\App\Http\Controllers\Api\Admin\ScoringController::class, 'fetchLiveStatistics']);
+        Route::post('/calculate-tournament-scores', [\App\Http\Controllers\Api\Admin\ScoringController::class, 'calculateTournamentScores']);
+        Route::post('/calculate-peer-scores', [\App\Http\Controllers\Api\Admin\ScoringController::class, 'calculatePeerScores']);
+        Route::get('/competition-status', [\App\Http\Controllers\Api\Admin\ScoringController::class, 'getCompetitionStatus']);
     });
 });

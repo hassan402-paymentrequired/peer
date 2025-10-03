@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Leagues;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\fetchLeagues;
+use App\Jobs\FetchLeagues;
 use App\Models\League;
 use App\Models\Season;
 use Illuminate\Http\Request;
@@ -43,7 +43,7 @@ class LeagueController extends Controller
         ]);
         $name = $request->country_name ?? '';
 
-        fetchLeagues::dispatch($name);
+        FetchLeagues::dispatch($name);
 
         return $this->respondWithCustomData(
             [

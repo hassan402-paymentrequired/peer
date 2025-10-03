@@ -13,6 +13,17 @@ class Peer extends Model
 {
     use HasUlids, HasFactory;
 
+    protected $fillable = [
+        'name',
+        'user_id',
+        'amount',
+        'private',
+        'limit',
+        'sharing_ratio',
+        'status',
+        'winner_user_id'
+    ];
+
     public function uniqueIds(): array
     {
         return ['peer_id'];

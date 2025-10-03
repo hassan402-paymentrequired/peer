@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class TournamentUserSquard extends Model
 {
+    protected $fillable = [
+        'tournament_user_id',
+        'star_rating',
+        'main_player_id',
+        'sub_player_id',
+        'main_player_match_id',
+        'sub_player_match_id'
+    ];
     public function contestsUser()
     {
         return $this->belongsTo(TournamentUser::class);

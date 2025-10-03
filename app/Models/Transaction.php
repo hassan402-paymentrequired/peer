@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    protected $fillable = [
+        'user_id',
+        'amount',
+        'type',
+        'description',
+        'status'
+    ];
     /**
      * Get the user that owns the Transaction
      *
