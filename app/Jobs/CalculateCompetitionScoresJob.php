@@ -83,8 +83,12 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             // Determine winners
             $winners = $this->determineTournamentWinners($participants);
 
-            // Update tournament status and distribute prizes
-            $tournament->update(['status' => 'close']);
+            // Update tournament status and mark as calculated
+            $tournament->update([
+                'status' => 'close',
+                'scoring_calculated' => true,
+                'scoring_calculated_at' => now()
+            ]);
 
             $this->distributeTournamentPrizes($tournament, $winners);
 
@@ -129,10 +133,12 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             // Determine winner
             $winner = $this->determinePeerWinner($participants);
 
-            // Update peer status and distribute prizes
+            // Update peer status and mark as calculated
             $peer->update([
                 'status' => 'finished',
-                'winner_user_id' => $winner->user_id
+                'winner_user_id' => $winner->user_id,
+                'scoring_calculated' => true,
+                'scoring_calculated_at' => now()
             ]);
 
             $this->distributePeerPrizes($peer, $winner, $participants);

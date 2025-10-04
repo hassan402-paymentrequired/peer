@@ -264,8 +264,10 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function checkCompletedCompetitions(): void
     {
-        // Check tournaments
-        $activeTournaments = Tournament::where('status', 'open')->get();
+        // Check tournaments that haven't been calculated yet
+        $activeTournaments = Tournament::where('status', 'open')
+            ->where('scoring_calculated', false)
+            ->get();
 
         foreach ($activeTournaments as $tournament) {
             if ($this->isTournamentComplete($tournament)) {
@@ -274,8 +276,10 @@ class FetchLiveStatisticsJob implements ShouldQueue
             }
         }
 
-        // Check peers
-        $activePeers = Peer::where('status', 'open')->get();
+        // Check peers that haven't been calculated yet
+        $activePeers = Peer::where('status', 'open')
+            ->where('scoring_calculated', false)
+            ->get();
 
         foreach ($activePeers as $peer) {
             if ($this->isPeerComplete($peer)) {

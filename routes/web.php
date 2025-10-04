@@ -16,8 +16,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [PeerController::class, 'store'])->name('peers.store');
         Route::get('/join/{peer:peer_id}', [PeerController::class, 'joinPeer'])->name('join.peer');
         Route::get('/my-contest', [PeerController::class, 'myGame'])->name('peers.contents');
-         Route::post('/join/{peer}', [PeerController::class, 'storeJoinPeer'])->name('join.peer.store');
-          Route::get('/{peer:peer_id}', [PeerController::class, 'show'])->name('peers.show');
+        Route::post('/join/{peer}', [PeerController::class, 'storeJoinPeer'])->name('join.peer.store');
+        Route::get('/{peer:peer_id}', [PeerController::class, 'show'])->name('peers.show');
+
+        // API endpoints for infinite scroll
+        Route::get('/api/ongoing', [PeerController::class, 'getOngoingPeers'])->name('peers.api.ongoing');
+        Route::get('/api/completed', [PeerController::class, 'getCompletedPeers'])->name('peers.api.completed');
     });
 
     Route::prefix('tournament')->group(function () {
@@ -41,7 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-Route::prefix('webhooks')->group(function(){
+Route::prefix('webhooks')->group(function () {
     Route::post('/paystack/transfer-verify', [WalletController::class, 'processTransferWebhook']);
 });
 

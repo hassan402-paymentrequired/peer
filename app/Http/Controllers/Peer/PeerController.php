@@ -15,7 +15,7 @@ use Inertia\Inertia;
 class PeerController extends Controller
 {
     protected PlayerService $playerService;
-     protected PeerService $peerService;
+    protected PeerService $peerService;
 
     public function __construct(PlayerService $playerService, PeerService $peerService)
     {
@@ -103,21 +103,21 @@ class PeerController extends Controller
     {
         $user = authUser();
 
-        // Ongoing: Peers the user joined that are currently ongoing
+        // Ongoing: Peers the user joined that are currently ongoing (paginated)
         $ongoingPeers = $user->peers()
             ->where('status', 'open')
-            ->with('created_by')
+            ->with(['created_by', 'winner'])
             ->withCount('users')
-            ->get();
+            ->latest()
+            ->paginate(10, ['*'], 'ongoing_page');
 
-        // dd($ongoingPeers);
-
+        // History: Completed peers (paginated)
         $historyPeers = $user->peers()
-            ->where('status', 'finished')
-            ->with('created_by')
+            ->whereIn('status', ['finished', 'closed'])
+            ->with(['created_by', 'winner'])
             ->withCount('users')
-            // ->orderBy('end_time', 'desc')
-            ->get();
+            ->latest('updated_at')
+            ->paginate(10, ['*'], 'history_page');
 
         return Inertia::render('peer/contests', [
             'ongoing' => $ongoingPeers,
@@ -217,4 +217,39 @@ class PeerController extends Controller
         ]);
     }
 
+    /**
+     * Get ongoing peers for infinite scroll (API endpoint)
+     */
+    public function getOngoingPeers(Request $request)
+    {
+        $user = authUser();
+        $page = $request->get('page', 1);
+
+        $ongoingPeers = $user->peers()
+            ->where('status', 'open')
+            ->with(['created_by', 'winner'])
+            ->withCount('users')
+            ->latest()
+            ->paginate(10, ['*'], 'page', $page);
+
+        return response()->json($ongoingPeers);
+    }
+
+    /**
+     * Get completed peers for infinite scroll (API endpoint)
+     */
+    public function getCompletedPeers(Request $request)
+    {
+        $user = authUser();
+        $page = $request->get('page', 1);
+
+        $historyPeers = $user->peers()
+            ->whereIn('status', ['finished', 'closed'])
+            ->with(['created_by', 'winner'])
+            ->withCount('users')
+            ->latest('updated_at')
+            ->paginate(10, ['*'], 'page', $page);
+
+        return response()->json($historyPeers);
+    }
 }

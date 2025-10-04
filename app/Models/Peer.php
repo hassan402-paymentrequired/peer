@@ -21,7 +21,9 @@ class Peer extends Model
         'limit',
         'sharing_ratio',
         'status',
-        'winner_user_id'
+        'winner_user_id',
+        'scoring_calculated',
+        'scoring_calculated_at'
     ];
 
     public function uniqueIds(): array

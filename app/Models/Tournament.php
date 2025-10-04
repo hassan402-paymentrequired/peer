@@ -14,7 +14,9 @@ class Tournament extends Model
         'is_active',
         'amount',
         'date',
-        'status'
+        'status',
+        'scoring_calculated',
+        'scoring_calculated_at'
     ];
 
     public function uniqueIds(): array
