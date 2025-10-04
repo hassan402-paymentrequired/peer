@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enum\TransactionStatusEnum;
 use App\Models\Tournament;
 use App\Models\TournamentUser;
 use App\Models\Peer;
@@ -267,7 +268,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 'amount' => $prizePerWinner,
                 'action_type' => 'credit',
                 'description' => "Tournament prize - {$tournament->name}",
-                'status' => 1,
+                'status' => TransactionStatusEnum::SUCCESSFUL->value,
                 'transaction_ref' => 'TournamentPrize'
             ]);
 
@@ -314,7 +315,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'amount' => $prizeAmount,
             'action_type' => 'credit',
             'description' => "Peer competition prize - {$peer->name}",
-            'status' => 1,
+            'status' => TransactionStatusEnum::SUCCESSFUL->value,
             'transaction_ref' => 'TournamentPrize'
         ]);
 
