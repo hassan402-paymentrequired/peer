@@ -115,7 +115,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                                                             Array.from({
                                                                 length: peer.users_count,
                                                             }).map((_, idx) => (
-                                                                <Avatar key={idx} className="rounded">
+                                                                <Avatar key={idx} className="rounded border text-sm ">
                                                                     <AvatarFallback className="size-7 rounded">{idx + 1}</AvatarFallback>
                                                                 </Avatar>
                                                             ))
@@ -154,15 +154,6 @@ export default function Dashboard({ tournament, recents, peers }) {
                         <h3 className="mg:text-lg flex text-base font-semibold text-[var(--clr-light-a0)]">
                             <CupSoda /> Top Peers
                         </h3>
-                        <Link href={create()} prefetch>
-                                    <Button
-                                        size={'default'}
-                                        variant="outline"
-                                        className="w-full transform rounded-lg border-white/30 bg-white/10 font-semibold tracking-wide text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-white/50 hover:bg-white/20"
-                                    >
-                                        Create Peer 
-                                    </Button>
-                                </Link>
                     </div>
 
                     <div className="mt-2 flex flex-col">

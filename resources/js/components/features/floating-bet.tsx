@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import {usePage} from "@inertiajs/react"
 
 interface Player {
     player_avatar: string;
@@ -43,7 +44,8 @@ export const FloatingBetSlip = ({
     handleSubmitTeam,
     processing
 }: FloatingBetSlipProps) => {
-
+const {flash} = usePage().props
+console.log(flash)
     const [isOpen, setIsOpen] = useState(false);
 
     const totalSelected = selectedPlayers.length;

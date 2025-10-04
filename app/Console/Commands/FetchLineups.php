@@ -42,11 +42,11 @@ class FetchLineups extends Command
             FetchFixtureLineupsJob::dispatchSync($fixture->id);
             $this->info('Lineup fetch completed!');
         } else {
-            // Fetch lineups for all relevant fixtures
+            
             $this->info('Dispatching lineup fetch job for all relevant fixtures...');
             FetchFixtureLineupsJob::dispatch();
             $this->info('Lineup fetch job dispatched!');
-            $this->warn('Note: Lineups are normally fetched automatically with weekly fixtures.');
+
         }
 
         return 0;

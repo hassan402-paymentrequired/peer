@@ -120,8 +120,9 @@ class fetchWeeklyFixtures implements ShouldQueue
 
         Log::info('All fixtures fetched and upserted successfully.');
 
-        // Now fetch lineups for all the fixtures we just fetched
-        $this->fetchLineupsForWeeklyFixtures($league, $season, $from, $to);
+        // Note: Lineups are only available 20-40 minutes before kickoff
+        // We'll fetch them separately closer to match time
+        Log::info('Fixtures fetched. Lineups will be fetched closer to match time (20-40 minutes before kickoff).');
     }
 
     /**

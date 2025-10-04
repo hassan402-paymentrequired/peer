@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppLayout from "@/layouts/app-layout";
 import { cn } from "@/lib/utils";
 import join from "@/routes/join";
-import { router } from "@inertiajs/react";
+import { router, usePage } from "@inertiajs/react";
 import { Check, Clock, Star, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -60,7 +60,9 @@ export default function JoinPeer({
         []
     );
     const [activeTab, setActiveTab] = useState("5");
-   
+    const [loading, setLoading] = useState(false)
+const {flash} = usePage().props
+console.log(flash)
 
     const getTierColor = (tier: number) => {
         switch (tier) {
@@ -116,10 +118,12 @@ export default function JoinPeer({
     };
 
     const handleSubmitTeam = async () => {
+        setLoading(true)
         if (selectedPlayers.length !== 10) {
             toast.error(
                 "Please select exactly 10 players (5 main + 5 substitutes)"
             );
+            setLoading(false)
             return;
         }
 
@@ -160,10 +164,24 @@ export default function JoinPeer({
                     console.error("Validation errors:", errors);
                     alert(`Error: ${Object.values(errors).join(", ")}`);
                 },
+                onFinish: () => {
+                    if(flash?.error)
+                    {
+                    toast.error(flash?.error)
+                    }
+
+                     if(flash?.success)
+                    {
+                    toast.success(flash?.success)
+                    }
+                }
             });
+            console.log('joined')
         } catch (error) {
             console.error("Error submitting team:", error);
             toast.error("Failed to submit team. Please try again.");
+        }finally{
+            setLoading(false)
         }
     };
 
@@ -183,18 +201,8 @@ export default function JoinPeer({
         }
         return 1;
     };
-    // console.log(players);
     return (
-        <AppLayout
-            // alert={
-            //     Number(balance) < Number(peer.amount) && (
-            //         <div className="mt-3 flex items-center gap-2">
-            //             <BatteryWarning size={17} color="red" />{" "}
-            //             <FormError message="Insufficient balance to join tournament. Please fund your wallet." />
-            //         </div>
-            //     )
-            // }
-        >
+        <AppLayout>
             <main className="p-5">
                 {/* Peer Info */}
                 <div className=" py-3 bg-[var(--clr-surface-a10)] border-border/10">
@@ -552,7 +560,7 @@ export default function JoinPeer({
                 }}
                 players={players}
                 handleSubmitTeam={handleSubmitTeam}
-                processing={false}
+                processing={loading}
                 
             />
         </AppLayout>

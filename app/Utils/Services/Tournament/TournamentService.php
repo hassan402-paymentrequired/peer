@@ -45,7 +45,9 @@ class TournamentService
             DB::beginTransaction();
 
             $tourn = Tournament::active()->first();
-            $tourn->update(['is_active' => false]);
+            if ($tourn) {
+                $tourn->update(['is_active' => false, 'status' => 'close']);
+            }
 
             Tournament::create($payload);
 
@@ -62,7 +64,7 @@ class TournamentService
     public function getAllsTournament()
     {
         try {
-            return Tournament::query()->paginate(20);
+            return Tournament::query()->withCount('users')->orderBy('created_at', 'desc')->paginate(20);
         } catch (\Throwable $e) {
             Log::info("TournamentService error:", [
                 'error' => $e->getMessage()

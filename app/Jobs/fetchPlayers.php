@@ -63,7 +63,7 @@ class FetchPlayers implements ShouldQueue
                     'position'     => $position,
                     'image'        => $player['photo'] ?? '',
                     'nationality'  => $player['nationality'] ?? '',
-                    'player_rating' => 1,
+                    'player_rating' => random_int(1, 5),
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ];

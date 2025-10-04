@@ -129,7 +129,8 @@ class PeerController extends Controller
 
     public function storeJoinPeer(BetRequest $request, Peer $peer)
     {
-        if (!hasEnoughBalance($peer->amount)) {
+        $user = authUser()->id;
+        if (!hasEnoughBalance($peer->amount) && $peer->user_id !== $user) {
             return back()->with('error', 'Insufficient balance to join peer. Please fund your wallet.');
         }
         $result = $this->peerService->playBet($request, $peer, WEB);
@@ -138,7 +139,7 @@ class PeerController extends Controller
             return back()->with('error', 'You are already in the peer');
         }
 
-        if ($peer->user_id !== AuthUser('web')->id) {
+        if ($peer->user_id !== $user) {
             decreaseWallet($peer->amount);
         }
 

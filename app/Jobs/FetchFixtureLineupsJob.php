@@ -15,7 +15,7 @@ class FetchFixtureLineupsJob implements ShouldQueue
     use Queueable;
 
     public function __construct(
-        public ?int $fixtureId = null // If null, fetch for all relevant fixtures
+        public ?int $fixtureId = null
     ) {}
 
     public function handle(): void
@@ -69,8 +69,8 @@ class FetchFixtureLineupsJob implements ShouldQueue
                 ->where('date', '>=', now()->subHours(3)) // Only recent/upcoming matches
                 ->where('date', '<=', now()->addHours(6));
         })
-            ->whereHas('playerMatches.tournamentSquads')
-            ->orWhereHas('playerMatches.peerSquads')
+            // ->whereHas('playerMatches.tournamentSquads')
+            // ->orWhereHas('playerMatches.peerSquads')
             ->whereDoesntHave('lineups')
             ->distinct()
             ->get();
