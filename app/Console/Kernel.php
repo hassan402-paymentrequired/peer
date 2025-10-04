@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Jobs\FetchLiveStatisticsJob;
 use App\Jobs\FetchPreMatchLineupsJob;
+use App\Jobs\UpdateFixtureStatusJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -14,9 +15,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Fetch pre-match lineups every 15 minutes (to catch lineups when they become available)
+        // Update fixture status every 2 minutes (to catch status changes quickly)
+        $schedule->job(UpdateFixtureStatusJob::class)
+            ->everyTwoMinutes()
+            ->withoutOverlapping()
+            ->runInBackground();
+
+        // Fetch pre-match lineups every 10 minutes (20-60 minutes before kickoff)
         $schedule->job(FetchPreMatchLineupsJob::class)
-            ->everyFifteenMinutes()
+            ->everyTenMinutes()
             ->withoutOverlapping()
             ->runInBackground();
 
@@ -25,8 +32,6 @@ class Kernel extends ConsoleKernel
             ->everyFiveMinutes()
             ->withoutOverlapping()
             ->runInBackground();
-
-        $schedule->command('lineups:fetch')->everyFiveSeconds();
     }
 
     /**

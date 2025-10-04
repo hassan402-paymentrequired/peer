@@ -265,9 +265,10 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             Transaction::create([
                 'user_id' => $winner->user_id,
                 'amount' => $prizePerWinner,
-                'type' => 'credit',
+                'action_type' => 'credit',
                 'description' => "Tournament prize - {$tournament->name}",
-                'status' => 'completed'
+                'status' => 1,
+                'transaction_ref' => 'TournamentPrize'
             ]);
 
             Log::info("Prize distributed to tournament winner", [
@@ -311,9 +312,10 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         Transaction::create([
             'user_id' => $winner->user_id,
             'amount' => $prizeAmount,
-            'type' => 'credit',
+            'action_type' => 'credit',
             'description' => "Peer competition prize - {$peer->name}",
-            'status' => 'completed'
+            'status' => 1,
+            'transaction_ref' => 'TournamentPrize'
         ]);
 
         Log::info("Prize distributed to peer winner", [

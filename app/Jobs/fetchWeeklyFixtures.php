@@ -111,8 +111,7 @@ class fetchWeeklyFixtures implements ShouldQueue
                     ]
                 );
 
-                // Don't fetch lineup immediately - do it in batch later
-                // sleep(1); // Reduced sleep for fixture fetching
+                // Lineups will be fetched automatically 20-60 minutes before kickoff
             }
 
             $page++;

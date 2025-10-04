@@ -27,11 +27,11 @@ class FetchPreMatchLineupsJob implements ShouldQueue
 
     public function handle(): void
     {
-        Log::info('FetchPreMatchLineupsJob started - fetching lineups for upcoming matches');
+        Log::info('FetchPreMatchLineupsJob started');
 
         try {
-            // Get fixtures that are starting in the next 2 hours and don't have lineups yet
-            $upcomingFixtures = $this->getUpcomingFixtures();
+            // Get fixtures that are starting in the next 20-60 minutes and don't have lineups yet
+            $upcomingFixtures = $this->getUpcomingFixturesNeedingLineups();
 
             if ($upcomingFixtures->isEmpty()) {
                 Log::info('No upcoming fixtures needing lineups found');
@@ -40,92 +40,80 @@ class FetchPreMatchLineupsJob implements ShouldQueue
 
             Log::info('Found ' . $upcomingFixtures->count() . ' upcoming fixtures needing lineups');
 
-            $successCount = 0;
-            $noLineupsCount = 0;
-            $errorCount = 0;
-
             foreach ($upcomingFixtures as $fixture) {
-                try {
-                    $result = $this->fetchLineupForFixture($fixture);
+                $this->fetchLineupForFixture($fixture);
 
-                    if ($result === 'success') {
-                        $successCount++;
-                    } elseif ($result === 'no_lineups') {
-                        $noLineupsCount++;
-                    }
-
-                    // Add delay to respect API rate limits
-                    sleep(2);
-                } catch (\Exception $e) {
-                    $errorCount++;
-                    Log::error("Failed to fetch lineup for fixture {$fixture->external_id}: " . $e->getMessage());
-                }
+                // Add delay to respect API rate limits
+                sleep(2);
             }
-
-            Log::info("Pre-match lineup fetching completed", [
-                'success' => $successCount,
-                'no_lineups_yet' => $noLineupsCount,
-                'errors' => $errorCount
-            ]);
         } catch (\Exception $e) {
             Log::error('FetchPreMatchLineupsJob failed: ' . $e->getMessage(), [
                 'exception' => $e
             ]);
         }
+
+        Log::info('FetchPreMatchLineupsJob completed');
     }
 
-    private function getUpcomingFixtures()
+    /**
+     * Get fixtures that are starting soon and need lineups
+     */
+    private function getUpcomingFixturesNeedingLineups()
     {
-        // Get fixtures that:
-        // 1. Are starting in the next 2 hours
-        // 2. Don't have lineups yet
-        // 3. Have players selected in tournaments/peers
-        return Fixture::where('date', '>=', now())
-            ->where('date', '<=', now()->addHours(2))
-            ->whereIn('status', ['Not Started', 'TBD'])
-            ->whereDoesntHave('lineups')
-            ->where(function ($query) {
-                $query->whereHas('playerMatches.tournamentSquads')
-                    ->orWhereHas('playerMatches.peerSquads');
-            })
+        $now = Carbon::now();
+
+        return Fixture::where('date', '>=', $now->copy()->addMinutes(20)) // At least 20 minutes away
+            ->where('date', '<=', $now->copy()->addMinutes(60))           // But within 60 minutes
+            ->whereIn('status', ['Not Started', 'TBD'])                   // Only upcoming matches
+            ->whereDoesntHave('lineups')                                  // Don't have lineups yet
+            ->whereHas('playerMatches')                                   // Have players selected
             ->get();
     }
 
-    private function fetchLineupForFixture(Fixture $fixture): string
+    /**
+     * Fetch lineup for a specific fixture
+     */
+    private function fetchLineupForFixture(Fixture $fixture): void
     {
         $apiKey = env('SPORT_API_KEY');
         $url = "https://v3.football.api-sports.io/fixtures/lineups";
 
         Log::info("Fetching pre-match lineup for fixture {$fixture->external_id}");
 
-        $response = Http::timeout(30)
-            ->withHeaders([
-                'x-rapidapi-key' => $apiKey
-            ])
-            ->get($url, [
-                'fixture' => $fixture->external_id
-            ]);
+        try {
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'x-rapidapi-key' => $apiKey
+                ])
+                ->get($url, [
+                    'fixture' => $fixture->external_id
+                ]);
 
-        if (!$response->successful()) {
-            Log::warning("Lineup API request failed for fixture {$fixture->external_id}", [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
-            return 'error';
+            if (!$response->successful()) {
+                Log::warning("Lineup API request failed for fixture {$fixture->external_id}", [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                return;
+            }
+
+            $data = $response->json();
+            $lineupData = $data['response'] ?? [];
+
+            if (empty($lineupData)) {
+                Log::info("No lineup data available yet for fixture {$fixture->external_id} (may be too early)");
+                return;
+            }
+
+            $this->storeLineupData($fixture, $lineupData);
+        } catch (\Exception $e) {
+            Log::error("Failed to fetch lineup for fixture {$fixture->external_id}: " . $e->getMessage());
         }
-
-        $data = $response->json();
-        $lineupData = $data['response'] ?? [];
-
-        if (empty($lineupData)) {
-            Log::info("No lineup data available yet for fixture {$fixture->external_id} (lineups typically available 20-40 minutes before kickoff)");
-            return 'no_lineups';
-        }
-
-        $this->storeLineupData($fixture, $lineupData);
-        return 'success';
     }
 
+    /**
+     * Store lineup data in the database
+     */
     private function storeLineupData(Fixture $fixture, array $lineupData): void
     {
         DB::beginTransaction();
