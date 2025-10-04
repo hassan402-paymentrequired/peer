@@ -12,15 +12,16 @@ class MatchService
 {
     public function matches(): array
     {
+        $key =   CacheKey::MATCH->value . '_page_' . request()->page;
         $matches = Cache::remember(
-            CacheKey::MATCH->value,
-            now()->addDay(),
+            $key,
+            300,
             function () {
                 return PlayerMatch::with(
                     ['player' => function ($query) {
                         return $query->with('team');
                     }, 'team', 'fixture']
-                )->get();
+                )->paginate(20);
             }
         );
 

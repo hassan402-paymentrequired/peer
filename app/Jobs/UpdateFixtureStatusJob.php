@@ -74,7 +74,7 @@ class UpdateFixtureStatusJob implements ShouldQueue
                 'Extra Time',
                 'Penalty In Progress'
             ])
-            ->whereHas('playerMatches') // Only fixtures with selected players
+            ->whereHas('playerMatches') 
             ->get();
     }
 

@@ -9,11 +9,11 @@ import { dashboard } from "@/routes";
 
 interface Props {
     history: any[];
-    upcoming: any[];
     ongoing: any[];
 }
 
-const Contests = ({ history, upcoming, ongoing }: Props) => {
+const Contests = ({ history,  ongoing }: Props) => {
+    // console.log(history, ongoing)
     return (
         <AppLayout>
             <Head title="Peers - contests" />
@@ -35,7 +35,7 @@ const Contests = ({ history, upcoming, ongoing }: Props) => {
                     </TabsList>
 
                     <TabsContent value="live">
-                        {!ongoing.length && (
+                        {!ongoing?.data?.length && (
                             <div className="flex justify-center py-8">
                                 <div className=" p-6 flex flex-col items-center max-w-xs">
                                     <span className="text-4xl mb-2 animate-bounce">
@@ -60,11 +60,11 @@ const Contests = ({ history, upcoming, ongoing }: Props) => {
                             </div>
                         )}
 
-                        {ongoing.length > 0 &&
-                            ongoing.map((p) => <Ongoing peer={p} key={p.id} />)}
+                        {ongoing?.data?.length > 0 &&
+                            ongoing?.data?.map((p) => <Ongoing peer={p} key={p.id} />)}
                     </TabsContent>
                     <TabsContent value="upcoming">
-                        {!history.length && (
+                        {!history?.data?.length && (
                             <div className="flex justify-center py-8">
                                 <div className=" p-6 flex flex-col items-center max-w-xs">
                                     <span className="text-4xl mb-2 animate-bounce">
@@ -86,6 +86,8 @@ const Contests = ({ history, upcoming, ongoing }: Props) => {
                                 </div>
                             </div>
                         )}
+                        {history?.data?.length > 0 &&
+                            history?.data?.map((p) => <Ongoing peer={p} key={p.id} />)}
                     </TabsContent>
                 </Tabs>
             </div>

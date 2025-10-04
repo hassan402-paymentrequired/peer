@@ -41,7 +41,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/transactions/{transactionId}', [WalletController::class, 'getTransactionDetails']);
         Route::post('/bank-account-verify', [WalletController::class, 'verifyBankAccount'])->name('bank.account.verify');
         Route::post('/withdraw-funds', [WalletController::class, 'initiateWithdrawal'])->name('fund.withdraw');
-        // Route::post('/transfer-verify', [WalletController::class, 'VerityTransfer'])->name('fund.transfer.verify');
     });
 });
 

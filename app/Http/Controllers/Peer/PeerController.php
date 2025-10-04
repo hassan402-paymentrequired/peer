@@ -95,7 +95,7 @@ class PeerController extends Controller
         decreaseWallet($peer->amount, 'web');
 
         return to_route('join.peer', [
-            'peer' => $peer->id
+            'peer' => $peer->peer_id
         ])->with('success', 'Peer created successfully. You can now select your squard');
     }
 
