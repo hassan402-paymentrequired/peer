@@ -35,7 +35,10 @@ class FetchLeagues implements ShouldQueue
 
             $response = Http::withHeaders([
                 'x-rapidapi-key' => env('SPORT_API_KEY')
-            ])->get("https://v3.football.api-sports.io/leagues?id=2");
+            ])->get("https://v3.football.api-sports.io/leagues", [
+                'country' => $country,
+                'season'  => '2025'
+            ]);
 
             $body = $response->json();
 

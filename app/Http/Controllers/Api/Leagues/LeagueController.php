@@ -5,9 +5,7 @@ namespace App\Http\Controllers\Api\Leagues;
 use App\Http\Controllers\Controller;
 use App\Jobs\FetchLeagues;
 use App\Models\League;
-use App\Models\Season;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 
 class LeagueController extends Controller
 {
@@ -43,7 +41,7 @@ class LeagueController extends Controller
         ]);
         $name = $request->country_name ?? '';
 
-        FetchLeagues::dispatch($name);
+        FetchLeagues::dispatch(strtolower($name));
 
         return $this->respondWithCustomData(
             [

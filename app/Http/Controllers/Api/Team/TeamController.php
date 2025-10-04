@@ -29,7 +29,7 @@ class TeamController extends \App\Http\Controllers\Controller
             'league_id' => ['required']
         ]);
         $league = $request->league_id;
-        FetchTeams::dispatch($league);
+        FetchTeams::dispatch($league, date('Y'));
         return $this->respondWithCustomData(
             [
                 'message' => 'Teams refetched successfully'

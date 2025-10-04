@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Player;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Player\StorePlayerRequest as PlayerStorePlayerRequest;
 use App\Http\Requests\StorePlayerRequest;
 use App\Jobs\fetchPlayers;
 use App\Models\League;
@@ -22,7 +23,7 @@ class PlayerController extends Controller
     {
         $this->playerService = $playerService;
     }
-    public function store(StorePlayerRequest $request): JsonResponse
+    public function store(PlayerStorePlayerRequest $request): JsonResponse
     {
         $this->playerService->uploadPlayer($request);
         return $this->respondWithCustomData([

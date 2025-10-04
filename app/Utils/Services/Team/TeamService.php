@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\Cache;
 
 class TeamService
 {
-    public function teams(): Collection
+    public function teams()
     {
-        return Cache::remember('teams', now()->addDay(), function () {
-            return Team::where('status', 1)->withCount('players')->get();
+        return Cache::remember('teams_page_' . request('page'), 300, function () {
+            return Team::where('status', true)->withCount('players')->paginate(20);
         });
     }
 }

@@ -24,8 +24,7 @@ class FetchTeams implements ShouldQueue
      */
     public function handle(): void
     {
-        $leagueSeason = League::query()->first();
-        Log::info('Fetching teams for league: ' . json_encode($leagueSeason->toArray()));
+        Log::info('Fetching teams for league: ' . $this->league . ' and year: ' . $this->year);
         $leagueId = $this->league;
         $season = $this->year;
         $apiUrl = 'https://v3.football.api-sports.io/teams';
@@ -55,21 +54,23 @@ class FetchTeams implements ShouldQueue
             $paging = $body['paging'] ?? ['current' => $page, 'total' => $page];
             $totalPages = $paging['total'] ?? 1;
 
-            foreach ($teams as $item) {
-                $team = $item['team'];
-                $insertBatch[] = [
-                    'external_id' => $team['id'],
-                    'name'        => $team['name'],
-                    'code'        => $team['code'] ?? '',
-                    'country'     => $team['country'] ?? '',
-                    'logo'        => $team['logo'] ?? '',
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ];
-            }
+            collect($teams)->chunk(500)->each(function ($chunk) use (&$insertBatch) {
+                foreach ($chunk as $item) {
+                    $team = $item['team'];
+                    $insertBatch[] = [
+                        'external_id' => $team['id'],
+                        'name'        => $team['name'],
+                        'code'        => $team['code'] ?? '',
+                        'country'     => $team['country'] ?? '',
+                        'logo'        => $team['logo'] ?? '',
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
+                    ];
+                }
+            });
 
             if (count($insertBatch) >= 500) {
-                \App\Models\Team::upsert($insertBatch, ['external_id'], ['name', 'code', 'country', 'logo', 'status', 'updated_at']);
+                \App\Models\Team::query()->upsert($insertBatch, ['external_id'], ['name', 'code', 'country', 'logo', 'status', 'updated_at']);
                 $insertBatch = [];
             }
 
@@ -81,5 +82,12 @@ class FetchTeams implements ShouldQueue
         }
 
         Log::info('All teams fetched and inserted/updated successfully.');
+        Log::info('Starting to fetch team players.');
+        $this->fetchTeamPlayer($leagueId, $season);
+    }
+
+    public function fetchTeamPlayer($leagueId, $season)
+    {
+        FetchPlayers::dispatch($leagueId, $season);
     }
 }

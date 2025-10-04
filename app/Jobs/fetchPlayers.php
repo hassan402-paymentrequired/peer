@@ -40,7 +40,7 @@ class FetchPlayers implements ShouldQueue
                 'page' => $page
             ]);
 
-           
+
             $body = $response->json();
             Log::info('Fetch Players Response', $body);
             $players = $body['response'] ?? [];
