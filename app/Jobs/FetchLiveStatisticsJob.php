@@ -81,7 +81,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
                 'Halftime',
                 'Extra Time',
                 'Penalty In Progress',
-                'Match Finished'  // Include just finished matches
+                'Match Finished'  
             ]);
         })
             ->where('date', '>=', now()->subHours(6)) // Only recent matches
@@ -228,7 +228,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
                 // Playing status
                 'did_play' => ($games['minutes'] ?? 0) > 0,
-                'is_injured' => false, // API doesn't provide this directly
+                'is_injured' => false, 
 
                 // Additional stats
                 'passes_total' => $passes['total'] ?? 0,

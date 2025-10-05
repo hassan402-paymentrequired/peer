@@ -21,10 +21,7 @@ class PlayerService
 
     public function players(Request $request): LengthAwarePaginator|Collection
     {
-        // $players = Cache::tags(CacheKey::PLAYER->value)->remember('page_' . $request->query('page'), now()->addDay(), function () use ($request) {
-        //     return ;
-        // });
-
+        
       $players =  Player::when(
                 $request->query('team'),
                 fn($query, $teamId) => $query->whereHas('team', fn($q) => $q->where('id', $teamId))

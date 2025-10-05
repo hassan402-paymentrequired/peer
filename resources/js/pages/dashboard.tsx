@@ -8,6 +8,7 @@ import { dashboardBreadcrumbs } from '@/lib/breadcrumbs';
 import 'swiper/css';
 
 import { create, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { create as joinTour } from '@/actions/App/Http/Controllers/Peer/PeerController';
 import { show } from '@/routes/peers';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Target, Users } from 'lucide-react';
@@ -47,7 +48,7 @@ export default function Dashboard({ tournament, recents, peers }) {
 
                         <CardContent className="relative z-10 pt-0">
                             <div className="grid grid-cols-2 gap-4">
-                                <Link href={'#'} prefetch>
+                                <Link href={joinTour()} prefetch>
                                     <Button
                                         size={'default'}
                                         className="w-full transform rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"

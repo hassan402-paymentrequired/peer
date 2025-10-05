@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Tournament;
 use App\Models\Peer;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -33,33 +34,37 @@ class SendCompetitionCompletedNotification implements ShouldQueue
 
     private function notifyTournamentParticipants(): void
     {
-        $tournament = Tournament::with('users')->find($this->competitionId);
+        $tournament = Tournament::with(['users.user'])->find($this->competitionId);
 
         if (!$tournament) {
             Log::error("Tournament {$this->competitionId} not found for notifications");
             return;
         }
 
-        foreach ($tournament->users as $user) {
-            // Here you would send actual notifications
-            // For now, just log
-            Log::info("Tournament completed notification sent to user {$user->id}");
-        }
+        $winners = $tournament->users()->where('is_winner', true)->with('user')->get();
+        $totalPrizePool = $tournament->amount * $tournament->users()->count();
+
+        app(NotificationService::class)->notifyTournamentCompletion($tournament, $winners, $totalPrizePool);
+
+        Log::info("Tournament completed notifications sent for tournament {$this->competitionId}");
     }
 
     private function notifyPeerParticipants(): void
     {
-        $peer = Peer::with('users')->find($this->competitionId);
+        $peer = Peer::with(['users.user'])->find($this->competitionId);
 
         if (!$peer) {
             Log::error("Peer {$this->competitionId} not found for notifications");
             return;
         }
 
-        foreach ($peer->users as $user) {
-            // Here you would send actual notifications
-            // For now, just log
-            Log::info("Peer completed notification sent to user {$user->id}");
+        $winner = $peer->users()->where('is_winner', true)->with('user')->first();
+        $totalPrizePool = $peer->amount * $peer->users()->count();
+
+        if ($winner) {
+            app(NotificationService::class)->notifyPeerCompletion($peer, $winner, $totalPrizePool);
         }
+
+        Log::info("Peer completed notifications sent for peer {$this->competitionId}");
     }
 }

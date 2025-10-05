@@ -15,8 +15,8 @@ class LeagueController extends Controller
             ->when($request->status, function ($query) use ($request) {
                 return $query->where('status', $request->status);
             })
-            ->orderBy('status')
-            ->get();
+            ->orderBy('status', 'desc')
+            ->paginate(20);
 
         return $this->respondWithCustomData(
             [
@@ -64,18 +64,30 @@ class LeagueController extends Controller
         );
     }
 
-    public function getLeagueSeasonAndRound(League $leagues)
+    public function update(Request $request, League $league)
     {
-        $league = $leagues;
+        $request->validate([
+            'status' => 'required|in:1,0'
+        ]);
 
-        // $seasons = Season::where('league_id', $league->id)
-        //     ->with(['league'])
-        //     ->get();
+        $league->update(['status' => $request->status]);
 
-        // return $this->respondWithCustomData(
-        //     [
-        //         'seasons' => $seasons
-        //     ]
-        // );
+        return $this->respondWithCustomData(
+            [
+                'message' => 'Countries refetched successfully'
+            ]
+        );
+    }
+
+    public function activeCountry()
+    {
+
+        $leagues = League::active()->get();
+
+        return $this->respondWithCustomData(
+            [
+                'leagues' => $leagues
+            ]
+        );
     }
 }

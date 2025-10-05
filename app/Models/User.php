@@ -71,6 +71,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(Wallet::class);
     }
 
+     public function notifications(): HasMany
+    {
+        return $this->hasmany(Notification::class);
+    }
+
 
     public function peers(): BelongsToMany
     {

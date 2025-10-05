@@ -11,7 +11,9 @@ Ts system implements automated scoring for tournaments and peer competitions by 
 1. **FetchLiveStatisticsJob** - Cron job that fetches live player statistics
 2. **ScoringService** - Calculates points and determines winners
 3. **CompetitionFinalizerService** - Handles prize distribution and status updates
-4. **NotificationService** - Sends completion notifications
+4. **NotificationService** - Creates in-app notifications and broadcasts real-time updates
+5. **NotificationController** - API endpoints for fetching and managing notifications
+6. **NotificationCenter** - Frontend component for displaying notifications
 
 ### Data Flow
 
@@ -24,7 +26,9 @@ ScoringService → Calculate Total Points → Determine Winners
                       ↓
 CompetitionFinalizerService → Update Status → Distribute Prizes
                       ↓
-NotificationService → Send Notifications
+NotificationService → Create In-App Notifications → Broadcast Real-time Updates
+                      ↓
+Frontend NotificationCenter → Display Notifications → Update UI
 ```
 
 ## Components and Interfaces
@@ -107,11 +111,28 @@ $points = $this->goals_total * config('point.goal') +
 - Rollback on calculation errors
 - Maintain competition state integrity
 
-### Notification Failures
+### Notification System
 
-- Queue notifications separately from scoring
-- Retry failed notifications
-- Log notification errors
+#### In-App Notifications
+
+- Store notifications in user_notifications table
+- Support different notification types (tournament_completed, peer_completed, prize_won)
+- Include structured data for rich notification content
+- Track read/unread status per user
+
+#### Real-time Broadcasting
+
+- Use Laravel Reverb for WebSocket connections
+- Broadcast to private user channels
+- Support notification counts and live updates
+- Handle connection failures gracefully
+
+#### Frontend Integration
+
+- NotificationCenter component with unread counts
+- Toast notifications for immediate feedback
+- Notification history and management
+- Real-time updates via WebSocket connection
 
 ## Testing Strategy
 
@@ -164,4 +185,72 @@ $schedule->job(FetchLiveStatisticsJob::class)->everyFiveMinutes();
     'rate_limit' => 100, // requests per minute
     'timeout' => 30,
 ];
+```
+
+## Notification System Architecture
+
+### Database Schema
+
+#### user_notifications Table
+
+```php
+- id (primary key)
+- user_id (foreign key to users)
+- title (notification title)
+- message (notification content)
+- type (tournament_completed, peer_completed, prize_won, etc.)
+- data (JSON field for additional context)
+- read_at (timestamp for read status)
+- created_at, updated_at
+```
+
+### Notification Types
+
+1. **Tournament Completed**
+    - Sent when tournament scoring is finished
+    - Includes final ranking and prize information
+    - Data: tournament_id, final_rank, total_points, prize_amount
+
+2. **Peer Competition Completed**
+    - Sent when peer competition is finished
+    - Includes winner announcement and prize distribution
+    - Data: peer_id, is_winner, total_points, prize_amount
+
+3. **Prize Won**
+    - Sent when user wins a prize
+    - Includes prize amount and wallet update
+    - Data: competition_type, competition_id, prize_amount, new_balance
+
+### Real-time Broadcasting
+
+#### Laravel Reverb Integration
+
+```php
+// Broadcasting to private user channel
+broadcast(new NotificationCreated($notification))->toOthers();
+
+// Channel naming convention
+'private-user.{user_id}'
+```
+
+#### Frontend WebSocket Connection
+
+```javascript
+// Connect to user's private channel
+Echo.private(`user.${userId}`).listen('NotificationCreated', (e) => {
+    // Update notification center
+    // Show toast notification
+    // Update unread count
+});
+```
+
+### API Endpoints
+
+#### Notification Management
+
+```php
+GET /api/notifications - Fetch user notifications
+POST /api/notifications/{id}/read - Mark notification as read
+POST /api/notifications/read-all - Mark all notifications as read
+GET /api/notifications/unread-count - Get unread notification count
 ```

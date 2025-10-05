@@ -52,7 +52,10 @@ Route::middleware(['auth:admin'])->group(function () {
 
     Route::prefix('countries')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\Country\CountryController::class, 'index']);
+        Route::patch('/{country}/status', [\App\Http\Controllers\Api\Country\CountryController::class, 'update']);
+        Route::get('/active-countries', [\App\Http\Controllers\Api\Country\CountryController::class, 'activeCountry']);
         Route::get('/refetch', [\App\Http\Controllers\Api\Country\CountryController::class, 'refetch']);
+        Route::get('/{country}', [\App\Http\Controllers\Api\Country\CountryController::class, 'show']);
     });
 
     Route::prefix('leagues')->group(function () {
@@ -60,6 +63,8 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('/seasons/{league}', [\App\Http\Controllers\Api\Leagues\LeagueController::class, 'getLeagueSeason']);
         Route::get('/season-rounde/{league}', [\App\Http\Controllers\Api\Leagues\LeagueController::class, 'getLeagueSeasonAndRound']);
         Route::post('/refetch', [\App\Http\Controllers\Api\Leagues\LeagueController::class, 'refetch']);
+        Route::patch('/{league}/status', [\App\Http\Controllers\Api\Leagues\LeagueController::class, 'update']);
+        Route::get('/active-leagues', [\App\Http\Controllers\Api\Leagues\LeagueController::class, 'activeCountry']);
         Route::get('/{league}', [\App\Http\Controllers\Api\Leagues\LeagueController::class, 'show']);
     });
 

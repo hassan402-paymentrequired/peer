@@ -9,6 +9,7 @@ use App\Models\Peer;
 use App\Models\PeerUser;
 use App\Models\PlayerStatistic;
 use App\Models\Transaction;
+use App\Services\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -90,10 +91,13 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 'scoring_calculated_at' => now()
             ]);
 
-            $this->distributeTournamentPrizes($tournament, $winners);
+            $totalPrizePool = $this->distributeTournamentPrizes($tournament, $winners);
 
-            // Send notifications
-            \App\Jobs\SendCompetitionCompletedNotification::dispatch('tournament', $this->competitionId);
+            // Broadcast tournament completion event
+            event(new \App\Events\TournamentCompleted($tournament, $winners, $totalPrizePool));
+
+            // Create notifications for all participants
+            app(NotificationService::class)->notifyTournamentCompletion($tournament, $winners, $totalPrizePool);
 
             DB::commit();
 
@@ -141,10 +145,13 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 'scoring_calculated_at' => now()
             ]);
 
-            $this->distributePeerPrizes($peer, $winner, $participants);
+            $totalPrizePool = $this->distributePeerPrizes($peer, $winner, $participants);
 
-            // Send notifications
-            \App\Jobs\SendCompetitionCompletedNotification::dispatch('peer', $this->competitionId);
+            // Broadcast peer completion event
+            event(new \App\Events\PeerCompleted($peer, $winner, $totalPrizePool));
+
+            // Create notifications for all participants
+            app(NotificationService::class)->notifyPeerCompletion($peer, $winner, $totalPrizePool);
 
             DB::commit();
 
@@ -248,11 +255,11 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         return $winner;
     }
 
-    private function distributeTournamentPrizes(Tournament $tournament, $winners): void
+    private function distributeTournamentPrizes(Tournament $tournament, $winners): float
     {
         if ($winners->isEmpty()) {
             Log::warning("No winners found for tournament {$tournament->id}");
-            return;
+            return 0;
         }
 
         $totalPrizePool = $tournament->amount * $tournament->users()->count();
@@ -268,6 +275,9 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             // Add to user's wallet
             $winner->user->addBalance($prizePerWinner);
 
+            // Store prize amount for notifications
+            $winner->prize_amount = $prizePerWinner;
+
             // Create transaction record
             Transaction::create([
                 'user_id' => $winner->user_id,
@@ -277,6 +287,15 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 'status' => TransactionStatusEnum::SUCCESSFUL->value,
                 'transaction_ref' => 'TournamentPrize'
             ]);
+
+            // Send prize won notification
+            (new NotificationService())->notifyPrizeWon(
+                $winner->user,
+                $prizePerWinner,
+                'tournament',
+                $tournament->name,
+                ['tournament_id' => $tournament->id]
+            );
 
             Log::info("Prize distributed to tournament winner", [
                 'user_id' => $winner->user_id,
@@ -293,9 +312,11 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'net_prize_pool' => $netPrizePool,
             'fee_percentage' => $systemFeePercentage
         ]);
+
+        return $totalPrizePool;
     }
 
-    private function distributePeerPrizes(Peer $peer, $winner, $participants): void
+    private function distributePeerPrizes(Peer $peer, $winner, $participants): float
     {
         $totalPrizePool = $peer->amount * $participants->count();
 
@@ -315,6 +336,9 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         // Add to winner's wallet
         $winner->user->addBalance($prizeAmount);
 
+        // Store prize amount for notifications
+        $winner->prize_amount = $prizeAmount;
+
         // Create transaction record
         Transaction::create([
             'user_id' => $winner->user_id,
@@ -322,8 +346,17 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'action_type' => 'credit',
             'description' => "Peer competition prize - {$peer->name}",
             'status' => TransactionStatusEnum::SUCCESSFUL->value,
-            'transaction_ref' => 'TournamentPrize'
+            'transaction_ref' => 'PeerPrize'
         ]);
+
+        // Send prize won notification
+        app(NotificationService::class)->notifyPrizeWon(
+            $winner->user,
+            $prizeAmount,
+            'peer',
+            $peer->name,
+            ['peer_id' => $peer->id]
+        );
 
         Log::info("Prize distributed to peer winner", [
             'user_id' => $winner->user_id,
@@ -340,5 +373,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'net_prize_pool' => $netPrizePool,
             'fee_percentage' => $systemFeePercentage
         ]);
+
+        return $totalPrizePool;
     }
 }

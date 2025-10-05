@@ -42,6 +42,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/bank-account-verify', [WalletController::class, 'verifyBankAccount'])->name('bank.account.verify');
         Route::post('/withdraw-funds', [WalletController::class, 'initiateWithdrawal'])->name('fund.withdraw');
     });
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+        Route::post('/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+        Route::post('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+        Route::delete('/delete', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.delete');
+        Route::get('/recent', [\App\Http\Controllers\NotificationController::class, 'recent'])->name('notifications.recent');
+    });
+
+    // Test notification routes (remove in production)
+    Route::prefix('api/test')->group(function () {
+        Route::post('/notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestNotification'])->name('test.notification');
+        Route::post('/tournament-notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestTournamentNotification'])->name('test.tournament-notification');
+        Route::post('/prize-notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestPrizeNotification'])->name('test.prize-notification');
+    });
 });
 
 Route::prefix('webhooks')->group(function () {
