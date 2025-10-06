@@ -23,10 +23,10 @@ const Wallet = ({ transactions }) => {
         return new Date(date).toLocaleString();
     };
 
-    console.log(transactions);
+    // console.log(transactions);
 
     return (
-        <AppLayout>
+        <AppLayout title="My wallet">
             <Head title="Wallet" />
             <div className="flex flex-col items-center px-4 py-6">
                 {/* Balance Card */}

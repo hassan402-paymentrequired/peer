@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Fixture;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\fetchWeeklyFixtures;
+use App\Jobs\FetchWeeklyFixtures;
 use App\Models\Fixture;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class FixtureController extends Controller
         $to = Carbon::now()->addDays(7)->format('Y-m-d');
 
 
-        fetchWeeklyFixtures::dispatch($league, $season, $to, $from);
+        FetchWeeklyFixtures::dispatch($league, $season, $to, $from);
 
         return $this->respondWithCustomData([
             'message' => 'Fixtures refetched successfully'

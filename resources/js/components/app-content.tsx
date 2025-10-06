@@ -4,9 +4,10 @@ import * as React from 'react';
 
 interface AppContentProps extends React.ComponentProps<'main'> {
     variant?: 'header' | 'sidebar';
+    title?: string
 }
 
-export function AppContent({ variant = 'header', children, ...props }: AppContentProps) {
+export function AppContent({ variant = 'header',title = 'Starpick', children, ...props }: AppContentProps) {
     // if (variant === 'sidebar') {
     //     return <SidebarInset {...props}>{children}</SidebarInset>;
     // }
@@ -14,10 +15,10 @@ export function AppContent({ variant = 'header', children, ...props }: AppConten
     return (
         <main className="flex h-screen w-full flex-1 flex-col gap-4 overflow-hidden overflow-y-auto bg-white lg:mx-auto lg:max-w-7xl" {...props}>
             <header className="border-b bg-white shadow-sm">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 items-center justify-between">
-                        <div className="flex items-center">
-                            <h1 className="text-xl font-semibold text-gray-900">Fantasy Sports App</h1>
+                <div className="mx-auto  pr-4 sm:pr-6 lg:pr-8">
+                    <div className="flex h-14 items-center justify-between">
+                        <div className="flex items-center ml-1">
+                            <h1 className="text-xl font-semibold text-gray-900 capitalize">{title}</h1>
                         </div>
 
                         {/* Notification Center in header */}

@@ -25,7 +25,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth } = usePage<SharedData>().props;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} title="Profile settings">
             <Head title="Profile settings" />
 
             <SettingsLayout>

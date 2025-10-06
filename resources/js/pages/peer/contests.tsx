@@ -15,9 +15,9 @@ interface Props {
 const Contests = ({ history,  ongoing }: Props) => {
     // console.log(history, ongoing)
     return (
-        <AppLayout>
+        <AppLayout title="My Contests">
             <Head title="Peers - contests" />
-            <div className="flex w-full p-3">
+            <div className="flex w-full ">
                 <Tabs defaultValue="live" className="w-full">
                     <TabsList className="w-full bg-transparent">
                         <TabsTrigger
@@ -35,6 +35,7 @@ const Contests = ({ history,  ongoing }: Props) => {
                     </TabsList>
 
                     <TabsContent value="live">
+                        <div className='p-3'>
                         {!ongoing?.data?.length && (
                             <div className="flex justify-center py-8">
                                 <div className=" p-6 flex flex-col items-center max-w-xs">
@@ -62,8 +63,10 @@ const Contests = ({ history,  ongoing }: Props) => {
 
                         {ongoing?.data?.length > 0 &&
                             ongoing?.data?.map((p) => <Ongoing peer={p} key={p.id} />)}
+                            </div>
                     </TabsContent>
                     <TabsContent value="upcoming">
+                        <div className='p-3'>
                         {!history?.data?.length && (
                             <div className="flex justify-center py-8">
                                 <div className=" p-6 flex flex-col items-center max-w-xs">
@@ -88,6 +91,7 @@ const Contests = ({ history,  ongoing }: Props) => {
                         )}
                         {history?.data?.length > 0 &&
                             history?.data?.map((p) => <Ongoing peer={p} key={p.id} />)}
+                            </div>
                     </TabsContent>
                 </Tabs>
             </div>

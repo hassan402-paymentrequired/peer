@@ -11,8 +11,8 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
         // grid shadow  w-full lg:max-w-4xl mx-auto h-screen lg:grid-cols-3 overflow-hidden
         <div className="mx-auto grid h-screen w-full grid-cols-3 shadow lg:max-w-4xl">
             {/* Left panel (branding / tagline / illustration) */}
-            <div className="relative hidden flex-col justify-center bg-muted p-5 text-white md:col-span-1 md:flex">
-                <Link href={'#'} className="mb-5 flex items-center gap-2 text-lg font-medium text-black">
+            <div className="bg-white border-r relative hidden flex-col justify-center p-5 text-white md:col-span-1 md:flex">
+                <Link href={'/'} className="mb-5 flex items-center gap-2 text-lg font-medium text-black">
                     <AppLogoIcon className="w-10" />
                     <span className="mt-5">Starpick</span>
                 </Link>

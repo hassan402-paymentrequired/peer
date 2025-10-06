@@ -9,14 +9,14 @@ const Tournament = ({ tournament, users }) => {
         auth: {
             user: { id },
         },
-    } = usePage().props;
+    } = usePage<{ auth: { user: { id: number } } }>().props;
 
     const isAmoung = () => {
         return tournament && users?.some((user) => user.id.toString() === id.toString());
     };
 
     return (
-        <AppLayout>
+        <AppLayout title={tournament?.name ? tournament.name + 's' + ' 🏆 Leaderboard' : 'Tournament'}>
             <Head title={tournament?.name ? tournament.name + 's' + ' Tournament' : 'Tournament'} />
 
             {!tournament ? (
@@ -36,14 +36,7 @@ const Tournament = ({ tournament, users }) => {
                 </div>
             ) : (
                 <div className="flex h-screen flex-col">
-                    {/* <div className="flex items-center justify-between p-3">
-                        <div className="mt-3 mb-2 flex flex-col items-start">
-                            <h2 className="text-muted-white text-base font-bold capitalize">{tournament.name}'s Tournament</h2>
-                            <p className="text-xs font-semibold text-muted">Join other users and compete globally!</p>
-                        </div>
-                        <div>₦{tournament.amount}</div>
-                    </div> */}
-
+                   
                     {!isAmoung() ? (
                         <div className="flex justify-center py-8">
                             <div className="flex max-w-xs flex-col items-center p-6">
@@ -65,13 +58,13 @@ const Tournament = ({ tournament, users }) => {
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 bg-white pt-3 px-1">
-                            <div className="mx-3 mb-4">
-                                <h3 className="mb-1 text-lg font-semibold text-gray-800">🏆 Leaderboard</h3>
+                        <div className="flex-1 bg-white ">
+                            <div className="ml-1 mb-4">
+                                {/* <h3 className="mb-1 text-lg font-semibold text-gray-800">🏆 Leaderboard</h3> */}
                                 <p className="text-sm text-muted">Current tournament standings</p>
                             </div>
 
-                            <div className="mx-3 overflow-hidden rounded border border-gray-200 shadow-sm">
+                            <div className=" overflow-hidden  border border-gray-200 shadow-sm">
                                 {/* Header */}
                                 <div className="grid grid-cols-12 items-center border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3">
                                     <div className="col-span-2 text-sm font-semibold text-gray-700">Rank</div>
@@ -168,7 +161,7 @@ const Tournament = ({ tournament, users }) => {
 
                             {/* Tournament Stats */}
                             {users.length > 0 && (
-                                <div className="mx-3 mt-4 rounded-lg bg-gray-50 p-3">
+                                <div className=" mt-4  bg-gray-50 p-3">
                                     <div className="flex items-center justify-between text-sm text-gray-600">
                                         <span>
                                             Total Players: <strong>{users.length}</strong>

@@ -64,5 +64,12 @@ Route::prefix('webhooks')->group(function () {
     Route::post('/paystack/transfer-verify', [WalletController::class, 'processTransferWebhook']);
 });
 
+Route::get('/test', function () {
+    $user = \App\Models\User::find(1);
+
+    $user->updatePushSubscription(route('home'), null, null, null);
+    return 'hello';
+});
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
