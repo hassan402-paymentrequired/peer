@@ -23,7 +23,7 @@ export default function WithdrawModal() {
     const [accN, setAccN] = useState('');
     const [loading, setLoading] = useState(false);
     const [banks, setBanks] = useState<{ id: number; name: string; code: string; slug: string }[]>([]);
-    const themagicthing = import.meta.env.PAYSTACK_SECRET_KEY;
+    const themagicthing = import.meta.env.VITE_PAYSTACK_SEC;
 
     const { data, setData, post, processing, reset, transform } = useForm({
         amount: '',
