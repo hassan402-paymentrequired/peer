@@ -1,4 +1,3 @@
-import Echo from 'laravel-echo';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface Notification {
@@ -6,6 +5,7 @@ interface Notification {
     title: string;
     message: string;
     type: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any;
     read_at: string | null;
     created_at: string;
@@ -41,66 +41,8 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [toasts, setToasts] = useState<Toast[]>([]);
-    const [echo, setEcho] = useState<Echo | null>(null);
 
-    // Initialize Laravel Echo for real-time notifications
-    useEffect(() => {
-        if (!userId) return;
-
-        // Initialize Laravel Echo with Reverb
-        const echoInstance = new Echo({
-            broadcaster: 'reverb',
-            key: import.meta.env.VITE_REVERB_APP_KEY,
-            wsHost: import.meta.env.VITE_REVERB_HOST,
-            wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-            wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-            forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
-            enabledTransports: ['ws', 'wss'],
-        });
-
-        setEcho(echoInstance);
-
-        // Listen to private user channel for notifications
-        const channel = echoInstance.private(`user.${userId}`);
-
-        // Listen for new notifications
-        channel.listen('notification.created', (e: any) => {
-            console.log('New notification received:', e);
-
-            const newNotification = e.notification;
-            addNotification(newNotification);
-            setUnreadCount(e.unread_count);
-
-            // Show toast notification
-            showToast(newNotification.title, 'info');
-        });
-
-        // Listen for tournament completion
-        channel.listen('tournament.completed', (e: any) => {
-            console.log('Tournament completed:', e);
-            showToast(e.message, 'success');
-        });
-
-        // Listen for peer completion
-        channel.listen('peer.completed', (e: any) => {
-            console.log('Peer completed:', e);
-            showToast(e.message, 'success');
-        });
-
-        // Listen for prize won
-        channel.listen('prize.won', (e: any) => {
-            console.log('Prize won:', e);
-            showToast(e.message, 'success');
-        });
-
-        return () => {
-            channel.stopListening('notification.created');
-            channel.stopListening('tournament.completed');
-            channel.stopListening('peer.completed');
-            channel.stopListening('prize.won');
-            echoInstance.disconnect();
-        };
-    }, [userId]);
+    
 
     // Fetch initial notifications and unread count
     useEffect(() => {

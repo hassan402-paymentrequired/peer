@@ -64,7 +64,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout title={`Peer: ${peer.name}`}>
             <Head title={`Peer: ${peer.name}`} />
             <div className="min-h-screen p-4">
                 <div className="mx-auto max-w-4xl space-y-6">

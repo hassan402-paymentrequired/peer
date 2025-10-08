@@ -1,16 +1,71 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import '../css/app.css';
 
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
-import { configureEcho } from '@laravel/echo-react';
 
-configureEcho({
-    broadcaster: 'reverb',
-});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Starpick';
+
+// ✅ Base64 → Uint8Array converter (needed for Chrome)
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// ✅ Save subscription to backend (implement this)
+function saveSub(subscription: any) {
+    fetch('/save-subscription', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+        },
+        credentials: 'include',
+        body: subscription,
+    });
+}
+
+
+// ✅ Register service worker and ask permission automatically
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+    window.addEventListener('load', async () => {
+        try {
+            const registration = await navigator.serviceWorker.register('/service-worker.js');
+            console.log('Service Worker registered:', registration);
+
+            if (Notification.permission === 'default') {
+                // ask only if user hasn’t answered before
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return;
+            }
+
+            if (Notification.permission === 'granted') {
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(
+                        "BG6wjrwln2cyFMKkNp5IqockYwtichfoyM4MrCi9U0PcLpHK6ySi9PXf_qoRKV8ay8GOuucYVOLeipejJFSoFX8"
+                    ),
+                });
+                console.log('Push Subscription:', JSON.stringify(subscription));
+                saveSub(JSON.stringify(subscription));
+            }
+        } catch (error) {
+            console.error('Service Worker registration or push setup failed:', error);
+        }
+    });
+}
+
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

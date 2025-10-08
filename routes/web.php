@@ -3,6 +3,7 @@
 use App\Http\Controllers\Peer\PeerController;
 use App\Http\Controllers\Tournament\TournamentController;
 use App\Http\Controllers\Wallet\WalletController;
+use App\Notifications\TestNotification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -64,10 +65,12 @@ Route::prefix('webhooks')->group(function () {
     Route::post('/paystack/transfer-verify', [WalletController::class, 'processTransferWebhook']);
 });
 
+Route::post('/save-subscription', [\App\Utils\Services\NotificationService::class, 'storeSubscription'])->name('save.subscription');
+
 Route::get('/test', function () {
     $user = \App\Models\User::find(1);
 
-    $user->updatePushSubscription(route('home'), null, null, null);
+    $user->notify(new TestNotification());
     return 'hello';
 });
 

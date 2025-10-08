@@ -28,7 +28,7 @@ const Wallet = ({ transactions }) => {
     return (
         <AppLayout title="My wallet">
             <Head title="Wallet" />
-            <div className="flex flex-col items-center px-4 py-6">
+            <div className="flex flex-col items-center px-4 py-2">
                 {/* Balance Card */}
                 <div className=" p-1 w-full bg-white/10 rounded border mb-3">
                     <div className="w-full flex items-center justify-between p-3 bg-default/10 rounded shadow-sm ">

@@ -18,7 +18,7 @@ export default function Dashboard({ tournament, recents, peers }) {
     return (
         <AppLayout breadcrumbs={dashboardBreadcrumbs}>
             <Head title="Peers" />
-            <div className="mt-2 space-y-4 p-3">
+            <div className=" space-y-4 p-3">
                 {tournament && (
                     <Card className="relative overflow-hidden rounded border-0 shadow-lg">
                         <div
