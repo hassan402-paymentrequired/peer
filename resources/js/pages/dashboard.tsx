@@ -51,7 +51,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                                 <Link href={joinTour()} prefetch>
                                     <Button
                                         size={'default'}
-                                        className="w-full transform rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"
+                                        className="w-full  transform rounded bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"
                                     >
                                         Join {tournament?.name}
                                     </Button>
@@ -60,7 +60,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                                     <Button
                                         size={'default'}
                                         variant="outline"
-                                        className="w-full transform rounded-lg border-white/30 bg-white/10 font-semibold tracking-wide text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-white/50 hover:bg-white/20"
+                                        className="w-full transform rounded border-white/30 bg-white/10 font-semibold tracking-wide text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-white/50 hover:bg-white/20"
                                     >
                                         Create Peer
                                     </Button>

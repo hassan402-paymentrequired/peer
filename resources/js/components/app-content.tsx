@@ -17,7 +17,7 @@ export function AppContent({ title = 'Starpick', children, ...props }: AppConten
             <header className="border-b bg-white shadow-sm">
                 <div className="mx-auto  pr-4 sm:pr-6 lg:pr-8">
                     <div className="flex h-14 items-center justify-between">
-                        <div className="flex items-center ml-1">
+                        <div className="flex items-center ml-3">
                             <h1 className="text-xl font-semibold text-gray-900 capitalize">{title}</h1>
                         </div>
 
