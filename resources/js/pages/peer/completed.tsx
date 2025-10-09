@@ -1,61 +1,53 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { show } from '@/routes/peers';
-import { Link } from '@inertiajs/react';
-import { HandCoins, Target, Users } from 'lucide-react';
+import { CardContent } from '@/components/ui/card';
+import AppLayout from '@/layouts/app-layout';
+import { dashboard } from '@/routes';
+import { Head, Link } from '@inertiajs/react';
+import Ongoing from './on-going';
 
-const Ongoing = ({ peer }) => {
+interface Props {
+    history: {
+        data: any;
+    };
+}
+
+const Contests = ({ history }: Props) => {
     return (
-        <Card className="mb-3 rounded border bg-background/10 p-0 shadow">
-            <Collapsible open={true}>
-                <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between rounded p-2 transition hover:bg-[var(--clr-surface-a10)]">
-                    <div className="flex items-center gap-2">
-                        <Avatar className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--clr-surface-a20)] shadow-sm ring ring-[#c4c4c4]">
-                            <AvatarFallback className="rounded shadow-md">{peer.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col items-start">
-                            <div className="text-sm font-semibold text-gray-600 md:text-base">{peer.name}</div>
-                            <div className="text-[10px] text-gray-600 lg:text-xs">by @{peer.created_by.name}</div>
-                        </div>
-                    </div>
-                    <span className="text-sm font-medium text-muted md:text-base">{new Date(peer.created_at).toLocaleDateString()}</span>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <div className="grid grid-cols-2 gap-4 border-t border-border px-4 py-3">
-                        <div className="flex items-center gap-2">
-                            <div className="flex size-10 items-center justify-center rounded-full shadow ring ring-background">
-                                <Users size={18} />
+        <AppLayout title="My Contests">
+            <Head title="Peers - completed contests" />
+            <div className="mt-2 flex w-full flex-col">
+                <div className="flex items-center justify-between px-3">
+                    <h2 className="font-['Google Sans Code'] text-lg font-semibold">Completed Peers</h2>
+                </div>
+                <div className="w-full p-3">
+                    {!history?.data?.length && (
+                        // <div className="flex w-full flex-col items-center  py-8">
+                            <div className="relative overflow-hidden rounded border-2 border-dashed border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
+                                <CardContent className="p-4">
+                                    <div className="flex flex-col items-center text-center">
+                                        <h3 className="mb-2 text-lg font-bold text-gray-700 dark:text-gray-300">No Peers Found</h3>
+                                        <p className="mb-6 max-w-md text-xs text-gray-600 dark:text-gray-400">
+                                            It looks like you don't have any peers in your history right now. Don't worry, you can always find more
+                                            peers on the dashboard!
+                                        </p>
+                                        <div className="flex flex-col gap-3 sm:flex-row">
+                                            <Link href={dashboard()} prefetch>
+                                                <Button size={'sm'}>
+                                                    <span>Find some peers</span>
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </CardContent>
                             </div>
-                            <div className="flex flex-col items-start">
-                                <small className="text-muted">Entries</small>
-                                <span className="text-muted-white">{peer.users_count}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="flex size-10 items-center justify-center rounded-full shadow ring ring-background">
-                                <HandCoins size={18} />
-                            </div>
-                            <div className="flex flex-col items-start">
-                                <small className="text-muted">Fees</small>
-                                <span className="text-muted-white">₦{Number(peer.amount).toFixed()}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 border-t border-border px-4 py-3">
-                        <Link href={show(peer.peer_id)} className="w-full" prefetch>
-                            <Button className="w-full text-sm font-medium" size="sm">
-                                <Target className="mr-1 h-3 w-3" />
-                                View Peer
-                            </Button>
-                        </Link>
-                    </div>
-                </CollapsibleContent>
-            </Collapsible>
-        </Card>
+                        // {/* </div> */}
+                    )}
+                    {history?.data?.length > 0 && history?.data?.map((p: any) => <Ongoing peer={p} key={p.id} />)}
+                </div>
+            </div>
+        </AppLayout>
     );
 };
 
-export default Ongoing;
+export default Contests;

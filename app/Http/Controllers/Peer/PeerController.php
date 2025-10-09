@@ -31,6 +31,7 @@ class PeerController extends Controller
             ->whereDoesntHave('users', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
+            ->where('status', 'open')
             ->withCount('users')
             ->latest()
             ->take(4)
@@ -40,7 +41,7 @@ class PeerController extends Controller
 
         $peers = Peer::with('created_by')->whereDoesntHave('users', function ($query) use ($user) {
             $query->where('user_id', $user->id);
-        })->withCount('users')->latest()->paginate(10);
+        })->withCount('users')->where('status', 'open')->latest()->paginate(10);
 
         return Inertia::render('dashboard', [
             'tournament' => $tournament,
@@ -111,7 +112,17 @@ class PeerController extends Controller
             ->latest()
             ->paginate(10, ['*'], 'ongoing_page');
 
-        // History: Completed peers (paginated)
+      
+
+        return Inertia::render('peer/contests', [
+            'ongoing' => $ongoingPeers,
+        ]);
+    }
+
+    public function completedContest()
+    {
+        $user = authUser();
+
         $historyPeers = $user->peers()
             ->whereIn('status', ['finished', 'closed'])
             ->with(['created_by', 'winner'])
@@ -119,8 +130,7 @@ class PeerController extends Controller
             ->latest('updated_at')
             ->paginate(10, ['*'], 'history_page');
 
-        return Inertia::render('peer/contests', [
-            'ongoing' => $ongoingPeers,
+        return Inertia::render('peer/completed', [
             'history' => $historyPeers,
         ]);
     }

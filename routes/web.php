@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [PeerController::class, 'store'])->name('peers.store');
         Route::get('/join/{peer:peer_id}', [PeerController::class, 'joinPeer'])->name('join.peer');
         Route::get('/my-contest', [PeerController::class, 'myGame'])->name('peers.contents');
+        Route::get('/completed-game', [PeerController::class, 'completedContest'])->name('peers.completed');
         Route::post('/join/{peer}', [PeerController::class, 'storeJoinPeer'])->name('join.peer.store');
         Route::get('/{peer:peer_id}', [PeerController::class, 'show'])->name('peers.show');
 

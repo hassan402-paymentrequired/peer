@@ -11,7 +11,7 @@ import { create, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerContro
 import { create as joinTour } from '@/actions/App/Http/Controllers/Peer/PeerController';
 import { show } from '@/routes/peers';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Target, Users } from 'lucide-react';
+import { ArrowDownRightSquareIcon, Calendar, CupSoda, HandCoins, Target, Users } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
 export default function Dashboard({ tournament, recents, peers }) {
@@ -19,7 +19,7 @@ export default function Dashboard({ tournament, recents, peers }) {
         <AppLayout breadcrumbs={dashboardBreadcrumbs}>
             <Head title="Peers" />
             <div className=" space-y-4 p-3">
-                {tournament && (
+                {tournament ? (
                     <Card className="relative overflow-hidden rounded border-0 shadow-lg">
                         <div
                             className="absolute inset-0 z-0"
@@ -68,6 +68,30 @@ export default function Dashboard({ tournament, recents, peers }) {
                             </div>
                         </CardContent>
                     </Card>
+                ): (
+                     <div className="relative overflow-hidden rounded border-2 border-dashed border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 dark:border-gray-700">
+                        <CardContent className="p-4">
+                            <div className="flex flex-col items-center text-center">
+                              
+                                <h3 className="mb-2 text-lg font-bold text-gray-700 dark:text-gray-300">
+                                    No Tournament Today
+                                </h3>
+                                <p className="mb-6 text-xs max-w-md text-gray-600 dark:text-gray-400">
+                                    There's no active tournament at the moment. Check back tomorrow or create your own peer to get started!
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Link href={create()} prefetch>
+                                        <Button
+                                            size={'sm'}
+                                        >
+                                            <Users className="mr-2 h-5 w-5" />
+                                            Create a Peer
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </div>
                 )}
                 {/* Recent Peers Section */}
                 <div className="space-y-3">
@@ -76,6 +100,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                     </div>
 
                     <div className="mb-10">
+                        {recents.length > 0 ? (
                         <Swiper
                             spaceBetween={10}
                             slidesPerView={1.2}
@@ -104,27 +129,39 @@ export default function Dashboard({ tournament, recents, peers }) {
                                                         </div>
                                                         <p className="text-xs text-gray-600">by @{peer.created_by.name}</p>
                                                     </div>
-                                                    <Badge className={`text-default rounded bg-background px-2 py-1 text-xs tracking-wider`}>
+                                                    <Badge className={`text-default rounded bg-gray-50 border px-2 py-1 text-xs tracking-wider`}>
                                                         ₦{Number(peer.amount).toFixed()}
                                                     </Badge>
                                                 </div>
 
                                                 {/* Prize Pool */}
-                                                <div className="iteme-center mb-3 w-full justify-center p-2">
-                                                    <div className="flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:grayscale">
-                                                        {peer?.users_count > 0 ? (
-                                                            Array.from({
-                                                                length: peer.users_count,
-                                                            }).map((_, idx) => (
-                                                                <Avatar key={idx} className="rounded border text-sm ">
-                                                                    <AvatarFallback className="size-7 rounded">{idx + 1}</AvatarFallback>
-                                                                </Avatar>
-                                                            ))
-                                                        ) : (
-                                                            <span className="text-center text-xs text-gray-600">No one has joined yet</span>
-                                                        )}
+                                               <div className="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Participants</span>
+                                                            {peer?.users_count > 0 ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="flex -space-x-2">
+                                                                        {Array.from({
+                                                                            length: Math.min(peer.users_count, 3),
+                                                                        }).map((_, idx) => (
+                                                                            <Avatar key={idx} className="h-7 w-7 rounded-full border-2 border-white dark:border-gray-800">
+                                                                                <AvatarFallback className="text-xs font-semibold">{idx + 1}</AvatarFallback>
+                                                                            </Avatar>
+                                                                        ))}
+                                                                    </div>
+                                                                    {peer.users_count > 3 && (
+                                                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                                                            +{peer.users_count - 3}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                    Be the first!
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
 
                                                 {/* Action Button */}
                                                 <div className="grid grid-cols-2 gap-3">
@@ -147,6 +184,11 @@ export default function Dashboard({ tournament, recents, peers }) {
                                 </SwiperSlide>
                             ))}
                         </Swiper>
+                        ) : (
+                            <div>
+                                <h2>No recent peer at the moment</h2>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -158,7 +200,8 @@ export default function Dashboard({ tournament, recents, peers }) {
                     </div>
 
                     <div className="mt-2 flex flex-col">
-                        {(peers.data || []).map((peer, i) => (
+                        {(peers.data || []).length > 0 ? (
+                            peers.data.map((peer, i) => (
                             <Card className="group mb-3 rounded border bg-background/10 p-0 ring ring-background" key={i}>
                                 <Collapsible>
                                     <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between rounded p-2 transition hover:bg-[var(--clr-surface-a10)]">
@@ -218,7 +261,22 @@ export default function Dashboard({ tournament, recents, peers }) {
                                     </CollapsibleContent>
                                 </Collapsible>
                             </Card>
-                        ))}
+                             ))
+                        ) : (
+                            <div className="rounded border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+                                <CardContent className="p-4 text-center">
+                                    <div className="mb-3 inline-flex rounded-full bg-gray-200 p-4 dark:bg-gray-700">
+                                        <Users className="h-8 w-8 text-gray-400" />
+                                    </div>
+                                    <h3 className=" text-lg font-semibold text-gray-700 dark:text-gray-300">
+                                        No Peers Yet
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        Be the first to create a peer and start competing!
+                                    </p>
+                                </CardContent>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

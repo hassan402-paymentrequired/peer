@@ -7,13 +7,13 @@ interface AppContentProps extends React.ComponentProps<'main'> {
     title?: string
 }
 
-export function AppContent({ variant = 'header',title = 'Starpick', children, ...props }: AppContentProps) {
+export function AppContent({ title = 'Starpick', children, ...props }: AppContentProps) {
     // if (variant === 'sidebar') {
     //     return <SidebarInset {...props}>{children}</SidebarInset>;
     // }
 
     return (
-        <main className="flex h-screen w-full flex-1 flex-col gap-4 overflow-hidden overflow-y-auto bg-white lg:mx-auto lg:max-w-7xl" {...props}>
+        <main className="flex h-screen w-full flex-1 flex-col  overflow-hidden overflow-y-auto bg-white lg:mx-auto lg:max-w-7xl" {...props}>
             <header className="border-b bg-white shadow-sm">
                 <div className="mx-auto  pr-4 sm:pr-6 lg:pr-8">
                     <div className="flex h-14 items-center justify-between">

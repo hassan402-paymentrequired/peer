@@ -1,99 +1,55 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Head, Link } from "@inertiajs/react";
-import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import Ongoing from "./on-going";
-import AppLayout from "@/layouts/app-layout";
-import { dashboard } from "@/routes";
+import { completedContest } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
+import AppLayout from '@/layouts/app-layout';
+import { dashboard } from '@/routes';
+import { Head, Link } from '@inertiajs/react';
+import Ongoing from './on-going';
 
 interface Props {
-    history: any[];
-    ongoing: any[];
+    ongoing: {
+        data: any;
+    };
 }
 
-const Contests = ({ history,  ongoing }: Props) => {
-    // console.log(history, ongoing)
+const Contests = ({ ongoing }: Props) => {
     return (
         <AppLayout title="My Contests">
             <Head title="Peers - contests" />
-            <div className="flex w-full ">
-                <Tabs defaultValue="live" className="w-full">
-                    <TabsList className="w-full bg-transparent">
-                        <TabsTrigger
-                            className="text-muted w-full data-[state=active]:border-b-muted data-[state=active]:border-b-3 data-[state=active]:text-muted-white data-[state=active]:rounded-none data-[state=active]:bg-transparent"
-                            value="live"
-                        >
-                            Live
-                        </TabsTrigger>
-                        <TabsTrigger
-                            className="text-muted w-full data-[state=active]:border-b-muted data-[state=active]:border-b-3 data-[state=active]:text-muted-white data-[state=active]:rounded-none data-[state=active]:bg-transparent"
-                            value="upcoming"
-                        >
-                            Finished
-                        </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="live">
-                        <div className='p-3'>
-                        {!ongoing?.data?.length && (
-                            <div className="flex justify-center py-8">
-                                <div className=" p-6 flex flex-col items-center max-w-xs">
-                                    <span className="text-4xl mb-2 animate-bounce">
-                                        🤷‍♂️
-                                    </span>
-                                    <div className="text-center text-muted mb-3">
-                                        No ongoing peers found.
-                                        <br />
-                                        Maybe they're all hiding from you?
+            <div className="mt-2 flex w-full flex-col">
+                <div className="flex items-center justify-between px-3">
+                    <h2 className="font-['Google Sans Code'] text-lg font-semibold">Active Peers</h2>
+                    <Link href={completedContest()}>
+                        <Button className="" size={'sm'}>
+                            history
+                        </Button>
+                    </Link>
+                </div>
+                <div className="w-full p-3">
+                    {!ongoing?.data?.length && (
+                        <div className="relative overflow-hidden rounded border-2 border-dashed border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
+                            <CardContent className="p-4">
+                                <div className="flex flex-col items-center text-center">
+                                    <h3 className="mb-2 text-lg font-bold text-gray-700 dark:text-gray-300">No Peers Found</h3>
+                                    <p className="mb-6 max-w-md text-xs text-gray-600 dark:text-gray-400">
+                                        It looks like you don't have any ongoing peers right now. That's okay! You can find other users to play with
+                                        by clicking the button below.
+                                    </p>
+                                    <div className="flex flex-col gap-3 sm:flex-row">
+                                        <Link href={dashboard()} prefetch>
+                                            <Button size={'sm'}>
+                                                <span>Find some peers</span>
+                                            </Button>
+                                        </Link>
                                     </div>
-                                    <Link
-                                        href={dashboard()}
-                                        className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground  transition"
-                                        prefetch
-                                    >
-                                        <Button className="text-foreground">
-                                            <span>Find some peers</span>
-                                            <span className="text-lg">🕵️‍♀️</span>
-                                        </Button>
-                                    </Link>
                                 </div>
-                            </div>
-                        )}
+                            </CardContent>
+                        </div>
+                    )}
 
-                        {ongoing?.data?.length > 0 &&
-                            ongoing?.data?.map((p) => <Ongoing peer={p} key={p.id} />)}
-                            </div>
-                    </TabsContent>
-                    <TabsContent value="upcoming">
-                        <div className='p-3'>
-                        {!history?.data?.length && (
-                            <div className="flex justify-center py-8">
-                                <div className=" p-6 flex flex-col items-center max-w-xs">
-                                    <span className="text-4xl mb-2 animate-bounce">
-                                        🤷‍♂️
-                                    </span>
-                                    <div className="text-center text-muted mb-3">
-                                        You have't join and peer yet .
-                                    </div>
-                                    <Link
-                                        href={dashboard()}
-                                        className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary  transition"
-                                        prefetch
-                                    >
-                                        <Button>
-                                            <span>Find some peers</span>
-                                            <span className="text-lg">🕵️‍♀️</span>
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
-                        {history?.data?.length > 0 &&
-                            history?.data?.map((p) => <Ongoing peer={p} key={p.id} />)}
-                            </div>
-                    </TabsContent>
-                </Tabs>
+                    {ongoing?.data?.length > 0 && ongoing?.data?.map((p: any) => <Ongoing peer={p} key={p.id} />)}
+                </div>
             </div>
         </AppLayout>
     );

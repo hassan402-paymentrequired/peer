@@ -8,7 +8,7 @@ export default function AppHeaderLayout({ children, breadcrumbs, title }: PropsW
     return (
         <AppShell>
             <AppContent title={title}>{children}</AppContent>
-            <AppHeader breadcrumbs={breadcrumbs} />
+            <AppHeader  />
         </AppShell>
     );
 }
