@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Country;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\FetchCounties;
+use App\Jobs\FetchCountries;
 use App\Models\Country;
 use Illuminate\Http\Request;
 
@@ -23,7 +23,7 @@ class CountryController extends Controller
 
     public function refetch()
     {
-        FetchCounties::dispatch();
+        FetchCountries::dispatch();
 
         return $this->respondWithCustomData(
             [

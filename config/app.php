@@ -99,6 +99,7 @@ return [
 
     'key' => env('APP_KEY'),
 
+
     'previous_keys' => [
         ...array_filter(
             explode(',', env('APP_PREVIOUS_KEYS', ''))
@@ -122,5 +123,11 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    'football' => [
+        'api_key' => env('SPORT_API_KEY'),
+        'api_host' => env('FOOTBALL_API_HOST'),
+    ],
+    
 
 ];

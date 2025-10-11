@@ -8,7 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class FetchCounties implements ShouldQueue
+class FetchCountries implements ShouldQueue
 {
     use Queueable;
 
@@ -26,15 +26,14 @@ class FetchCounties implements ShouldQueue
     public function handle(): void
     {
         $apiUrl = 'https://v3.football.api-sports.io/countries';
-        $apiKey = env('SPORT_API_KEY');
         $page = 1;
         $totalPages = 1;
         $updated = 0;
         Log::info("Fetting started.");
         do {
             $response = Http::withHeaders([
-                'x-rapidapi-key' => $apiKey,
-            ])->get($apiUrl);
+                'x-rapidapi-key' => config('app.football.api_key'),
+            ])->get('https://v3.football.api-sports.io/countries?');
 
             if (!$response->ok()) {
                 Log::error('Failed to fetch countries: ' . $response->body());
