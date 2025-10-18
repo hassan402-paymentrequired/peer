@@ -11,8 +11,15 @@ class TeamService
 {
     public function teams()
     {
-        return Cache::remember('teams_page_' . request('page'), 300, function () {
-            return Team::where('status', true)->withCount('players')->paginate(20);
-        });
+        // return Cache::remember('teams_page_' . request('page'), 300, function () {
+            return Team::withCount('players')->orderBy('status', 'desc')->paginate(20);
+        // });
+    }
+
+    public function activeTeams()
+    {
+        // return Cache::remember('teams_page_' . request('page'), 300, function () {
+            return Team::where('status', true)->get();
+        // });
     }
 }

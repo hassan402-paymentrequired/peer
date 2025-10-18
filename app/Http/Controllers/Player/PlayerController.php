@@ -74,6 +74,17 @@ class PlayerController extends Controller
         ], 200);
     }
 
+
+    public function updatePlayerStatus(Player $player): JsonResponse
+    {
+        
+        $player->update(['status' => !$player->status]);
+
+        return $this->respondWithCustomData([
+            'message' => 'player status updated successfully'
+        ], 200);
+    }
+
     public function createMatch(Request $request, Team $team, League $league): JsonResponse
     {
 

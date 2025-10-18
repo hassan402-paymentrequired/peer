@@ -25,7 +25,7 @@ class PlayerService
       $players =  Player::when(
                 $request->query('team'),
                 fn($query, $teamId) => $query->whereHas('team', fn($q) => $q->where('id', $teamId))
-            )->with('team')->orderBy('status')->paginate(30);
+            )->with('team')->orderBy('status', 'desc')->paginate(30);
 
         return $players;
     }

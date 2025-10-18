@@ -22,9 +22,8 @@ class FixtureController extends Controller
     {
         $league = $request->league;
         $season = $request->season ?? '2025';
-        // $from = '2025-10-03';
-        $from = Carbon::now()->format('Y-m-d');
-        $to = Carbon::now()->addDays(7)->format('Y-m-d');
+        $from = Carbon::parse($request->from)->format('Y-m-d') ?? Carbon::now()->format('Y-m-d') ;
+        $to = Carbon::parse($request->to)->format('Y-m-d') ?? Carbon::now()->addDays(7)->format('Y-m-d');
 
 
         FetchWeeklyFixtures::dispatch($league, $season, $to, $from);

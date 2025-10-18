@@ -23,6 +23,11 @@ class TeamController extends \App\Http\Controllers\Controller
         return $this->teamService->teams();
     }
 
+    public function activeTeams()
+    {
+        return $this->teamService->activeTeams();
+    }
+
     public function refetch(Request $request)
     {
         $request->validate([
@@ -45,8 +50,9 @@ class TeamController extends \App\Http\Controllers\Controller
         $request->validate([
             'status' => 'required|in:1,0',
         ]);
-        $team->status = $request->status;
-        $team->save();
+
+        $team->update(['status' => !$team->status]);
+
         return $this->respondWithCustomData([
             'message' => 'Team status updated successfully'
         ]);

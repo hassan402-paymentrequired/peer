@@ -15,6 +15,7 @@ Route::middleware(['auth:admin'])->group(function () {
         Route::get('/', [PlayerController::class, 'index']);
         Route::get('/{player}', [PlayerController::class, 'show']);
         Route::patch('/star/{player}/update', [PlayerController::class, 'updatePlayerStar']);
+        Route::patch('status/{player}/update', [PlayerController::class, 'updatePlayerStatus']);
         Route::get('/{player}', [PlayerController::class, 'show']);
         Route::post('/refetch', [PlayerController::class, 'refetch']);
     });
@@ -25,6 +26,7 @@ Route::middleware(['auth:admin'])->group(function () {
 
     Route::prefix('teams')->group(function () {
         Route::get('/', [TeamController::class, 'index']);
+        Route::get('/active-teams', [TeamController::class, 'activeTeams']);
         Route::post('/refetch', [TeamController::class, 'refetch']);
         Route::patch('/{team}/status', [TeamController::class, 'updateStatus']);
         Route::get('/{team_id}/players', [TeamController::class, 'players']);
