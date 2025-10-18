@@ -27,11 +27,7 @@ class MatchController extends Controller
     public function index(): JsonResponse
     {
         $matches =  $this->matchService->matches();
-        return $this->respondWithCustomData([
-            'matches' => $matches,
-            'team' => $matches[1],
-            'leagues' => $matches[2],
-        ], 200);
+        return $this->respondWithCustomData($matches, 200);
     }
 
     public function refetchStatistics(Request $request)

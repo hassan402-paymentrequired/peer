@@ -63,7 +63,7 @@ class TeamController extends \App\Http\Controllers\Controller
      */
     public function players(string $team_id)
     {
-        $players = Player::where('team_id', $team_id)->get();
+        $players = Player::where('team_id', $team_id)->paginate(20);
         return $this->respondWithCustomData([
             'players' => $players
         ], 200);

@@ -76,6 +76,7 @@ Route::middleware(['auth:admin'])->group(function () {
 
     Route::prefix('fixtures')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'index']);
+        Route::get('/active-fixtures', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'activeFixtures']);
         Route::post('/refetch', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'refetch']);
     });
 
