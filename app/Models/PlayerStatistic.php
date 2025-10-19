@@ -14,6 +14,7 @@ class PlayerStatistic extends Model
         'assists',
         'yellow_cards',
         'shots_on_target',
+        'shots_on_goal',
         'did_play',
         'is_injured',
         'minutes',
@@ -31,7 +32,6 @@ class PlayerStatistic extends Model
         'tackles_total',
         'number',
         'clean_sheet',
-        'shots_on_goal',
         'red_cards'
     ];
     public function getPointsAttribute()
@@ -43,51 +43,56 @@ class PlayerStatistic extends Model
         $points = 0;
 
         // Goals (most important)
-        $points += ($this->goals_total ?? 0) * config('point.goal', 6);
+        $points += ($this->goals_total ?? 0) * config('point.goal', 13);
 
         // Assists
-        $points += ($this->goals_assists ?? 0) * config('point.assist', 4);
+        $points += ($this->goals_assists ?? 0) * config('point.assist', 7);
 
-        // Shots
-        $points += ($this->shots_total ?? 0) * config('point.shot', 1);
+        // Shots total
+        $points += ($this->shots_total ?? 0) * config('point.shots_total', 2);
 
         // Shots on target (bonus for accuracy)
-        $points += ($this->shots_on_target ?? 0) * config('point.shot_on_target', 2);
+        $points += ($this->shots_on_target ?? 0) * config('point.shot_on_target', 1);
 
-
-        // Shots on goal (bonus for accuracy)
-        $points += ($this->shots_on_goal ?? 0) * config('point.shot_on_goal', 2);
+        // Shots on goal (if different from shots on target)
+        if (isset($this->shots_on_goal) && $this->shots_on_goal !== $this->shots_on_target) {
+            $points += ($this->shots_on_goal ?? 0) * config('point.shot_on_goal', 1);
+        }
 
         // Yellow cards (penalty)
         $points += ($this->yellow_cards ?? 0) * config('point.yellow_card', -1);
 
-         // red cards (penalty)
+        // Red cards (penalty)
         $points += ($this->red_cards ?? 0) * config('point.red_card', -5);
 
         // Goalkeeper saves (if applicable)
-        if ($this->position === 'G' && $this->goals_saves > 0) {
-            $points += ($this->goals_saves ?? 0) * config('point.save', 1);
-        }
-
-         if ($this->position === 'D' && $this->goals_total > 0) {
-            $points += ($this->goals_saves ?? 0) * config('point.save', 1);
+        if ($this->position === 'G' && ($this->goals_saves ?? 0) > 0) {
+            $points += ($this->goals_saves ?? 0) * config('point.goals_saves', 3);
         }
 
         // Clean sheet bonus for goalkeepers and defenders
-        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) === 0 && $this->minutes >= 65) {
+        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) === 0 && ($this->minutes ?? 0) >= 65) {
             if ($this->position === 'G') {
-                $cal = config('point.clean_sheet_goalkeeper', 15);
-                $points += $cal;
-                $this->clean_sheet = $cal;
-                $this->save();
+                $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 15);
+                $points += $cleanSheetPoints;
+
+                // Update clean_sheet field if it exists
+                if (in_array('clean_sheet', $this->fillable)) {
+                    $this->clean_sheet = $cleanSheetPoints;
+                    $this->save();
+                }
             } else if ($this->position === 'D') {
-                $cal = config('point.clean_sheet_defender', 15);
-                $points += $cal;
-                $this->clean_sheet = $cal;
-                $this->save();
+                $cleanSheetPoints = config('point.clean_sheet_defender', 10);
+                $points += $cleanSheetPoints;
+
+                // Update clean_sheet field if it exists
+                if (in_array('clean_sheet', $this->fillable)) {
+                    $this->clean_sheet = $cleanSheetPoints;
+                    $this->save();
+                }
             }
         }
 
-        return $points;
+        return max(0, $points); // Ensure points never go below 0
     }
 }

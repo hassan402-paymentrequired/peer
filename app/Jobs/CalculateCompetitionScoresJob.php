@@ -219,21 +219,32 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         // Sort participants by total points (descending)
         $sortedParticipants = $participants->sortByDesc('total_points');
 
-        $highestScore = $sortedParticipants->first()->total_points;
+        // Get top 3 winners (or fewer if there are ties)
+        $winners = collect();
+        $currentPosition = 1;
+        $previousScore = null;
+        $participantsProcessed = 0;
 
-        // Get all participants with the highest score (handles ties)
-        $winners = $sortedParticipants->filter(function ($participant) use ($highestScore) {
-            return $participant->total_points === $highestScore;
-        });
+        foreach ($sortedParticipants as $participant) {
+            // If score is different from previous, update position
+            if ($previousScore !== null && $participant->total_points < $previousScore) {
+                $currentPosition = $participantsProcessed + 1;
+            }
 
-        // Mark winners
-        foreach ($winners as $winner) {
-            $winner->update(['is_winner' => true]);
+            // Only include top 3 positions
+            if ($currentPosition <= 3) {
+                $participant->update(['is_winner' => true]);
+                $winners->push($participant);
+            }
+
+            $previousScore = $participant->total_points;
+            $participantsProcessed++;
         }
 
         Log::info("Tournament winners determined", [
-            'winner_count' => $winners->count(),
-            'winning_score' => $highestScore
+            'total_participants' => $sortedParticipants->count(),
+            'winners_count' => $winners->count(),
+            'top_3_scores' => $sortedParticipants->take(3)->pluck('total_points')->toArray()
         ]);
 
         return $winners;
@@ -289,7 +300,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             ]);
 
             // Send prize won notification
-            (new NotificationService())->notifyPrizeWon(
+            app(NotificationService::class)->notifyPrizeWon(
                 $winner->user,
                 $prizePerWinner,
                 'tournament',
@@ -310,11 +321,14 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'total_prize_pool' => $totalPrizePool,
             'system_fee' => $systemFee,
             'net_prize_pool' => $netPrizePool,
-            'fee_percentage' => $systemFeePercentage
+            'fee_percentage' => $systemFeePercentage,
+            'prize_distribution' => $prizeDistribution
         ]);
 
         return $totalPrizePool;
     }
+
+
 
     private function distributePeerPrizes(Peer $peer, $winner, $participants): float
     {
