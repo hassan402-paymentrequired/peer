@@ -69,6 +69,14 @@ class TeamController extends \App\Http\Controllers\Controller
         ], 200);
     }
 
+    public function activePlayer(string $team_id)
+    {
+        $players = Player::where('team_id', $team_id)->where('status', true)->get();
+        return $this->respondWithCustomData([
+            'players' => $players
+        ], 200);
+    }
+
     /**
      * View only players who are currently in lineups (actually playing)
      */
