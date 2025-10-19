@@ -29,11 +29,13 @@ class PlayerStatistic extends Model
         'passes_total',
         'position',
         'tackles_total',
-        'number'
+        'number',
+        'clean_sheet',
+        'shots_on_goal',
+        'red_cards'
     ];
     public function getPointsAttribute()
     {
-        // Don't award points if player didn't play or was injured
         if (!$this->did_play || $this->is_injured) {
             return 0;
         }
@@ -52,17 +54,38 @@ class PlayerStatistic extends Model
         // Shots on target (bonus for accuracy)
         $points += ($this->shots_on_target ?? 0) * config('point.shot_on_target', 2);
 
+
+        // Shots on goal (bonus for accuracy)
+        $points += ($this->shots_on_goal ?? 0) * config('point.shot_on_goal', 2);
+
         // Yellow cards (penalty)
         $points += ($this->yellow_cards ?? 0) * config('point.yellow_card', -1);
+
+         // red cards (penalty)
+        $points += ($this->red_cards ?? 0) * config('point.red_card', -5);
 
         // Goalkeeper saves (if applicable)
         if ($this->position === 'G' && $this->goals_saves > 0) {
             $points += ($this->goals_saves ?? 0) * config('point.save', 1);
         }
 
+         if ($this->position === 'D' && $this->goals_total > 0) {
+            $points += ($this->goals_saves ?? 0) * config('point.save', 1);
+        }
+
         // Clean sheet bonus for goalkeepers and defenders
-        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) === 0 && $this->minutes >= 60) {
-            $points += config('point.clean_sheet', 4);
+        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) === 0 && $this->minutes >= 65) {
+            if ($this->position === 'G') {
+                $cal = config('point.clean_sheet_goalkeeper', 15);
+                $points += $cal;
+                $this->clean_sheet = $cal;
+                $this->save();
+            } else if ($this->position === 'D') {
+                $cal = config('point.clean_sheet_defender', 15);
+                $points += $cal;
+                $this->clean_sheet = $cal;
+                $this->save();
+            }
         }
 
         return $points;

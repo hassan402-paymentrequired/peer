@@ -10,6 +10,7 @@ use App\Models\Peer;
 use App\Models\Tournament;
 use App\Utils\Services\Peer\PeerService;
 use App\Utils\Services\Player\PlayerService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PeerController extends Controller
@@ -220,6 +221,7 @@ class PeerController extends Controller
             ];
         });
 
+// dd($users);
 
         return Inertia::render('peer/show', [
             'peer' => $peer,

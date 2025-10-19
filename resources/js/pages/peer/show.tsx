@@ -63,6 +63,8 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
         );
     };
 
+    console.log(users)
+
     return (
         <AppLayout title={`Peer: ${peer.name}`}>
             <Head title={`Peer: ${peer.name}`} />
@@ -184,7 +186,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                             {getPlayerStatusIcon(squad.main_player?.statistics?.did_play)}
                                                                         </div>
 
-                                                                        <div className="grid grid-cols-4 gap-3 text-xs md:grid-cols-8 md:text-sm">
+                                                                        <div className="grid grid-cols-4 gap-3 text-xs md:grid-cols-7 md:text-sm">
                                                                             <div className="text-center">
                                                                                 <div className="text-sm font-bold text-slate-900 md:text-lg">
                                                                                     {squad.main_player?.statistics?.goals_total ?? 0}
@@ -221,16 +223,30 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                 </div>
                                                                                 <div className="text-slate-600">Saves</div>
                                                                             </div>
+
                                                                             <div className="text-center">
                                                                                 <div className="text-sm md:text-lg">
-                                                                                    {squad.main_player?.statistics?.cards_yellow > 0 && '🟨'}
-                                                                                    {squad.main_player?.statistics?.cards_red > 0 && '🟥'}
-                                                                                    {!squad.main_player?.statistics?.cards_yellow &&
-                                                                                        !squad.main_player?.statistics?.cards_red &&
-                                                                                        '✅'}
+                                                                                    {squad.main_player?.statistics?.red_cards ?? 0}
                                                                                 </div>
-                                                                                <div className="text-slate-600">Cards</div>
+                                                                                <div className="text-slate-600">🟥 Cards</div>
                                                                             </div>
+
+                                                                             <div className="text-center">
+                                                                                <div className="text-sm md:text-lg">
+                                                                                    {squad.main_player?.statistics?.yellow_cards ?? 0}   
+                                                                                </div>
+                                                                                <div className="text-slate-600" >🟨 Cards</div>
+                                                                            </div>
+
+                                                                            {squad.main_player?.statistics?.position === 'G' || squad.main_player?.statistics?.position === 'D' &&
+                                                                                 <div className="text-center">
+                                                                                <div className="text-sm font-bold text-green-600 md:text-lg">
+                                                                                    {squad.main_player?.statistics?.clean_sheet ?? 0}
+                                                                                </div>
+                                                                                <div className="text-slate-600">Clean sheet</div>
+                                                                            </div>
+                                                                            }
+
                                                                             <div className="text-center">
                                                                                 <div className="text-sm font-bold text-green-600 md:text-lg">
                                                                                     {squad.main_player?.statistics?.points ?? 0}
@@ -293,16 +309,28 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                     </div>
                                                                                     <div className="text-slate-600">Saves</div>
                                                                                 </div>
-                                                                                <div className="text-center">
-                                                                                    <div className="text-sm md:text-lg">
-                                                                                        {squad.sub_player?.statistics?.cards_yellow > 0 && '🟨'}
-                                                                                        {squad.sub_player?.statistics?.cards_red > 0 && '🟥'}
-                                                                                        {!squad.sub_player?.statistics?.cards_yellow &&
-                                                                                            !squad.sub_player?.statistics?.cards_red &&
-                                                                                            '✅'}
-                                                                                    </div>
-                                                                                    <div className="text-slate-600">Cards</div>
+                                                                                 <div className="text-center">
+                                                                                <div className="text-sm md:text-lg">
+                                                                                    {squad.sub_player?.statistics?.red_cards ?? 0}
                                                                                 </div>
+                                                                                <div className="text-slate-600">🟥 Cards</div>
+                                                                            </div>
+
+                                                                             <div className="text-center">
+                                                                                <div className="text-sm md:text-lg">
+                                                                                    {squad.sub_player?.statistics?.yellow_cards ?? 0}   
+                                                                                </div>
+                                                                                <div className="text-slate-600" >🟨 Cards</div>
+                                                                            </div>
+
+                                                                            {squad.main_player?.statistics?.position === 'G' || squad.main_player?.statistics?.position === 'D' &&
+                                                                                 <div className="text-center">
+                                                                                <div className="text-sm font-bold text-green-600 md:text-lg">
+                                                                                    {squad.sub_player?.statistics?.clean_sheet ?? 0}
+                                                                                </div>
+                                                                                <div className="text-slate-600">Clean sheet</div>
+                                                                            </div>
+                                                                            }
                                                                                 <div className="text-center">
                                                                                     <div className="text-sm font-bold text-green-600 md:text-lg">
                                                                                         {squad.sub_player?.statistics?.points ?? 0}

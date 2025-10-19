@@ -217,6 +217,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
                 // Cards
                 'yellow_cards' => $cards['yellow'] ?? 0,
+                'red_cards' => $cards['red'] ?? 0,
 
                 // Game info
                 'minutes' => $games['minutes'] ?? 0,
@@ -238,6 +239,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
                 // Goalkeeper specific
                 'goals_conceded' => $goals['conceded'] ?? 0,
                 'goals_saves' => $goals['saves'] ?? 0,
+                
             ]
         );
     }
