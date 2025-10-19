@@ -296,7 +296,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 'action_type' => 'credit',
                 'description' => "Tournament prize - {$tournament->name}",
                 'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                'transaction_ref' => 'TournamentPrize'
+                'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->name . $prizePerWinner
             ]);
 
             // Send prize won notification
@@ -359,7 +359,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'action_type' => 'credit',
             'description' => "Peer competition prize - {$peer->name}",
             'status' => TransactionStatusEnum::SUCCESSFUL->value,
-            'transaction_ref' => 'PeerPrize'
+            'transaction_ref' => 'PeerPrize' .  $winner->user_id . $prizeAmount
         ]);
 
         // Send prize won notification
