@@ -65,34 +65,51 @@ class PlayerStatistic extends Model
         // Red cards (penalty)
         $points += ($this->red_cards ?? 0) * config('point.red_card', -5);
 
-        // Goalkeeper saves (if applicable)
-        if ($this->position === 'G' && ($this->goals_saves ?? 0) > 0) {
-            $points += ($this->goals_saves ?? 0) * config('point.goals_saves', 3);
-        }
+        // Goalkeeper and Defender Clean Sheet Logic
+        if (in_array($this->position, ['G', 'D']) && ($this->minutes ?? 0) >= 65) {
+            $goalsConceeded = $this->goals_conceded ?? 0;
 
-        // Clean sheet bonus for goalkeepers and defenders
-        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) === 0 && ($this->minutes ?? 0) >= 65) {
             if ($this->position === 'G') {
-                $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 15);
-                $points += $cleanSheetPoints;
+                // GOALKEEPER LOGIC
+                $goalsSaved = $this->goals_saves ?? 0;
 
-                // Update clean_sheet field if it exists
-                if (in_array('clean_sheet', $this->fillable)) {
-                    $this->clean_sheet = $cleanSheetPoints;
+                if ($goalsConceeded === 0) {
+                    // Clean sheet: 15 points + (saves * 3 points each)
+                    $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 15);
+                    $savePoints = $goalsSaved * config('point.goals_saves', 3);
+                    $totalCleanSheetPoints = $cleanSheetPoints + $savePoints;
+
+                    $points += $totalCleanSheetPoints;
+
+
+                    $this->clean_sheet = $totalCleanSheetPoints;
+                    $this->save();
+                } else {
+                    // Conceded goals: lose clean sheet bonus, only get save points
+                    $savePoints = $goalsSaved * config('point.goals_saves', 3);
+                    $points += $savePoints;
+                    $this->clean_sheet = 0;
                     $this->save();
                 }
             } else if ($this->position === 'D') {
-                $cleanSheetPoints = config('point.clean_sheet_defender', 10);
-                $points += $cleanSheetPoints;
+                // DEFENDER LOGIC
+                if ($goalsConceeded === 0) {
+                    // Clean sheet: 10 points
+                    $cleanSheetPoints = config('point.clean_sheet_defender', 10);
+                    $points += $cleanSheetPoints;
 
-                // Update clean_sheet field if it exists
-                if (in_array('clean_sheet', $this->fillable)) {
-                    $this->clean_sheet = $cleanSheetPoints;
-                    $this->save();
+                    
+                        $this->clean_sheet = $cleanSheetPoints;
+                        $this->save();
+                    
+                } else {
+                    // Conceded goals: no clean sheet bonus
+                        $this->clean_sheet = 0;
+                        $this->save();
                 }
             }
         }
 
-        return max(0, $points); // Ensure points never go below 0
+        return max(0, $points); 
     }
 }

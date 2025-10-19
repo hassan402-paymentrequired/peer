@@ -322,7 +322,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'system_fee' => $systemFee,
             'net_prize_pool' => $netPrizePool,
             'fee_percentage' => $systemFeePercentage,
-            'prize_distribution' => $prizeDistribution
         ]);
 
         return $totalPrizePool;
