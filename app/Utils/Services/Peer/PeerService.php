@@ -26,9 +26,9 @@ class PeerService
         $page = request('page', 1);
         $ttl = now()->addHours(4);
 
-        return Cache::remember(CacheKey::PEERS->value . "_page_{$page}", $ttl, function () {
+        // return Cache::remember(CacheKey::PEERS->value . "_page_{$page}", $ttl, function () {
             return Peer::with('created_by')->withCount('users')->paginate(20);
-        });
+        // });
     }
 
 
