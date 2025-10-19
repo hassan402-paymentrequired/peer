@@ -92,18 +92,33 @@ class TestNotificationController extends Controller
      */
     public function sendTestWebPush(Request $request): JsonResponse
     {
-        $user = authUser();
+        try {
+            $user = authUser();
 
-        // Send WebPush notification directly
-        $user->notify(new \App\Notifications\TournamentCompletedNotification(
-            'Test Tournament',
-            true,
-            85,
-            1500.00
-        ));
+            Log::info("Sending test WebPush notification to user {$user->id}");
 
-        return response()->json([
-            'message' => 'Test WebPush notification sent successfully',
-        ]);
+            // Check if user has push subscriptions
+            $subscriptions = $user->pushSubscriptions()->count();
+            Log::info("User has {$subscriptions} push subscriptions");
+
+            // Send WebPush notification directly
+            $user->notify(new \App\Notifications\TournamentCompletedNotification(
+                'Test Tournament',
+                true,
+                85,
+                1500.00
+            ));
+
+            return response()->json([
+                'message' => 'Test WebPush notification sent successfully',
+                'user_id' => $user->id,
+                'subscriptions_count' => $subscriptions,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to send test WebPush notification: " . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to send notification: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

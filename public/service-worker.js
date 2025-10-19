@@ -1,5 +1,6 @@
 self.addEventListener("push", (event) => {
     const notification = event.data.json();
+    console.log(event, notification)
 
     const notificationOptions = {
         body: notification.body,
@@ -7,7 +8,7 @@ self.addEventListener("push", (event) => {
         badge: "./images/badge.png",
         data: notification.data || { url: "/" },
         actions: notification.actions || [],
-        requireInteraction: notification.type === 'prize_won', // Keep prize notifications visible
+        requireInteraction: notification.type === 'prize_won',
         tag: notification.data?.type || 'general',
         timestamp: Date.now(),
         vibrate: [200, 100, 200] // Vibration pattern for mobile

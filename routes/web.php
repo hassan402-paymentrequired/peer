@@ -57,6 +57,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Push subscription route
     Route::post('/save-subscription', [\App\Http\Controllers\PushSubscriptionController::class, 'saveSubscription'])->name('push.save-subscription');
 
+    // Test notification page
+    Route::get('/test-notifications', function () {
+        return inertia('TestNotifications');
+    })->name('test-notifications');
+
     // Test notification routes (remove in production)
     Route::prefix('api/test')->group(function () {
         Route::post('/notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestNotification'])->name('test.notification');

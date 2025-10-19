@@ -24,8 +24,12 @@ class PushSubscriptionController extends Controller
                 return response()->json(['error' => 'Invalid subscription data'], 400);
             }
 
-            // Update user's push subscription
-            $user->updatePushSubscription($subscriptionData['endpoint'], $subscriptionData['keys']['p256dh'], $subscriptionData['keys']['auth']);
+            // Update user's push subscription using the WebPush package method
+            $user->updatePushSubscription(
+                $subscriptionData['endpoint'],
+                $subscriptionData['keys']['p256dh'] ?? null,
+                $subscriptionData['keys']['auth'] ?? null
+            );
 
             Log::info("Push subscription saved for user {$user->id}");
 
