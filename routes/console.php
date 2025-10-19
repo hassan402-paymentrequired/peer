@@ -2,7 +2,18 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
+use App\Jobs\FetchLiveStatisticsJob;
+use App\Jobs\FetchPreMatchLineupsJob;
+use App\Jobs\UpdateFixtureStatusJob;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+
+
+Schedule::job(UpdateFixtureStatusJob::class)
+    ->everyTwoMinutes();
+
+Schedule::job(FetchPreMatchLineupsJob::class)
+    ->everyTenMinutes();
+
+Schedule::job(FetchLiveStatisticsJob::class)
+    ->everyFiveMinutes();
