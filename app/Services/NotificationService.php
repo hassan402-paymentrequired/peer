@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\Notification;
 use App\Models\User;
 use App\Events\NotificationCreated;
+use App\Notifications\TournamentCompletedNotification;
+use App\Notifications\PeerCompletedNotification;
+use App\Notifications\PrizeWonNotification;
 use Illuminate\Support\Facades\Log;
 
 class NotificationService
@@ -28,9 +31,6 @@ class NotificationService
                 'data' => $data,
             ]);
 
-            // Broadcast the notification in real-time
-            broadcast(new NotificationCreated($notification))->toOthers();
-
             Log::info("Notification created for user {$user->id}: {$title}");
 
             return $notification;
@@ -53,11 +53,11 @@ class NotificationService
                 $isWinner = $winners->contains('user_id', $user->id);
                 $winner = $winners->firstWhere('user_id', $user->id);
 
-                $title = $isWinner ? 
-                    "🏆 You won in {$tournament->name}!" : 
+                $title = $isWinner ?
+                    "🏆 You won in {$tournament->name}!" :
                     "Tournament {$tournament->name} completed";
 
-                $message = $isWinner ? 
+                $message = $isWinner ?
                     "Congratulations! You finished with {$winner->total_points} points and won ₦" . number_format($winner->prize_amount ?? 0, 2) :
                     "The tournament has ended. You scored {$participant->total_points} points. Better luck next time!";
 
@@ -71,6 +71,7 @@ class NotificationService
                     'total_prize_pool' => $totalPrizePool,
                 ];
 
+                // Create in-app notification
                 $this->createNotification(
                     $user,
                     $title,
@@ -78,6 +79,14 @@ class NotificationService
                     'tournament_completed',
                     $data
                 );
+
+                // Send WebPush notification
+                $user->notify(new TournamentCompletedNotification(
+                    $tournament->name,
+                    $isWinner,
+                    $participant->total_points,
+                    $isWinner ? ($winner->prize_amount ?? 0) : 0
+                ));
             }
 
             Log::info("Tournament completion notifications sent for tournament {$tournament->id}");
@@ -98,11 +107,11 @@ class NotificationService
                 $user = $participant;
                 $isWinner = $participant->user_id === $winner->user_id;
 
-                $title = $isWinner ? 
-                    "🎯 You won the peer '{$peer->name}'!" : 
+                $title = $isWinner ?
+                    "🎯 You won the peer '{$peer->name}'!" :
                     "Peer '{$peer->name}' completed";
 
-                $message = $isWinner ? 
+                $message = $isWinner ?
                     "Congratulations! You won with {$winner->total_points} points and earned ₦" . number_format($winner->prize_amount ?? 0, 2) :
                     "The peer competition has ended. You scored {$participant->total_points} points. The winner was {$winner->user->name}.";
 
@@ -117,6 +126,7 @@ class NotificationService
                     'total_prize_pool' => $totalPrizePool,
                 ];
 
+                // Create in-app notification
                 $this->createNotification(
                     $user,
                     $title,
@@ -124,6 +134,15 @@ class NotificationService
                     'peer_completed',
                     $data
                 );
+
+                // Send WebPush notification
+                $user->notify(new PeerCompletedNotification(
+                    $peer->name,
+                    $isWinner,
+                    $participant->total_points,
+                    $winner->user->name ?? 'Unknown',
+                    $isWinner ? ($winner->prize_amount ?? 0) : 0
+                ));
             }
 
             Log::info("Peer completion notifications sent for peer {$peer->id}");
@@ -153,6 +172,7 @@ class NotificationService
                 'new_balance' => $user->fresh()->balance ?? 0,
             ], $additionalData);
 
+            // Create in-app notification
             $this->createNotification(
                 $user,
                 $title,
@@ -160,6 +180,14 @@ class NotificationService
                 'prize_won',
                 $data
             );
+
+            // Send WebPush notification
+            $user->notify(new PrizeWonNotification(
+                $amount,
+                $competitionType,
+                $competitionName,
+                $user->fresh()->balance ?? 0
+            ));
 
             Log::info("Prize won notification sent to user {$user->id}: ₦{$amount}");
         } catch (\Exception $e) {
@@ -194,9 +222,6 @@ class NotificationService
             }
 
             $insertedCount = Notification::insert($notifications);
-
-            // Note: Bulk insert doesn't trigger model events, so we don't broadcast these
-            // If real-time broadcasting is needed, use createNotification() in a loop instead
 
             Log::info("Bulk notifications created: {$insertedCount} notifications");
 

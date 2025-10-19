@@ -54,11 +54,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/recent', [\App\Http\Controllers\NotificationController::class, 'recent'])->name('notifications.recent');
     });
 
+    // Push subscription route
+    Route::post('/save-subscription', [\App\Http\Controllers\PushSubscriptionController::class, 'saveSubscription'])->name('push.save-subscription');
+
     // Test notification routes (remove in production)
     Route::prefix('api/test')->group(function () {
         Route::post('/notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestNotification'])->name('test.notification');
         Route::post('/tournament-notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestTournamentNotification'])->name('test.tournament-notification');
         Route::post('/prize-notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestPrizeNotification'])->name('test.prize-notification');
+        Route::post('/webpush-notification', [\App\Http\Controllers\Api\TestNotificationController::class, 'sendTestWebPush'])->name('test.webpush-notification');
     });
 });
 

@@ -86,4 +86,24 @@ class TestNotificationController extends Controller
             'message' => 'Test prize notification sent successfully',
         ]);
     }
+
+    /**
+     * Send a test WebPush notification directly
+     */
+    public function sendTestWebPush(Request $request): JsonResponse
+    {
+        $user = authUser();
+
+        // Send WebPush notification directly
+        $user->notify(new \App\Notifications\TournamentCompletedNotification(
+            'Test Tournament',
+            true,
+            85,
+            1500.00
+        ));
+
+        return response()->json([
+            'message' => 'Test WebPush notification sent successfully',
+        ]);
+    }
 }
