@@ -49,8 +49,6 @@ class FetchLiveStatisticsJob implements ShouldQueue
             $activeFixtures->chunk(5)->each(function ($fixtureChunk) {
                 foreach ($fixtureChunk as $fixture) {
                     $this->processFixture($fixture);
-
-                    // Add delay to respect API rate limits
                     sleep(1);
                 }
 

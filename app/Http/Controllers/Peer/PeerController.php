@@ -113,7 +113,7 @@ class PeerController extends Controller
             ->latest()
             ->paginate(10, ['*'], 'ongoing_page');
 
-      
+
 
         return Inertia::render('peer/contests', [
             'ongoing' => $ongoingPeers,
@@ -144,6 +144,22 @@ class PeerController extends Controller
         if (!hasEnoughBalance($peer->amount) && $peer->user_id !== $user) {
             return back()->with('error', 'Insufficient balance to join peer. Please fund your wallet.');
         }
+
+        // Validate that all selected players' matches haven't started
+        $playerMatchIds = collect($request->peers)
+            ->flatMap(fn($peer) => [$peer['main_player_match_id'], $peer['sub_player_match_id']])
+            ->unique();
+
+        $startedMatches = \App\Models\PlayerMatch::whereIn('id', $playerMatchIds)
+            ->whereHas('fixture', function ($query) {
+                $query->where('status', '!=', 'Not Started');
+            })
+            ->count();
+
+        if ($startedMatches > 0) {
+            return back()->with('error', 'Some selected players\' matches have already started. Please refresh and select different players.');
+        }
+
         $result = $this->peerService->playBet($request, $peer, WEB);
 
         if (!$result) {
@@ -221,7 +237,7 @@ class PeerController extends Controller
             ];
         });
 
-// dd($users);
+        // dd($users);
 
         return Inertia::render('peer/show', [
             'peer' => $peer,

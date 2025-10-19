@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Starpick';
+const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // ✅ Base64 → Uint8Array converter (needed for Chrome)
 function urlBase64ToUint8Array(base64String: string) {
@@ -49,9 +50,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
             if (Notification.permission === 'granted') {
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(
-                        'BG6wjrwln2cyFMKkNp5IqockYwtichfoyM4MrCi9U0PcLpHK6ySi9PXf_qoRKV8ay8GOuucYVOLeipejJFSoFX8',
-                    ),
+                    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
                 });
                 console.log('Push Subscription:', JSON.stringify(subscription));
                 saveSub(JSON.stringify(subscription));

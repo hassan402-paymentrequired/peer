@@ -144,6 +144,21 @@ class TournamentController extends Controller
             'peers.*.sub_player_match_id' => ['required', 'exists:player_matches,id'],
         ]);
 
+        // Validate that all selected players' matches haven't started
+        $playerMatchIds = collect($request->peers)
+            ->flatMap(fn($peer) => [$peer['main_player_match_id'], $peer['sub_player_match_id']])
+            ->unique();
+
+        $startedMatches = \App\Models\PlayerMatch::whereIn('id', $playerMatchIds)
+            ->whereHas('fixture', function ($query) {
+                $query->where('status', '!=', 'Not Started');
+            })
+            ->count();
+
+        if ($startedMatches > 0) {
+            return back()->with('error', 'Some selected players\' matches have already started. Please refresh and select different players.');
+        }
+
         if (!$this->tournamentService->create($request, $tournament, WEB)) {
             return to_route('tournament.index')->with('error', 'Tournament joining failed');
         }

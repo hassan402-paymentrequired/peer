@@ -66,8 +66,20 @@ class PlayerService
 
     public function groupedByStar()
     {
-        $matches = PlayerMatch::with(['player', 'team'])
+        $matches = PlayerMatch::with([
+            'player',
+            'team',
+            'fixture:id,home_team_id,away_team_id,date,time,status',
+            'fixture.homeTeam:id,name,logo',
+            'fixture.awayTeam:id,name,logo'
+        ])
             ->where('is_completed', false)
+            ->whereHas('fixture', function ($query) {
+                $query->where('date', '>=', now()->subHours(2))
+                    ->where('date', '<=', now()->addHours(24))
+                    // Only include fixtures that haven't started yet
+                    ->where('status', 'Not Started');
+            })
             ->orderBy('date')
             ->get();
 
@@ -81,22 +93,33 @@ class PlayerService
             return [
                 'star' => (int) $star,
                 'players' => $matches->map(function ($match) {
+                    $fixture = $match->fixture;
+                    $player = $match->player;
+                    $isHome = $fixture->home_team_id === $match->team_id;
+                    $againstTeam = $isHome ? $fixture->awayTeam : $fixture->homeTeam;
+
                     return [
-                        'player_avatar' => $match->player->image,
-                        'player_position' => $match->player->position,
-                        'player_external_id' => $match->player->external_id,
+                        'player_avatar' => $player->image,
+                        'player_position' => $player->position,
+                        'player_external_id' => $player->external_id,
                         'player_match_id' => $match->id,
                         'player_id' => $match->player_id,
-                        'player_team' => $match->player->team->name,
-                        'against_team_image' => $match->team->logo,
-                        'player_name' => $match->player->name,
-                        'against_team_name' => $match->team->name,
-                        'date' => $match->date,
-                        'time' => $match->time,
+                        'player_team' => $isHome ? $fixture->homeTeam->name : $fixture->awayTeam->name,
+                        'against_team_image' => $againstTeam->logo,
+                        'player_name' => $player->name,
+                        'against_team_name' => $againstTeam->name,
+                        'date' => $fixture->date,
+                        'time' => $fixture->time,
+                        'fixture_status' => $fixture->status,
                     ];
                 })->values()
             ];
-        })->values();
+        })
+            // Filter out star groups that have no available players
+            ->filter(function ($group) {
+                return $group['players']->isNotEmpty();
+            })
+            ->values();
 
         return $players;
     }
