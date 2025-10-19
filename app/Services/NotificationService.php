@@ -139,7 +139,7 @@ class NotificationService
                 $user->notify(new PeerCompletedNotification(
                     $peer->name,
                     $isWinner,
-                    $participant->total_points,
+                    $participant->total_points ?? 0,
                     $winner->user->name ?? 'Unknown',
                     $isWinner ? ($winner->prize_amount ?? 0) : 0
                 ));
