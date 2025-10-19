@@ -9,17 +9,18 @@ use Illuminate\Support\Facades\Cache;
 
 class TeamService
 {
-    public function teams()
+    public function teams($request)
     {
-        // return Cache::remember('teams_page_' . request('page'), 300, function () {
-            return Team::withCount('players')->orderBy('status', 'desc')->paginate(20);
-        // });
+        return Team::when($request->search, function ($query) use ($request) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        })->withCount('players')->orderBy('status', 'desc')->paginate(20);
     }
 
     public function activeTeams()
+
     {
         // return Cache::remember('teams_page_' . request('page'), 300, function () {
-            return Team::where('status', true)->get();
+        return Team::where('status', true)->get();
         // });
     }
 }

@@ -21,11 +21,14 @@ class PlayerService
 
     public function players(Request $request): LengthAwarePaginator|Collection
     {
-        
-      $players =  Player::when(
+
+        $players =  Player::query()
+            ->when(
                 $request->query('team'),
                 fn($query, $teamId) => $query->whereHas('team', fn($q) => $q->where('id', $teamId))
-            )->with('team')->orderBy('status', 'desc')->paginate(30);
+            )->when($request->search, function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->search . '%');
+            })->with('team')->orderBy('status', 'desc')->paginate(30);
 
         return $players;
     }

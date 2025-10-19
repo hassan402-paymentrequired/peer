@@ -10,9 +10,13 @@ use Illuminate\Http\Request;
 class CountryController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
-        $countries = Country::query()->orderBy('status', 'desc')->paginate(20);
+        $countries = Country::query()
+        ->when($request->search, function ($query) use ($request) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        })
+        ->orderBy('status', 'desc')->paginate(20);
 
         return $this->respondWithCustomData(
             [

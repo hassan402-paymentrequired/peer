@@ -18,9 +18,9 @@ class TeamController extends \App\Http\Controllers\Controller
         $this->teamService = $teamService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return $this->teamService->teams();
+        return $this->teamService->teams($request);
     }
 
     public function activeTeams()
