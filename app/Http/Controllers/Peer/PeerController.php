@@ -231,6 +231,7 @@ class PeerController extends Controller
                 'id' => $user->id,
                 'username' => $user->name,
                 'avatar' => $user->avatar,
+                'total_points' => $peerUser->total_points,
                 'email' => $user->email,
                 'created_at' => $user->created_at,
                 'squads' => $squads,

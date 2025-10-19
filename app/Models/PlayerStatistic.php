@@ -32,7 +32,8 @@ class PlayerStatistic extends Model
         'tackles_total',
         'number',
         'clean_sheet',
-        'red_cards'
+        'red_cards',
+        'total_point'
     ];
     public function getPointsAttribute()
     {
@@ -110,6 +111,11 @@ class PlayerStatistic extends Model
             }
         }
 
-        return max(0, $points); 
+        $total =  max(0, $points); 
+
+        $this->total_point = $total;
+        $this->save();
+
+        return $total;
     }
 }

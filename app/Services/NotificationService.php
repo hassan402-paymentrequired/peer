@@ -84,7 +84,7 @@ class NotificationService
                 $user->notify(new TournamentCompletedNotification(
                     $tournament->name,
                     $isWinner,
-                    $participant->total_points,
+                    $participant->total_points ?? 0,
                     $isWinner ? ($winner->prize_amount ?? 0) : 0
                 ));
             }

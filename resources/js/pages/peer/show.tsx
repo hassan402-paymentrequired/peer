@@ -249,7 +249,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
 
                                                                             <div className="text-center">
                                                                                 <div className="text-sm font-bold text-green-600 md:text-lg">
-                                                                                    {squad.main_player?.statistics?.points ?? 0}
+                                                                                    {squad.main_player?.statistics?.total_point ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Points</div>
                                                                             </div>
@@ -333,7 +333,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                             }
                                                                                 <div className="text-center">
                                                                                     <div className="text-sm font-bold text-green-600 md:text-lg">
-                                                                                        {squad.sub_player?.statistics?.points ?? 0}
+                                                                                        {squad.sub_player?.statistics?.total_point ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Points</div>
                                                                                 </div>
