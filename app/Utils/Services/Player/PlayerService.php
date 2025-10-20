@@ -69,9 +69,7 @@ class PlayerService
         $matches = PlayerMatch::with([
             'player',
             'team',
-            'fixture:id,home_team_id,away_team_id,date,status',
-            'fixture.homeTeam:id,name,logo',
-            'fixture.awayTeam:id,name,logo'
+            'fixture',
         ])
             ->where('is_completed', false)
             ->whereHas('fixture', function ($query) {
