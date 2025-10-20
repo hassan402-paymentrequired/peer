@@ -214,12 +214,53 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         return $statistic->points ?? 0;
     }
 
+    // private function determineTournamentWinners($participants)
+    // {
+    //     // Sort participants by total points (descending)
+    //     $sortedParticipants = $participants->sortByDesc('total_points');
+
+    //     // Get top 3 winners (or fewer if there are ties)
+    //     $winners = collect();
+    //     $currentPosition = 1;
+    //     $previousScore = null;
+    //     $participantsProcessed = 0;
+
+    //     foreach ($sortedParticipants as $participant) {
+    //         // If score is different from previous, update position
+    //         if ($previousScore !== null && $participant->total_points < $previousScore) {
+    //             $currentPosition = $participantsProcessed + 1;
+    //         }
+
+    //         // Only include top 3 positions
+    //         if ($currentPosition <= 3) {
+    //             $participant->update(['is_winner' => true]);
+    //             $winners->push($participant);
+    //         }
+
+    //         $previousScore = $participant->total_points;
+    //         $participantsProcessed++;
+    //     }
+
+    //     Log::info("Tournament winners determined", [
+    //         'total_participants' => $sortedParticipants->count(),
+    //         'winners_count' => $winners->count(),
+    //         'top_3_scores' => $sortedParticipants->take(3)->pluck('total_points')->toArray()
+    //     ]);
+
+    //     return $winners;
+    // }
+
     private function determineTournamentWinners($participants)
     {
         // Sort participants by total points (descending)
         $sortedParticipants = $participants->sortByDesc('total_points');
 
-        // Get top 3 winners (or fewer if there are ties)
+        if ($sortedParticipants->isEmpty()) {
+            Log::warning("No participants found for tournament");
+            return collect();
+        }
+
+        // Get top 3 winners (handle ties by including all tied participants)
         $winners = collect();
         $currentPosition = 1;
         $previousScore = null;
@@ -231,10 +272,17 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 $currentPosition = $participantsProcessed + 1;
             }
 
-            // Only include top 3 positions
+            // Only include top 3 positions (this may include ties)
             if ($currentPosition <= 3) {
                 $participant->update(['is_winner' => true]);
+
+                // Store the position for prize distribution
+                $participant->position = $currentPosition;
+
                 $winners->push($participant);
+            } else {
+                // Stop processing after position 3
+                break;
             }
 
             $previousScore = $participant->total_points;
@@ -244,7 +292,8 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         Log::info("Tournament winners determined", [
             'total_participants' => $sortedParticipants->count(),
             'winners_count' => $winners->count(),
-            'top_3_scores' => $sortedParticipants->take(3)->pluck('total_points')->toArray()
+            'top_3_scores' => $sortedParticipants->take(3)->pluck('total_points')->toArray(),
+            'positions_breakdown' => $winners->groupBy('position')->map->count()->toArray()
         ]);
 
         return $winners;
@@ -266,6 +315,67 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         return $winner;
     }
 
+    // private function distributeTournamentPrizes(Tournament $tournament, $winners): float
+    // {
+    //     if ($winners->isEmpty()) {
+    //         Log::warning("No winners found for tournament {$tournament->id}");
+    //         return 0;
+    //     }
+
+    //     $totalPrizePool = $tournament->amount * $tournament->users()->count();
+
+    //     // Deduct system fee (e.g., 10% for the platform)
+    //     $systemFeePercentage = config('tournament.system_fee_percentage', 10); // 10% default
+    //     $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
+    //     $netPrizePool = $totalPrizePool - $systemFee;
+
+    //     $prizePerWinner = $netPrizePool / $winners->count();
+
+    //     foreach ($winners as $winner) {
+    //         // Add to user's wallet
+    //         $winner->user->addBalance($prizePerWinner);
+
+    //         // Store prize amount for notifications
+    //         $winner->prize_amount = $prizePerWinner;
+
+    //         // Create transaction record
+    //         Transaction::create([
+    //             'user_id' => $winner->user_id,
+    //             'amount' => $prizePerWinner,
+    //             'action_type' => 'credit',
+    //             'description' => "Tournament prize - {$tournament->name}",
+    //             'status' => TransactionStatusEnum::SUCCESSFUL->value,
+    //             'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->name . $prizePerWinner
+    //         ]);
+
+    //         // Send prize won notification
+    //         app(NotificationService::class)->notifyPrizeWon(
+    //             $winner->user,
+    //             $prizePerWinner,
+    //             'tournament',
+    //             $tournament->name,
+    //             ['tournament_id' => $tournament->id]
+    //         );
+
+    //         Log::info("Prize distributed to tournament winner", [
+    //             'user_id' => $winner->user_id,
+    //             'amount' => $prizePerWinner,
+    //             'system_fee_deducted' => $systemFee / $winners->count()
+    //         ]);
+    //     }
+
+    //     // Log system fee collection
+    //     Log::info("System fee collected from tournament", [
+    //         'tournament_id' => $tournament->id,
+    //         'total_prize_pool' => $totalPrizePool,
+    //         'system_fee' => $systemFee,
+    //         'net_prize_pool' => $netPrizePool,
+    //         'fee_percentage' => $systemFeePercentage,
+    //     ]);
+
+    //     return $totalPrizePool;
+    // }
+
     private function distributeTournamentPrizes(Tournament $tournament, $winners): float
     {
         if ($winners->isEmpty()) {
@@ -280,39 +390,63 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
         $netPrizePool = $totalPrizePool - $systemFee;
 
-        $prizePerWinner = $netPrizePool / $winners->count();
+        // Prize distribution percentages for top 3
+        $prizeDistribution = [
+            1 => 50, // 1st place gets 50%
+            2 => 30, // 2nd place gets 30%
+            3 => 20, // 3rd place gets 20%
+        ];
 
-        foreach ($winners as $winner) {
-            // Add to user's wallet
-            $winner->user->addBalance($prizePerWinner);
+        foreach ($winners as $index => $winner) {
+            $position = $index + 1; // Position starts from 1
 
-            // Store prize amount for notifications
-            $winner->prize_amount = $prizePerWinner;
+            // Calculate prize based on position
+            if (isset($prizeDistribution[$position])) {
+                $prizePercentage = $prizeDistribution[$position];
+                $prizeAmount = $netPrizePool * ($prizePercentage / 100);
+            } else {
+                // If there are more than 3 winners, remaining winners get no prize
+                // Or you could split remaining amount equally
+                $prizeAmount = 0;
+            }
 
-            // Create transaction record
-            Transaction::create([
-                'user_id' => $winner->user_id,
-                'amount' => $prizePerWinner,
-                'action_type' => 'credit',
-                'description' => "Tournament prize - {$tournament->name}",
-                'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->name . $prizePerWinner
-            ]);
+            if ($prizeAmount > 0) {
+                // Add to user's wallet
+                $winner->user->addBalance($prizeAmount);
 
-            // Send prize won notification
-            app(NotificationService::class)->notifyPrizeWon(
-                $winner->user,
-                $prizePerWinner,
-                'tournament',
-                $tournament->name,
-                ['tournament_id' => $tournament->id]
-            );
+                // Store prize amount for notifications
+                $winner->prize_amount = $prizeAmount;
 
-            Log::info("Prize distributed to tournament winner", [
-                'user_id' => $winner->user_id,
-                'amount' => $prizePerWinner,
-                'system_fee_deducted' => $systemFee / $winners->count()
-            ]);
+                // Create transaction record
+                Transaction::create([
+                    'user_id' => $winner->user_id,
+                    'amount' => $prizeAmount,
+                    'action_type' => 'credit',
+                    'description' => "Tournament prize (Position {$position}) - {$tournament->name}",
+                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                    'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->id . time()
+                ]);
+
+                // Send prize won notification
+                app(NotificationService::class)->notifyPrizeWon(
+                    $winner->user,
+                    $prizeAmount,
+                    'tournament',
+                    $tournament->name,
+                    [
+                        'tournament_id' => $tournament->id,
+                        'position' => $position,
+                        'percentage' => $prizePercentage
+                    ]
+                );
+
+                Log::info("Prize distributed to tournament winner", [
+                    'user_id' => $winner->user_id,
+                    'position' => $position,
+                    'amount' => $prizeAmount,
+                    'percentage' => $prizePercentage,
+                ]);
+            }
         }
 
         // Log system fee collection
@@ -322,11 +456,11 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'system_fee' => $systemFee,
             'net_prize_pool' => $netPrizePool,
             'fee_percentage' => $systemFeePercentage,
+            'prize_distribution' => '50/30/20'
         ]);
 
         return $totalPrizePool;
     }
-
 
 
     private function distributePeerPrizes(Peer $peer, $winner, $participants): float
