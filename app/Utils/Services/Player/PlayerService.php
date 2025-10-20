@@ -95,8 +95,6 @@ class PlayerService
                 'players' => $matches->map(function ($match) {
                     $fixture = $match->fixture;
                     $player = $match->player;
-                    $isHome = $fixture->home_team_id === $match->team_id;
-                    $againstTeam = $isHome ? $fixture->awayTeam : $fixture->homeTeam;
 
                     return [
                         'player_avatar' => $player->image,
@@ -104,12 +102,15 @@ class PlayerService
                         'player_external_id' => $player->external_id,
                         'player_match_id' => $match->id,
                         'player_id' => $match->player_id,
-                        'player_team' => $isHome ? $fixture->homeTeam->name : $fixture->awayTeam->name,
-                        'against_team_image' => $againstTeam->logo,
-                        'player_name' => $player->name,
-                        'against_team_name' => $againstTeam->name,
-                        'date' => $fixture->date,
-                        'time' => $fixture->time,
+
+                        'player_team' => $match->player->team->name,
+                        'against_team_image' => $match->team->logo,
+                        'player_name' => $match->player->name,
+                        'against_team_name' => $match->team->name,
+                        'date' => $match->date,
+                        'time' => $match->time,
+
+
                         'fixture_status' => $fixture->status,
                     ];
                 })->values()
