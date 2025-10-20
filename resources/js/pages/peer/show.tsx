@@ -143,7 +143,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
 
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <div className="text-2xl font-bold text-slate-900">{userItem.total_points}</div>
+                                                    <div className="text-sm sm:text-xl font-bold text-slate-900">{userItem.total_points}</div>
                                                     <div className="text-xs text-slate-500 md:text-sm">points</div>
                                                 </div>
                                                 <div className="flex items-center gap-2">

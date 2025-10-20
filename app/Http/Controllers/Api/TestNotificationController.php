@@ -100,7 +100,6 @@ class TestNotificationController extends Controller
 
             // Check if user has push subscriptions
             $subscriptions = $user->pushSubscriptions()->count();
-            Log::info("User has {$subscriptions} push subscriptions");
 
             // Send WebPush notification directly
             $user->notify(new \App\Notifications\TournamentCompletedNotification(

@@ -118,6 +118,7 @@ class TournamentController extends Controller
         $tournament = Tournament::active()->withCount('users')->first();
 
         $players = $this->playerService->groupedByStar();
+        // dd($players);
 
 
         return Inertia::render('tournament/create', [
