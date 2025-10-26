@@ -8,10 +8,10 @@ import { dashboardBreadcrumbs } from '@/lib/breadcrumbs';
 import 'swiper/css';
 
 import { create, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
-import { create as joinTour } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { create as joinTour } from '@/actions/App/Http/Controllers/Tournament/TournamentController';
 import { show } from '@/routes/peers';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowDownRightSquareIcon, Calendar, CupSoda, HandCoins, Target, Users } from 'lucide-react';
+import { ArrowDownRightSquareIcon, CupSoda, HandCoins, Target, Users } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
 export default function Dashboard({ tournament, recents, peers }) {

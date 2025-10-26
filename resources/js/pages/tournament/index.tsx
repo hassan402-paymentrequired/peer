@@ -1,9 +1,10 @@
+import { leaderboard } from '@/actions/App/Http/Controllers/Tournament/TournamentController';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { create } from '@/routes/tournament';
 import { Head, Link, usePage } from '@inertiajs/react';
 
-const Tournament = ({ tournament, users }) => {
+const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
     console.log(users);
     const {
         auth: {
@@ -27,6 +28,21 @@ const Tournament = ({ tournament, users }) => {
                         <p className="mb-6 text-muted">
                             There's no active tournament at the moment. Check back later or stay tuned for upcoming competitions!
                         </p>
+
+                        {/* Show leaderboard button if there's a recently completed tournament */}
+                        {recentlyCompletedTournament && (
+                            <div className="mb-4 w-full">
+                                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                    <p className="mb-2 text-sm text-blue-800">
+                                        🎉 <strong>{recentlyCompletedTournament.name}</strong> has just ended!
+                                    </p>
+                                    <Link href={leaderboard()}>
+                                        <Button className="w-full bg-blue-600 hover:bg-blue-700">View Final Leaderboard</Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="rounded-lg bg-gray-50 p-4">
                             <p className="text-sm text-muted">
                                 💡 Tournaments are usually announced in advance. Make sure to follow updates so you don't miss out!
@@ -36,35 +52,33 @@ const Tournament = ({ tournament, users }) => {
                 </div>
             ) : (
                 <div className="flex h-screen flex-col">
-                   
-                    {!isAmoung() ? (
-                        <div className="flex justify-center py-8">
-                            <div className="flex max-w-xs flex-col items-center p-6">
-                                <span className="mb-2 animate-bounce text-4xl">🌍</span>
-                                <div className="mb-3 text-center font-semibold text-muted">You haven't joined {tournament.name} yet!</div>
-                                <p className="mb-4 text-center text-muted">
-                                    Be part of the excitement—join the contest and compete with other players.
-                                </p>
-                                <Link
-                                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
-                                    prefetch
-                                    href={create()}
-                                >
-                                    <Button className="">
-                                        <span>Join {tournament.name}</span>
-                                        <span className="text-lg">⚔️</span>
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex-1 bg-white ">
-                            <div className="ml-1 mb-4">
-                                {/* <h3 className="mb-1 text-lg font-semibold text-gray-800">🏆 Leaderboard</h3> */}
-                                <p className="text-sm text-muted">Current tournament standings</p>
+                    {isAmoung() ? (
+                        <div className="flex-1 bg-white">
+                            <div className="mb-4 ml-1 flex items-center justify-between">
+                                <div className="flex items-center justify-between p-2 w-full">
+                                    <p className="text-base text-muted capitalize">Current tournament standings</p>
+                                    <Link
+                                        className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
+                                        prefetch
+                                        href={create()}
+                                    >
+                                        <Button size="sm" className="text-xs">
+                                                {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'} 
+                                        </Button>
+                                    </Link>
+                                </div>
+
+                                {/* Show leaderboard button if there's a recently completed tournament */}
+                                {recentlyCompletedTournament && (
+                                    <Link href={leaderboard()}>
+                                        <Button variant="outline" size="sm" className="text-xs">
+                                            View Last Tournament Results
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
 
-                            <div className=" overflow-hidden  border border-gray-200 shadow-sm">
+                            <div className="overflow-hidden border border-gray-200 shadow-sm">
                                 {/* Header */}
                                 <div className="grid grid-cols-12 items-center border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3">
                                     <div className="col-span-2 text-sm font-semibold text-gray-700">Rank</div>
@@ -120,6 +134,11 @@ const Tournament = ({ tournament, users }) => {
                                                                     You
                                                                 </span>
                                                             )}
+                                                            {user.total_entries > 1 && !isCurrentUser && (
+                                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                                                    {user.total_entries} entries
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         {i < 3 && (
                                                             <p className="mt-0.5 text-xs text-gray-500">
@@ -161,7 +180,7 @@ const Tournament = ({ tournament, users }) => {
 
                             {/* Tournament Stats */}
                             {users.length > 0 && (
-                                <div className=" mt-4  bg-gray-50 p-3">
+                                <div className="mt-4 bg-gray-50 p-3">
                                     <div className="flex items-center justify-between text-sm text-gray-600">
                                         <span>
                                             Total Players: <strong>{users.length}</strong>
@@ -173,7 +192,26 @@ const Tournament = ({ tournament, users }) => {
                                 </div>
                             )}
                         </div>
+                    ) : (
+                         <div className="flex justify-center py-8">
+                            <div className="flex max-w-xs flex-col items-center p-6">
+                                <span className="mb-2 animate-bounce text-4xl">🌍</span>
+                                <div className="mb-3 text-center font-semibold text-muted">You haven't joined {tournament.name} yet!</div>
+                                <p className="mb-4 text-center text-muted">
+                                    Be part of the excitement—join the contest and compete with other players.
+                                </p>
+                                <Link  prefetch
+                                        href={create()}>
+                                    <Button className="capitalize">
+                                        <span>Join {tournament.name}</span>
+                                        <span className="text-lg">⚔️</span>
+                                   </Button>
+                                   </Link>
+                                   </div>
+                        </div>
                     )}
+                    
+
                 </div>
             )}
         </AppLayout>

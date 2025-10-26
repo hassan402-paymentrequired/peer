@@ -170,17 +170,28 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             // Calculate main player points
             $mainPlayerPoints = $this->getPlayerPoints($squad->main_player_id, $squad->main_player_match_id);
 
-            // Calculate sub player points
-            $subPlayerPoints = $this->getPlayerPoints($squad->sub_player_id, $squad->sub_player_match_id);
+            // Check if main player played (has points > 0 or played the match)
+            $mainPlayerPlayed = $this->didPlayerPlay($squad->main_player_id, $squad->main_player_match_id);
 
-            $squadPoints = $mainPlayerPoints + $subPlayerPoints;
+            if ($mainPlayerPlayed) {
+                // Use main player points
+                $squadPoints = $mainPlayerPoints;
+                $usedPlayer = 'main';
+            } else {
+                // Use sub player points since main didn't play
+                $subPlayerPoints = $this->getPlayerPoints($squad->sub_player_id, $squad->sub_player_match_id);
+                $squadPoints = $subPlayerPoints;
+                $usedPlayer = 'sub';
+            }
+
             $totalPoints += $squadPoints;
 
             Log::debug("Squad points calculated", [
                 'main_player_id' => $squad->main_player_id,
                 'main_player_points' => $mainPlayerPoints,
                 'sub_player_id' => $squad->sub_player_id,
-                'sub_player_points' => $subPlayerPoints,
+                'sub_player_points' => $usedPlayer === 'sub' ? $squadPoints : 0,
+                'used_player' => $usedPlayer,
                 'squad_total' => $squadPoints
             ]);
         }
@@ -212,6 +223,31 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
         // Use the model's getPointsAttribute method
         return $statistic->points ?? 0;
+    }
+
+    private function didPlayerPlay(int $playerId, ?int $playerMatchId): bool
+    {
+        if (!$playerMatchId) {
+            return false;
+        }
+
+        // Get the fixture_id from player_match
+        $playerMatch = \App\Models\PlayerMatch::find($playerMatchId);
+        if (!$playerMatch || !$playerMatch->fixture_id) {
+            return false;
+        }
+
+        // Get player statistics for this fixture
+        $statistic = PlayerStatistic::where('player_id', $playerId)
+            ->where('fixture_id', $playerMatch->fixture_id)
+            ->first();
+
+        if (!$statistic) {
+            return false;
+        }
+
+        // Player played if they have did_play = true and are not injured
+        return $statistic->did_play && !$statistic->is_injured;
     }
 
     // private function determineTournamentWinners($participants)

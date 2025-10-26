@@ -72,7 +72,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(Wallet::class);
     }
 
-     public function notifications(): HasMany
+    public function notifications(): HasMany
     {
         return $this->hasmany(Notification::class);
     }
@@ -142,5 +142,21 @@ class User extends Authenticatable implements JWTSubject
     function AlreadyJoinedTodayTournament()
     {
         return $this->tournaments()->active()->exists();
+    }
+
+    function getTournamentEntriesCount($tournamentId = null)
+    {
+        $query = $this->hasMany(\App\Models\TournamentUser::class);
+
+        if ($tournamentId) {
+            $query->where('tournament_id', $tournamentId);
+        } else {
+            // Get active tournament entries
+            $query->whereHas('tournament', function ($q) {
+                $q->where('status', 'open');
+            });
+        }
+
+        return $query->count();
     }
 }

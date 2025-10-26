@@ -21,7 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/join/{peer}', [PeerController::class, 'storeJoinPeer'])->name('join.peer.store');
         Route::get('/{peer:peer_id}', [PeerController::class, 'show'])->name('peers.show');
 
-        // API endpoints for infinite scroll
+        // API endpoints for infinite scrollb
         Route::get('/api/ongoing', [PeerController::class, 'getOngoingPeers'])->name('peers.api.ongoing');
         Route::get('/api/completed', [PeerController::class, 'getCompletedPeers'])->name('peers.api.completed');
     });
@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [TournamentController::class, 'index'])->name('tournament.index');
         Route::get('/join', [TournamentController::class, 'create'])->name('tournament.create');
         Route::post('/join', [TournamentController::class, 'store'])->name('tournament.store');
+        Route::get('/leaderboard', [TournamentController::class, 'leaderboard'])->name('tournament.leaderboard');
         Route::get('/{user}', [TournamentController::class, 'show'])->name('tournament.user.show');
     });
 
