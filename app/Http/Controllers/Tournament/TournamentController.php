@@ -24,7 +24,6 @@ class TournamentController extends Controller
 
     public function index()
     {
-        // $tournament = Tournament::whereDate('created_at', Carbon::today())->first();
         $tournament = Tournament::active()->first();
 
         // Check for recently completed tournament (within last 24 hours)
@@ -41,191 +40,63 @@ class TournamentController extends Controller
             ]);
         }
 
-        $currentUserId = Auth::id();
+        $users = \App\Models\TournamentUser::with(['user', 'squads'])->where('tournament_id', $tournament->id)->get();
 
-        // Get all tournament users
-        $allTournamentUsers = \App\Models\TournamentUser::with(['user', 'squads'])
-            ->where('tournament_id', $tournament->id)
-            ->get();
+        $users = $users->map(function ($peerUser) {
+            $user = $peerUser->user;
+            $squads = $peerUser->squads->map(function ($squad) {
+                // Get fixture_id for main and sub from player_match
+                $mainPlayerMatch = \App\Models\PlayerMatch::find($squad->main_player_match_id);
+                $main_fixture_id = $mainPlayerMatch ? $mainPlayerMatch->fixture_id : null;
+                $subPlayerMatch = \App\Models\PlayerMatch::find($squad->sub_player_match_id);
+                $sub_fixture_id = $subPlayerMatch ? $subPlayerMatch->fixture_id : null;
 
-        // Group by user_id to handle multiple entries
-        $groupedUsers = $allTournamentUsers->groupBy('user_id');
+                // Get main player stats using player_id and fixture_id
+                $mainStats = null;
+                if ($main_fixture_id) {
+                    $mainStats = \App\Models\PlayerStatistic::where('player_id', $squad->main_player_id)
+                        ->where('fixture_id', $main_fixture_id)
+                        ->first();
+                }
 
-        $users = $groupedUsers->map(function ($userEntries, $userId) use ($currentUserId) {
-            if ($userId == $currentUserId) {
-                // For current user, show all entries
-                return $userEntries->map(function ($peerUser, $index) {
-                    $user = $peerUser->user;
-                    $squads = $peerUser->squads->map(function ($squad) {
-                        // Get fixture_id for main and sub from player_match
-                        $mainPlayerMatch = \App\Models\PlayerMatch::find($squad->main_player_match_id);
-                        $main_fixture_id = $mainPlayerMatch ? $mainPlayerMatch->fixture_id : null;
-                        $subPlayerMatch = \App\Models\PlayerMatch::find($squad->sub_player_match_id);
-                        $sub_fixture_id = $subPlayerMatch ? $subPlayerMatch->fixture_id : null;
+                // Get sub player stats using player_id and fixture_id
+                $subStats = null;
+                if ($sub_fixture_id) {
+                    $subStats = \App\Models\PlayerStatistic::where('player_id', $squad->sub_player_id)
+                        ->where('fixture_id', $sub_fixture_id)
+                        ->first();
+                }
 
-                        // Get main player stats using player_id and fixture_id
-                        $mainStats = null;
-                        if ($main_fixture_id) {
-                            $mainStats = \App\Models\PlayerStatistic::where('player_id', $squad->main_player_id)
-                                ->where('fixture_id', $main_fixture_id)
-                                ->first();
-                        }
+                $mainPlayer = $squad->mainPlayer ? $squad->mainPlayer->toArray() : [];
+                $mainPlayer['statistics'] = $mainStats ? $mainStats->toArray() : [];
 
-                        // Get sub player stats using player_id and fixture_id
-                        $subStats = null;
-                        if ($sub_fixture_id) {
-                            $subStats = \App\Models\PlayerStatistic::where('player_id', $squad->sub_player_id)
-                                ->where('fixture_id', $sub_fixture_id)
-                                ->first();
-                        }
+                $subPlayer = $squad->subPlayer ? $squad->subPlayer->toArray() : [];
+                $subPlayer['statistics'] = $subStats ? $subStats->toArray() : [];
 
-                        $mainPlayer = $squad->mainPlayer ? $squad->mainPlayer->toArray() : [];
-                        $mainPlayer['statistics'] = $mainStats ? $mainStats->toArray() : [];
+                return [
+                    'id' => $squad->id,
+                    'peer_user_id' => $squad->peer_user_id,
+                    'star_rating' => $squad->star_rating,
+                    'main_player_id' => $squad->main_player_id,
+                    'sub_player_id' => $squad->sub_player_id,
+                    'main_player_match_id' => $squad->main_player_match_id,
+                    'sub_player_match_id' => $squad->sub_player_match_id,
+                    'main_player' => $mainPlayer,
+                    'sub_player' => $subPlayer,
+                ];
+            });
 
-                        $subPlayer = $squad->subPlayer ? $squad->subPlayer->toArray() : [];
-                        $subPlayer['statistics'] = $subStats ? $subStats->toArray() : [];
-
-                        return [
-                            'id' => $squad->id,
-                            'peer_user_id' => $squad->peer_user_id,
-                            'star_rating' => $squad->star_rating,
-                            'main_player_id' => $squad->main_player_id,
-                            'sub_player_id' => $squad->sub_player_id,
-                            'main_player_match_id' => $squad->main_player_match_id,
-                            'sub_player_match_id' => $squad->sub_player_match_id,
-                            'main_player' => $mainPlayer,
-                            'sub_player' => $subPlayer,
-
-
-                        ];
-                    });
-
-                    $user = $peerUser->user;
-                    $squads = $peerUser->squads->map(function ($squad) {
-                        // Get fixture_id for main and sub from player_match
-                        $mainPlayerMatch = \App\Models\PlayerMatch::find($squad->main_player_match_id);
-                        $main_fixture_id = $mainPlayerMatch ? $mainPlayerMatch->fixture_id : null;
-                        $subPlayerMatch = \App\Models\PlayerMatch::find($squad->sub_player_match_id);
-                        $sub_fixture_id = $subPlayerMatch ? $subPlayerMatch->fixture_id : null;
-
-                        // Get main player stats using player_id and fixture_id
-                        $mainStats = null;
-                        if ($main_fixture_id) {
-                            $mainStats = \App\Models\PlayerStatistic::where('player_id', $squad->main_player_id)
-                                ->where('fixture_id', $main_fixture_id)
-                                ->first();
-                        }
-
-                        // Get sub player stats using player_id and fixture_id
-                        $subStats = null;
-                        if ($sub_fixture_id) {
-                            $subStats = \App\Models\PlayerStatistic::where('player_id', $squad->sub_player_id)
-                                ->where('fixture_id', $sub_fixture_id)
-                                ->first();
-                        }
-
-                        $mainPlayer = $squad->mainPlayer ? $squad->mainPlayer->toArray() : [];
-                        $mainPlayer['statistics'] = $mainStats ? $mainStats->toArray() : [];
-
-                        $subPlayer = $squad->subPlayer ? $squad->subPlayer->toArray() : [];
-                        $subPlayer['statistics'] = $subStats ? $subStats->toArray() : [];
-
-                        return [
-                            'id' => $squad->id,
-                            'peer_user_id' => $squad->peer_user_id,
-                            'star_rating' => $squad->star_rating,
-                            'main_player_id' => $squad->main_player_id,
-                            'sub_player_id' => $squad->sub_player_id,
-                            'main_player_match_id' => $squad->main_player_match_id,
-                            'sub_player_match_id' => $squad->sub_player_match_id,
-                            'main_player' => $mainPlayer,
-                            'sub_player' => $subPlayer,
-                        ];
-                    });
-
-                    return [
-                        'id' => $user->id,
-                        'username' => $user->name . ($index > 0 ? " (Entry " . ($index + 1) . ")" : ""),
-                        'avatar' => $user->avatar,
-                        'email' => $user->email,
-                        'created_at' => $user->created_at,
-                        'squads' => $squads,
-                        'total_point' => $peerUser->total_points,
-                        'is_winner' => $peerUser->is_winner,
-                        'entry_number' => $index + 1,
-                        'tournament_user_id' => $peerUser->id,
-                    ];
-                });
-            } else {
-                // For other users, show only their best entry
-                $bestEntry = $userEntries->sortByDesc('total_points')->first();
-                $user = $bestEntry->user;
-                $squads = $bestEntry->squads->map(function ($squad) {
-                    // Get fixture_id for main and sub from player_match
-                    $mainPlayerMatch = \App\Models\PlayerMatch::find($squad->main_player_match_id);
-                    $main_fixture_id = $mainPlayerMatch ? $mainPlayerMatch->fixture_id : null;
-                    $subPlayerMatch = \App\Models\PlayerMatch::find($squad->sub_player_match_id);
-                    $sub_fixture_id = $subPlayerMatch ? $subPlayerMatch->fixture_id : null;
-
-                    // Get main player stats using player_id and fixture_id
-                    $mainStats = null;
-                    if ($main_fixture_id) {
-                        $mainStats = \App\Models\PlayerStatistic::where('player_id', $squad->main_player_id)
-                            ->where('fixture_id', $main_fixture_id)
-                            ->first();
-                    }
-
-                    // Get sub player stats using player_id and fixture_id
-                    $subStats = null;
-                    if ($sub_fixture_id) {
-                        $subStats = \App\Models\PlayerStatistic::where('player_id', $squad->sub_player_id)
-                            ->where('fixture_id', $sub_fixture_id)
-                            ->first();
-                    }
-
-                    $mainPlayer = $squad->mainPlayer ? $squad->mainPlayer->toArray() : [];
-                    $mainPlayer['statistics'] = $mainStats ? $mainStats->toArray() : [];
-
-                    $subPlayer = $squad->subPlayer ? $squad->subPlayer->toArray() : [];
-                    $subPlayer['statistics'] = $subStats ? $subStats->toArray() : [];
-
-                    return [
-                        'id' => $squad->id,
-                        'peer_user_id' => $squad->peer_user_id,
-                        'star_rating' => $squad->star_rating,
-                        'main_player_id' => $squad->main_player_id,
-                        'sub_player_id' => $squad->sub_player_id,
-                        'main_player_match_id' => $squad->main_player_match_id,
-                        'sub_player_match_id' => $squad->sub_player_match_id,
-                        'main_player' => $mainPlayer,
-                        'sub_player' => $subPlayer,
-                    ];
-                });
-
-                return collect([[
-                    'id' => $user->id,
-                    'username' => $user->name,
-                    'avatar' => $user->avatar,
-                    'email' => $user->email,
-                    'created_at' => $user->created_at,
-                    'squads' => $squads,
-                    'total_point' => $bestEntry->total_points,
-                    'is_winner' => $bestEntry->is_winner,
-                    'entry_number' => 1,
-                    'tournament_user_id' => $bestEntry->id,
-                    'total_entries' => $userEntries->count(),
-                ]]);
-            }
-        })->flatten(1);
-
-        // dd($users);
-
-
-        // Check for recently completed tournament (within last 24 hours)
-        $recentlyCompletedTournament = Tournament::where('status', 'closed')
-            ->where('updated_at', '>=', now()->subHours(24))
-            ->orderBy('updated_at', 'desc')
-            ->first();
+            return [
+                'id' => $user->id,
+                'username' => $user->name,
+                'avatar' => $user->avatar,
+                'email' => $user->email,
+                'created_at' => $user->created_at,
+                'squads' => $squads,
+                'total_point' => $peerUser->total_points,
+                'is_winner' => $peerUser->is_winner,
+            ];
+        });
 
         return Inertia::render('tournament/index', [
             'users' => $users,
