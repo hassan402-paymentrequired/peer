@@ -55,7 +55,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                     {isAmoung() ? (
                         <div className="flex-1 bg-white">
                             <div className="mb-4 ml-1 flex items-center justify-between">
-                                <div className="flex items-center justify-between p-2 w-full">
+                                <div className="flex w-full items-center justify-between p-2">
                                     <p className="text-base text-muted capitalize">Current tournament standings</p>
                                     <Link
                                         className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
@@ -63,7 +63,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                         href={create()}
                                     >
                                         <Button size="sm" className="text-xs">
-                                                {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'} 
+                                            {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'}
                                         </Button>
                                     </Link>
                                 </div>
@@ -99,7 +99,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
 
                                         return (
                                             <div
-                                                key={user.id}
+                                                key={user.tournament_user_id || `${user.id}-${i}`}
                                                 className={`grid grid-cols-12 items-center px-4 py-3 transition-colors hover:bg-gray-50 ${
                                                     isCurrentUser ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''
                                                 }`}
@@ -128,6 +128,9 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                             >
                                                                 @{user.username.substring(0, 20)}
                                                                 {user.username.length > 20 && '...'}
+                                                                {isCurrentUser && user.entry_number && (
+                                                                    <span className="ml-1 text-xs text-gray-500">(Entry {user.entry_number})</span>
+                                                                )}
                                                             </h4>
                                                             {isCurrentUser && (
                                                                 <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
@@ -193,25 +196,22 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                             )}
                         </div>
                     ) : (
-                         <div className="flex justify-center py-8">
+                        <div className="flex justify-center py-8">
                             <div className="flex max-w-xs flex-col items-center p-6">
                                 <span className="mb-2 animate-bounce text-4xl">🌍</span>
                                 <div className="mb-3 text-center font-semibold text-muted">You haven't joined {tournament.name} yet!</div>
                                 <p className="mb-4 text-center text-muted">
                                     Be part of the excitement—join the contest and compete with other players.
                                 </p>
-                                <Link  prefetch
-                                        href={create()}>
+                                <Link prefetch href={create()}>
                                     <Button className="capitalize">
                                         <span>Join {tournament.name}</span>
                                         <span className="text-lg">⚔️</span>
-                                   </Button>
-                                   </Link>
-                                   </div>
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     )}
-                    
-
                 </div>
             )}
         </AppLayout>

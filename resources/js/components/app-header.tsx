@@ -10,7 +10,7 @@ import peers from '@/routes/peers';
 import tournament from '@/routes/tournament';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Users, Trophy, Wallet, Grid3x3 } from 'lucide-react';
+import { Grid3x3, Search, Trophy, Users, Wallet } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
     {
@@ -29,15 +29,17 @@ const mainNavItems: NavItem[] = [
         icon: Trophy,
     },
     {
+        title: 'Search',
+        href: '/search',
+        icon: Search,
+    },
+    {
         title: 'Wallet',
         href: index(),
         icon: Wallet,
     },
 ];
 
-interface AppHeaderProps {
-    breadcrumbs?: BreadcrumbItem[];
-}
 
 export function AppHeader() {
     const page = usePage<SharedData>();
@@ -52,9 +54,9 @@ export function AppHeader() {
     return (
         <>
             {/* Mobile Bottom Tab Bar */}
-            <div className=" bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-md shadow-lg">
-                <nav className="mx-auto ">
-                    <ul className="flex items-center justify-around px-2  pb-safe">
+            <div className="right-0 bottom-0 left-0 z-50 border-t border-border bg-background/95 shadow-lg backdrop-blur-md">
+                <nav className="mx-auto">
+                    <ul className="pb-safe flex items-center justify-around px-2">
                         {mainNavItems.map((item, index) => {
                             const active = isActive(item.href);
                             return (
@@ -63,45 +65,33 @@ export function AppHeader() {
                                         href={item.href}
                                         className={cn(
                                             'flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 transition-all duration-200 active:scale-95',
-                                            active
-                                                ? 'text-primary'
-                                                : 'text-muted-foreground active:text-foreground'
+                                            active ? 'text-primary' : 'text-muted-foreground active:text-foreground',
                                         )}
                                     >
                                         <div
                                             className={cn(
                                                 'relative flex h-10 w-10 items-center justify-center rounded transition-all duration-200',
-                                                active
-                                                    ? 'bg-primary/15 '
-                                                    : ''
+                                                active ? 'bg-primary/15' : '',
                                             )}
                                         >
                                             {item.icon && (
                                                 <Icon
                                                     iconNode={item.icon}
-                                                    className={cn(
-                                                        'h-5 w-5 transition-transform duration-200',
-                                                        active ? 'scale-110' : ''
-                                                    )}
+                                                    className={cn('h-5 w-5 transition-transform duration-200', active ? 'scale-110' : '')}
                                                 />
                                             )}
                                             {active && (
-                                                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary animate-pulse shadow-sm" />
+                                                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 animate-pulse rounded-full bg-primary shadow-sm" />
                                             )}
                                         </div>
-                                        <span
-                                            className={cn(
-                                                'text-[10px] font-medium leading-tight transition-all',
-                                                active ? 'font-semibold' : ''
-                                            )}
-                                        >
+                                        <span className={cn('text-[10px] leading-tight font-medium transition-all', active ? 'font-semibold' : '')}>
                                             {item.title}
                                         </span>
                                     </Link>
                                 </li>
                             );
                         })}
-                        
+
                         {/* Profile Tab */}
                         <li className="flex-1">
                             <DropdownMenu>
@@ -115,10 +105,10 @@ export function AppHeader() {
                                                 </AvatarFallback>
                                             </Avatar>
                                         </div>
-                                        <span className="text-[10px] font-medium leading-tight">Profile</span>
+                                        <span className="text-[10px] leading-tight font-medium">Profile</span>
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56 mb-2" align="end" side="top">
+                                <DropdownMenuContent className="mb-2 w-56" align="end" side="top">
                                     <UserMenuContent user={auth.user} />
                                 </DropdownMenuContent>
                             </DropdownMenu>

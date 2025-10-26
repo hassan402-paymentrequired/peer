@@ -55,6 +55,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/recent', [\App\Http\Controllers\NotificationController::class, 'recent'])->name('notifications.recent');
     });
 
+    Route::prefix('search')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
+        Route::get('/api', [\App\Http\Controllers\SearchController::class, 'api'])->name('search.api');
+    });
+
     // Push subscription route
     Route::post('/save-subscription', [\App\Http\Controllers\PushSubscriptionController::class, 'saveSubscription'])->name('push.save-subscription');
 
