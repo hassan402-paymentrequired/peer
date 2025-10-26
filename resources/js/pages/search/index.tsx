@@ -71,8 +71,6 @@ export default function SearchIndex({ query, type, results }: SearchProps) {
                                         { value: 'all', label: 'All' },
                                         { value: 'peers', label: 'Peers' },
                                         { value: 'tournaments', label: 'Tournaments' },
-                                        { value: 'users', label: 'Users' },
-                                        { value: 'players', label: 'Players' },
                                     ].map((option) => (
                                         <Button
                                             key={option.value}
