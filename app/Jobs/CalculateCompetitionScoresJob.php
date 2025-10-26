@@ -250,42 +250,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         return $statistic->did_play && !$statistic->is_injured;
     }
 
-    // private function determineTournamentWinners($participants)
-    // {
-    //     // Sort participants by total points (descending)
-    //     $sortedParticipants = $participants->sortByDesc('total_points');
-
-    //     // Get top 3 winners (or fewer if there are ties)
-    //     $winners = collect();
-    //     $currentPosition = 1;
-    //     $previousScore = null;
-    //     $participantsProcessed = 0;
-
-    //     foreach ($sortedParticipants as $participant) {
-    //         // If score is different from previous, update position
-    //         if ($previousScore !== null && $participant->total_points < $previousScore) {
-    //             $currentPosition = $participantsProcessed + 1;
-    //         }
-
-    //         // Only include top 3 positions
-    //         if ($currentPosition <= 3) {
-    //             $participant->update(['is_winner' => true]);
-    //             $winners->push($participant);
-    //         }
-
-    //         $previousScore = $participant->total_points;
-    //         $participantsProcessed++;
-    //     }
-
-    //     Log::info("Tournament winners determined", [
-    //         'total_participants' => $sortedParticipants->count(),
-    //         'winners_count' => $winners->count(),
-    //         'top_3_scores' => $sortedParticipants->take(3)->pluck('total_points')->toArray()
-    //     ]);
-
-    //     return $winners;
-    // }
-
     private function determineTournamentWinners($participants)
     {
         // Sort participants by total points (descending)
