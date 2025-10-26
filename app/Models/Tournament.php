@@ -16,7 +16,9 @@ class Tournament extends Model
         'date',
         'status',
         'scoring_calculated',
-        'scoring_calculated_at'
+        'scoring_calculated_at',
+        'winner_user_id',
+        'updated_at'
     ];
 
     public function uniqueIds(): array

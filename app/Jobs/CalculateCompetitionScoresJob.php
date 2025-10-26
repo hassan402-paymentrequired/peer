@@ -351,67 +351,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         return $winner;
     }
 
-    // private function distributeTournamentPrizes(Tournament $tournament, $winners): float
-    // {
-    //     if ($winners->isEmpty()) {
-    //         Log::warning("No winners found for tournament {$tournament->id}");
-    //         return 0;
-    //     }
-
-    //     $totalPrizePool = $tournament->amount * $tournament->users()->count();
-
-    //     // Deduct system fee (e.g., 10% for the platform)
-    //     $systemFeePercentage = config('tournament.system_fee_percentage', 10); // 10% default
-    //     $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
-    //     $netPrizePool = $totalPrizePool - $systemFee;
-
-    //     $prizePerWinner = $netPrizePool / $winners->count();
-
-    //     foreach ($winners as $winner) {
-    //         // Add to user's wallet
-    //         $winner->user->addBalance($prizePerWinner);
-
-    //         // Store prize amount for notifications
-    //         $winner->prize_amount = $prizePerWinner;
-
-    //         // Create transaction record
-    //         Transaction::create([
-    //             'user_id' => $winner->user_id,
-    //             'amount' => $prizePerWinner,
-    //             'action_type' => 'credit',
-    //             'description' => "Tournament prize - {$tournament->name}",
-    //             'status' => TransactionStatusEnum::SUCCESSFUL->value,
-    //             'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->name . $prizePerWinner
-    //         ]);
-
-    //         // Send prize won notification
-    //         app(NotificationService::class)->notifyPrizeWon(
-    //             $winner->user,
-    //             $prizePerWinner,
-    //             'tournament',
-    //             $tournament->name,
-    //             ['tournament_id' => $tournament->id]
-    //         );
-
-    //         Log::info("Prize distributed to tournament winner", [
-    //             'user_id' => $winner->user_id,
-    //             'amount' => $prizePerWinner,
-    //             'system_fee_deducted' => $systemFee / $winners->count()
-    //         ]);
-    //     }
-
-    //     // Log system fee collection
-    //     Log::info("System fee collected from tournament", [
-    //         'tournament_id' => $tournament->id,
-    //         'total_prize_pool' => $totalPrizePool,
-    //         'system_fee' => $systemFee,
-    //         'net_prize_pool' => $netPrizePool,
-    //         'fee_percentage' => $systemFeePercentage,
-    //     ]);
-
-    //     return $totalPrizePool;
-    // }
-
     private function distributeTournamentPrizes(Tournament $tournament, $winners): float
     {
         if ($winners->isEmpty()) {
@@ -460,7 +399,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                     'action_type' => 'credit',
                     'description' => "Tournament prize (Position {$position}) - {$tournament->name}",
                     'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                    'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->id . time()
+                    'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->id . time() . rand(100000, 999999),
                 ]);
 
                 // Send prize won notification
@@ -529,7 +468,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'action_type' => 'credit',
             'description' => "Peer competition prize - {$peer->name}",
             'status' => TransactionStatusEnum::SUCCESSFUL->value,
-            'transaction_ref' => 'PeerPrize' .  $winner->user_id . $prizeAmount
+            'transaction_ref' => 'PeerPrize' .  $winner->user_id . time() . rand(100000, 999999)
         ]);
 
         // Send prize won notification
