@@ -119,10 +119,29 @@ class WalletController extends Controller
     public function processTransferWebhook(Request $request)
     {
         try {
-            $transferData = $this->walletService->processWebhook($request);
+            return $this->walletService->processWebhook($request);
+        } catch (\Exception $e) {
+            Log::error('Flutterwave webhook processing failed: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'headers' => $request->headers->all(),
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Webhook processing failed'], 500);
+        }
+    }
+
+    public function verifyTransfer(string $transferId)
+    {
+        try {
+            $transferData = $this->walletService->verifyTransfer($transferId);
+
+            if (!$transferData) {
+                return response()->json(['status' => 'error', 'message' => 'Transfer not found'], 404);
+            }
+
+            return response()->json(['status' => 'success', 'data' => $transferData]);
         } catch (\Exception $e) {
             Log::error('Transfer verification failed: ' . $e->getMessage());
-            return back()->with('error', 'Unable to verify transfer. Please check the transfer code.');
+            return response()->json(['status' => 'error', 'message' => 'Verification failed'], 500);
         }
     }
 }

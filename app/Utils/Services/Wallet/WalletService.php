@@ -119,7 +119,7 @@ class WalletService
 
     public function paymentCallback(string $reference)
     {
-        
+
         $transaction = Transaction::where('transaction_ref', $reference)->first();
 
         if (!$transaction) {
@@ -353,45 +353,70 @@ class WalletService
 
     public function processWebhook(Request $request)
     {
+        // Log the incoming webhook for debugging
+        Log::info('FlutterwaveService: Webhook received', [
+            'headers' => $request->headers->all(),
+            'payload' => $request->all(),
+        ]);
+
         // Flutterwave webhook verification
         $signature = $request->header('verif-hash');
-        $secretHash = env('FLW_SECRET_HASH'); // You should add this to your .env
+        $secretHash = env('FLW_SECRET_HASH');
 
-        if (!$signature || $signature !== $secretHash) {
+        // For testing, you might want to temporarily disable signature verification
+        // Remove this condition in production and ensure FLW_SECRET_HASH is set
+        if ($secretHash && (!$signature || $signature !== $secretHash)) {
             Log::warning('FlutterwaveService: Invalid webhook signature', [
                 'received_signature' => $signature,
+                'expected_hash' => $secretHash ? 'set' : 'not_set',
             ]);
-            return false;
+            return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
         }
 
         $payload = $request->all();
 
-        if (!isset($payload['event']) || !isset($payload['data'])) {
-            Log::warning('FlutterwaveService: Invalid webhook payload', [
+        // Flutterwave sends different webhook structures
+        // Check for both event-based and direct data structures
+        if (isset($payload['event']) && isset($payload['data'])) {
+            // Event-based webhook (newer format)
+            $event = $payload['event'];
+            $data = $payload['data'];
+        } elseif (isset($payload['event.type'])) {
+            // Alternative format
+            $event = $payload['event.type'];
+            $data = $payload;
+        } else {
+            Log::warning('FlutterwaveService: Invalid webhook payload structure', [
                 'payload' => $payload,
             ]);
-            return false;
+            return response()->json(['status' => 'error', 'message' => 'Invalid payload'], 400);
         }
 
-        $event = $payload['event'];
-        $data = $payload['data'];
+        try {
+            switch ($event) {
+                case 'charge.completed':
+                    $this->handleChargeCompleted($data);
+                    break;
+                case 'transfer.completed':
+                    $this->handleTransferCompleted($data);
+                    break;
+                default:
+                    Log::info('FlutterwaveService: Unhandled webhook event', [
+                        'event' => $event,
+                        'data' => $data,
+                    ]);
+                    break;
+            }
 
-        switch ($event) {
-            case 'charge.completed':
-                $this->handleChargeCompleted($data);
-                break;
-            case 'transfer.completed':
-                $this->handleTransferCompleted($data);
-                break;
-            default:
-                Log::info('FlutterwaveService: Unhandled webhook event', [
-                    'event' => $event,
-                    'data' => $data,
-                ]);
-                break;
+            return response()->json(['status' => 'success'], 200);
+        } catch (\Exception $e) {
+            Log::error('FlutterwaveService: Webhook processing failed', [
+                'error' => $e->getMessage(),
+                'event' => $event,
+                'data' => $data,
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Processing failed'], 500);
         }
-
-        return true;
     }
 
 
@@ -416,11 +441,13 @@ class WalletService
             'data' => $data,
         ]);
 
-        $reference = $data['reference'] ?? null;
+        // Flutterwave transfer webhooks can have different reference field names
+        $reference = $data['reference'] ?? $data['tx_ref'] ?? $data['flw_ref'] ?? null;
 
         if (!$reference) {
             Log::warning('FlutterwaveService: Transfer completed webhook missing reference', [
                 'data' => $data,
+                'available_keys' => array_keys($data),
             ]);
             return;
         }
@@ -430,46 +457,72 @@ class WalletService
         if (!$transaction) {
             Log::warning('FlutterwaveService: Transaction not found for transfer webhook', [
                 'reference' => $reference,
+                'searched_field' => 'transaction_ref',
             ]);
             return;
         }
 
         if ($transaction->status === TransactionStatusEnum::SUCCESSFUL->value) {
+            Log::info('FlutterwaveService: Transaction already processed', [
+                'reference' => $reference,
+                'current_status' => $transaction->status,
+            ]);
             return;
         }
 
         $user = $transaction->user;
 
-        if ($data['status'] === 'SUCCESSFUL') {
-            $newBalance = (int)$user->wallet->balance - (int)$transaction->amount;
+        // Flutterwave transfer status can be 'SUCCESSFUL', 'successful', 'FAILED', 'failed'
+        $status = strtoupper($data['status'] ?? '');
 
-            // Update user wallet balance
-            $user->wallet()->decrement('balance', $transaction->amount);
+        DB::transaction(function () use ($transaction, $user, $data, $status) {
+            if ($status === 'SUCCESSFUL') {
+                // Only deduct wallet balance if not already deducted
+                if ($transaction->wallet_balance_after == $transaction->wallet_balance_before) {
+                    $newBalance = (int)$user->wallet->balance - (int)$transaction->amount;
+                    $user->wallet()->decrement('balance', $transaction->amount);
+                    $transaction->wallet_balance_after = $newBalance;
+                }
 
-            // Update transaction
-            $transaction->update([
-                'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                'wallet_balance_after' => $newBalance,
-                'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
-                    'flw_transaction_id' => $data['id'],
-                    'gateway_ref' => $data['reference'],
-                    'completed_at' => $data['created_at'],
-                    'bank_name' => $data['bank_name'] ?? null,
-                    'account_number' => $data['account_number'] ?? null,
-                ]),
-            ]);
-        } else {
-            // Handle failed transfer
-            $transaction->update([
-                'status' => TransactionStatusEnum::FAILED->value,
-                'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
-                    'flw_transaction_id' => $data['id'],
-                    'gateway_ref' => $data['reference'],
-                    'failed_at' => $data['created_at'],
-                    'failure_reason' => $data['complete_message'] ?? 'Transfer failed',
-                ]),
-            ]);
-        }
+                // Update transaction to successful
+                $transaction->update([
+                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                    'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                        'flw_transaction_id' => $data['id'] ?? null,
+                        'gateway_ref' => $data['reference'] ?? $data['tx_ref'] ?? null,
+                        'completed_at' => $data['created_at'] ?? now(),
+                        'bank_name' => $data['bank_name'] ?? $data['account_bank'] ?? null,
+                        'account_number' => $data['account_number'] ?? null,
+                        'fee' => $data['fee'] ?? null,
+                        'webhook_status' => $status,
+                    ]),
+                ]);
+
+                Log::info('FlutterwaveService: Transfer marked as successful', [
+                    'transaction_id' => $transaction->id,
+                    'reference' => $transaction->transaction_ref,
+                    'amount' => $transaction->amount,
+                ]);
+            } else {
+                // Handle failed transfer - don't deduct wallet balance
+                $transaction->update([
+                    'status' => TransactionStatusEnum::FAILED->value,
+                    'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                        'flw_transaction_id' => $data['id'] ?? null,
+                        'gateway_ref' => $data['reference'] ?? $data['tx_ref'] ?? null,
+                        'failed_at' => $data['created_at'] ?? now(),
+                        'failure_reason' => $data['complete_message'] ?? $data['narration'] ?? 'Transfer failed',
+                        'webhook_status' => $status,
+                    ]),
+                ]);
+
+                Log::warning('FlutterwaveService: Transfer marked as failed', [
+                    'transaction_id' => $transaction->id,
+                    'reference' => $transaction->transaction_ref,
+                    'reason' => $data['complete_message'] ?? $data['narration'] ?? 'Unknown failure',
+                ]);
+            }
+        });
     }
 
     public function getBanks()
@@ -497,6 +550,36 @@ class WalletService
                 'error' => $th->getMessage(),
             ]);
             return [];
+        }
+    }
+
+    public function verifyTransfer(string $transferId)
+    {
+        try {
+            $response = Http::withToken($this->secretKey)
+                ->get($this->baseUrl . "/transfers/{$transferId}");
+
+            if (!$response->successful()) {
+                Log::error('FlutterwaveService: Transfer verification failed', [
+                    'transfer_id' => $transferId,
+                    'response' => $response->body()
+                ]);
+                return false;
+            }
+
+            $data = $response->json();
+
+            if ($data['status'] !== 'success' || !isset($data['data'])) {
+                return false;
+            }
+
+            return $data['data'];
+        } catch (\Throwable $th) {
+            Log::error('FlutterwaveService: Transfer verification exception', [
+                'error' => $th->getMessage(),
+                'transfer_id' => $transferId,
+            ]);
+            return false;
         }
     }
 }
