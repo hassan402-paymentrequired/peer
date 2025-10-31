@@ -13,39 +13,28 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class WalletService
 {
-
     protected string $secretKey;
     protected string $publicKey;
     protected string $baseUrl;
-    protected string $webhookSecret;
-    protected $httpClient;
+    protected string $encryptionKey;
 
     public function __construct()
     {
+        $this->secretKey = env('FLW_SECRET_KEY');
+        $this->publicKey = env('FLW_PUBLIC_KEY');
+        $this->encryptionKey = env('FLW_ENCRYPTION_KEY');
+        $this->baseUrl = 'https://api.flutterwave.com/v3';
 
-        $this->baseUrl = config('paystack.base_url');
-        $this->secretKey = config('paystack.secret_key');
-        $this->publicKey = config('paystack.public_key');
-        // $this->webhookSecret = config('paystack.webhook_secret');
-
-        if (!$this->secretKey || !$this->publicKey || !$this->baseUrl) {
-            Log::error('PaystackService: Missing configuration', [
+        if (!$this->secretKey || !$this->publicKey) {
+            Log::error('FlutterwaveService: Missing configuration', [
                 'secret_key' => $this->secretKey ? 'set' : 'missing',
                 'public_key' => $this->publicKey ? 'set' : 'missing',
-                'base_url' => $this->baseUrl,
             ]);
         }
-
-        $this->httpClient = new \GuzzleHttp\Client([
-            'base_uri' => $this->baseUrl,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->secretKey,
-                'Content-Type' => 'application/json',
-            ]
-        ]);
     }
 
     /**
@@ -57,66 +46,80 @@ class WalletService
         return 'STA_' . Str::random(16);
     }
 
-
-    public function initializeWalletFunding($amount)
+    public function initializeWalletFunding($request)
     {
         try {
-            $user = request()->user();
+            $user = $request->user();
             $reference = $this->generateTransactionRef();
             $callbackUrl = route('wallet.callback');
 
-            $response = $this->httpClient->post('/transaction/initialize', [
-                'json' => [
-                    'amount' => (int)$amount * 100,
+            $data = [
+                'tx_ref' => $reference,
+                'amount' => $request->amount,
+                'currency' => 'NGN',
+                'redirect_url' => $callbackUrl,
+                'customer' => [
                     'email' => $user->email,
-                    'reference' => $reference,
-                    'callback_url' => $callbackUrl,
-                    'currency' => config('paystack.currency', 'NGN'),
-                    'metadata' => [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'transaction_type' => 'deposit',
-                    ]
+                    'name' => $user->name,
+                    'phonenumber' => $user->phone ?? '',
+                ],
+                'customizations' => [
+                    'title' => 'Wallet Funding - ' . config('app.name'),
+                    'description' => 'Deposit to wallet',
+                    'logo' => config('app.url') . '/logo.png',
+                ],
+                'meta' => [
+                    'user_id' => $user->id,
+                    'transaction_type' => 'deposit',
                 ]
-            ]);
+            ];
 
-            $data = json_decode($response->getBody()->getContents(), true);
+            $response = Http::withToken($this->secretKey)
+                ->post($this->baseUrl . '/payments', $data);
 
+            if (!$response->successful()) {
+                throw new Exception('Failed to initialize payment: ' . $response->body());
+            }
 
+            $responseData = $response->json();
 
+            // dd($responseData);
+
+            if ($responseData['status'] !== 'success') {
+                throw new Exception('Payment initialization failed: ' . ($responseData['message'] ?? 'Unknown error'));
+            }
+
+            // Create transaction record
             Transaction::create([
                 'transaction_ref' => $reference,
                 'action_type' => 'credit',
                 'description' => 'Wallet funding',
-                'amount' => $amount,
+                'amount' => $request->amount,
                 'user_id' => $user->id,
                 'status' => TransactionStatusEnum::PENDING->value,
                 'meta_data' => json_encode([
-                    'gateway_ref' => $data['data']['reference'],
-                    'gateway_response' => $data['message'] ?? 'Transaction initialized',
+                    'flw_ref' => $responseData['data']['tx_ref'] ?? 'not provided',
+                    'gateway_response' => $responseData['message'] ?? 'Transaction initialized',
                     'ip_address' => request()->ip(),
                 ]),
                 'wallet_balance_before' => $user->wallet->balance,
-                'wallet_balance_after' => $user->wallet->balance + $amount,
+                'wallet_balance_after' => $user->wallet->balance + $request->amount,
             ]);
 
-            return $data['data']['authorization_url'];
+            return $responseData['data']['link'];
         } catch (\Exception $e) {
-            Log::error('WalletService: Failed to initialize wallet funding', [
+            Log::error('FlutterwaveService: Failed to initialize wallet funding', [
                 'error' => $e->getMessage(),
-                'user_id' => auth('web')->id(),
-                'amount' => $amount,
+                'user_id' => $user->id ?? null,
+                'amount' => $request->amount ?? null,
             ]);
-            dd($e->getMessage());
-            return back()->with('error', 'Failed to initialize wallet funding');
+            throw new Exception('Failed to initialize wallet funding: ' . $e->getMessage());
         }
     }
 
-
-
-
     public function paymentCallback(string $reference)
     {
+        
         $transaction = Transaction::where('transaction_ref', $reference)->first();
 
         if (!$transaction) {
@@ -127,72 +130,76 @@ class WalletService
             return false;
         }
 
-        $response = $this->httpClient->get("/transaction/verify/{$reference}");
+        // Verify transaction with Flutterwave
+        $response = Http::withToken($this->secretKey)
+            ->get($this->baseUrl . "/transactions/verify_by_reference", [
+                'tx_ref' => $reference
+            ]);
 
-        $data = json_decode($response->getBody()->getContents(), true);
+        if (!$response->successful()) {
+            Log::error('FlutterwaveService: Failed to verify transaction', [
+                'reference' => $reference,
+                'response' => $response->body()
+            ]);
+            return false;
+        }
 
-        $data = $data['data'] ?? [];
+        $responseData = $response->json();
 
-        // dd($data);
+        if ($responseData['status'] !== 'success') {
+            Log::error('FlutterwaveService: Transaction verification failed', [
+                'reference' => $reference,
+                'response' => $responseData
+            ]);
+            return false;
+        }
+
+        $data = $responseData['data'];
 
         switch ($data['status']) {
-            case 'success':
+            case 'successful':
                 $this->processSuccessfulPayment($transaction, $data);
                 return true;
+
             case 'failed':
                 $transaction->update([
                     'status' => TransactionStatusEnum::FAILED->value,
-                    'meta_data' => array_merge($transaction->meta_data ?? [], [
-                        'paystack_transaction_id' => $data['id'],
-                        'gateway_ref' => $data['reference'],
-                        'gateway_response' => $data['gateway_response'] ?? 'Payment failed',
+                    'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                        'flw_transaction_id' => $data['id'],
+                        'gateway_ref' => $data['tx_ref'],
+                        'gateway_response' => $data['processor_response'] ?? 'Payment failed',
                         'failed_at' => now(),
-                        'ip' => $data['ip_address'] ?? '',
                     ]),
                 ]);
 
                 $user = $transaction->user;
                 if ($user->email) {
-                    $failureReason = $paymentData['gateway_response'] ?? 'Payment failed';
+                    $failureReason = $data['processor_response'] ?? 'Payment failed';
                     SendNotificationJob::dispatch($user, new WalletFundingFailedNotification($transaction->fresh(), $failureReason));
                 }
-
                 return false;
 
-            case 'abandoned':
+            case 'cancelled':
                 $transaction->update([
                     'status' => TransactionStatusEnum::CANCELLED->value,
-                    'meta_data' => array_merge($transaction->meta_data ?? [], [
-                        'paystack_transaction_id' => $data['id'],
-                        'gateway_ref' => $data['reference'],
-                        'abandoned_at' => now(),
+                    'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                        'flw_transaction_id' => $data['id'],
+                        'gateway_ref' => $data['tx_ref'],
+                        'cancelled_at' => now(),
                     ]),
                 ]);
-
-                return false;
-
-            case 'pending':
-                $transaction->update([
-                    'meta_data' => array_merge($transaction->meta_data ?? [], [
-                        'paystack_transaction_id' => $data['id'],
-                        'gateway_ref' => $data['reference'],
-                        'last_checked' => now(),
-                    ]),
-                ]);
-
                 return false;
 
             default:
                 $transaction->update([
                     'status' => TransactionStatusEnum::FAILED->value,
-                    'meta_data' => array_merge($transaction->meta_data ?? [], [
-                        'paystack_transaction_id' => $data['id'],
-                        'gateway_ref' => $data['reference'],
+                    'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                        'flw_transaction_id' => $data['id'],
+                        'gateway_ref' => $data['tx_ref'],
                         'unknown_status' => $data['status'],
                         'failed_at' => now(),
                     ]),
                 ]);
-
                 return false;
         }
     }
@@ -205,7 +212,6 @@ class WalletService
         // Credit wallet in database transaction
         DB::transaction(function () use ($transaction, $paymentData) {
             $user = $transaction->user;
-            // dd($user);
 
             $newBalance = (int)$user->wallet->balance + (int)$transaction->amount;
 
@@ -217,11 +223,12 @@ class WalletService
                 'status' => TransactionStatusEnum::SUCCESSFUL->value,
                 'wallet_balance_after' => $newBalance,
                 'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
-                    'paystack_transaction_id' => $paymentData['id'],
-                    'gateway_ref' => $paymentData['reference'],
-                    'paid_at' => $paymentData['paid_at'],
-                    'channel' => $paymentData['channel'] ?? null,
-                    'ip_address' => $paymentData['ip_address'] ?? null,
+                    'flw_transaction_id' => $paymentData['id'],
+                    'gateway_ref' => $paymentData['tx_ref'],
+                    'paid_at' => $paymentData['created_at'],
+                    'payment_type' => $paymentData['payment_type'] ?? null,
+                    'amount_settled' => $paymentData['amount_settled'] ?? null,
+                    'app_fee' => $paymentData['app_fee'] ?? null,
                 ]),
             ]);
 
@@ -236,21 +243,34 @@ class WalletService
     public function verifyBankAccount(string $accountNumber, string $bankCode)
     {
         try {
-            $response = $this->httpClient->get("/bank/resolve", [
-                'query' => [
+            $response = Http::withToken($this->secretKey)
+                ->post($this->baseUrl . '/accounts/resolve', [
+                    'account_number' => $accountNumber,
+                    'account_bank' => $bankCode,
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('FlutterwaveService: Bank account verification failed', [
                     'account_number' => $accountNumber,
                     'bank_code' => $bankCode,
-                ]
-            ]);
+                    'response' => $response->body()
+                ]);
+                return false;
+            }
 
-            $data = json_decode($response->getBody()->getContents(), true);
+            $data = $response->json();
 
-            if (!$data['status'] || !isset($data['data'])) {
+            if ($data['status'] !== 'success' || !isset($data['data'])) {
                 return false;
             }
 
             return $data['data'];
         } catch (\Throwable $th) {
+            Log::error('FlutterwaveService: Bank account verification exception', [
+                'error' => $th->getMessage(),
+                'account_number' => $accountNumber,
+                'bank_code' => $bankCode,
+            ]);
             throw $th;
         }
     }
@@ -259,28 +279,29 @@ class WalletService
     public function initiateWithdrawal(array $manualBankDetails)
     {
         try {
-
             $user = authUser();
-            $recipientCode = null;
-            $recipientCode = $this->initiateRecipient($manualBankDetails['account_name'], $manualBankDetails['account_number'], $manualBankDetails['bank_code']);
             $reference = $this->generateTransactionRef();
 
-
+            // Create transaction record first
             $transaction = Transaction::create([
                 'transaction_ref' => $reference,
                 'user_id' => $user->id,
                 'action_type' => 'debit',
-                'description' => 'Wallet withdrawal to ' . $recipientCode['data']['details']['bank_name'] . ' - ' . $recipientCode['data']['details']['account_number'],
+                'description' => 'Wallet withdrawal to ' . $manualBankDetails['account_name'] . ' - ' . $manualBankDetails['account_number'],
                 'amount' => $manualBankDetails['amount'],
                 'wallet_balance_before' => $user->wallet->balance,
-                'wallet_balance_after' => $user->wallet->balance,
+                'wallet_balance_after' => $user->wallet->balance - $manualBankDetails['amount'],
                 'status' => TransactionStatusEnum::PENDING->value,
-                'meta_data' => json_encode($recipientCode['data']['details']),
+                'meta_data' => json_encode([
+                    'account_name' => $manualBankDetails['account_name'],
+                    'account_number' => $manualBankDetails['account_number'],
+                    'bank_code' => $manualBankDetails['bank_code'],
+                ]),
             ]);
 
-            return $this->initiateTransfer($recipientCode['data']['recipient_code'], $manualBankDetails['amount'], 'Withdrawal from wallet');
+            return $this->initiateTransfer($manualBankDetails, $reference);
         } catch (\Throwable $th) {
-            Log::error('WalletService: Withdrawal initiation failed', [
+            Log::error('FlutterwaveService: Withdrawal initiation failed', [
                 'error' => $th->getMessage(),
                 'user_id' => $user->id ?? null,
                 'amount' => $manualBankDetails['amount'],
@@ -291,58 +312,53 @@ class WalletService
 
 
 
-    public function initiateTransfer(string $recipientCode, float $amount, string $reason): array
+    public function initiateTransfer(array $bankDetails, string $reference): array
     {
         try {
-            $response = $this->httpClient->post('/transfer', [
-                'json' => [
-                    'source' => 'balance',
-                    'amount' => $amount * 100,
-                    'recipient' => $recipientCode,
-                    'reason' => $reason,
-                ]
-            ]);
+            $data = [
+                'account_bank' => $bankDetails['bank_code'],
+                'account_number' => $bankDetails['account_number'],
+                'amount' => $bankDetails['amount'],
+                'narration' => 'Wallet withdrawal - ' . config('app.name'),
+                'currency' => 'NGN',
+                'reference' => $reference,
+                'callback_url' => route('wallet.callback'),
+                'debit_currency' => 'NGN'
+            ];
 
-            $data = json_decode($response->getBody()->getContents(), true);
+            $response = Http::withToken($this->secretKey)
+                ->post($this->baseUrl . '/transfers', $data);
 
-            if (!$data['status'] || !isset($data['data'])) {
-                throw new Exception('Failed to initiate transfer: ' . ($data['message'] ?? 'Unknown error'));
+            if (!$response->successful()) {
+                throw new Exception('Failed to initiate transfer: ' . $response->body());
             }
 
-            return $data['data'];
+            $responseData = $response->json();
+
+            if ($responseData['status'] !== 'success') {
+                throw new Exception('Transfer initiation failed: ' . ($responseData['message'] ?? 'Unknown error'));
+            }
+
+            return $responseData['data'];
         } catch (\Throwable $th) {
-            Log::error('PaystackService: Transfer initiation failed', [
+            Log::error('FlutterwaveService: Transfer initiation failed', [
                 'error' => $th->getMessage(),
-                'recipient_code' => $recipientCode,
-                'amount' => $amount,
+                'bank_details' => $bankDetails,
+                'reference' => $reference,
             ]);
             throw new Exception('Failed to initiate transfer: ' . $th->getMessage());
         }
     }
 
 
-    private function initiateRecipient(string $accountName, string $accountNumber, string $bankCode)
-    {
-
-        $response = $this->httpClient->post('/transferrecipient', [
-            'json' => [
-                "type" => "nuban",
-                "name" => $accountName,
-                "account_number" => $accountNumber,
-                "bank_code" => $bankCode,
-                "currency" => "NGN"
-            ]
-        ]);
-        return  json_decode($response->getBody()->getContents(), true);
-    }
-
-
     public function processWebhook(Request $request)
     {
-        $signature = $request->header('x-paystack-signature');
+        // Flutterwave webhook verification
+        $signature = $request->header('verif-hash');
+        $secretHash = env('FLW_SECRET_HASH'); // You should add this to your .env
 
-        if (!$signature || $signature !== hash_hmac('sha512', $request->getContent(), $this->webhookSecret)) {
-            Log::warning('PaystackService: Invalid webhook signature', [
+        if (!$signature || $signature !== $secretHash) {
+            Log::warning('FlutterwaveService: Invalid webhook signature', [
                 'received_signature' => $signature,
             ]);
             return false;
@@ -351,7 +367,7 @@ class WalletService
         $payload = $request->all();
 
         if (!isset($payload['event']) || !isset($payload['data'])) {
-            Log::warning('PaystackService: Invalid webhook payload', [
+            Log::warning('FlutterwaveService: Invalid webhook payload', [
                 'payload' => $payload,
             ]);
             return false;
@@ -361,17 +377,14 @@ class WalletService
         $data = $payload['data'];
 
         switch ($event) {
-            case 'transfer.success':
-                $this->handleTransferSuccess($data);
+            case 'charge.completed':
+                $this->handleChargeCompleted($data);
                 break;
-            case 'transfer.failed':
-                $this->handleTransferFailed($data);
-                break;
-            case 'transfer.reversed':
-                $this->handleTransferReverse($data);
+            case 'transfer.completed':
+                $this->handleTransferCompleted($data);
                 break;
             default:
-                Log::info('PaystackService: Unhandled webhook event', [
+                Log::info('FlutterwaveService: Unhandled webhook event', [
                     'event' => $event,
                     'data' => $data,
                 ]);
@@ -382,84 +395,108 @@ class WalletService
     }
 
 
-    private function handleTransferReverse(array $data)
+    private function handleChargeCompleted(array $data)
     {
-        $reference = $data['reference'] ?? null;
+        $reference = $data['tx_ref'] ?? null;
 
         if (!$reference) {
-            Log::warning('PaystackService: Charge success webhook missing reference', [
+            Log::warning('FlutterwaveService: Charge completed webhook missing reference', [
                 'data' => $data,
             ]);
             return;
         }
 
+        // Verify the transaction to ensure it's legitimate
         $this->paymentCallback($reference);
     }
 
-
-    private function handleTransferSuccess(array $data)
+    private function handleTransferCompleted(array $data)
     {
-        Log::info('PaystackService: Transfer success webhook', [
+        Log::info('FlutterwaveService: Transfer completed webhook', [
             'data' => $data,
         ]);
 
-        $transaction = Transaction::where('transaction_ref', $data['reference'])->first();
+        $reference = $data['reference'] ?? null;
+
+        if (!$reference) {
+            Log::warning('FlutterwaveService: Transfer completed webhook missing reference', [
+                'data' => $data,
+            ]);
+            return;
+        }
+
+        $transaction = Transaction::where('transaction_ref', $reference)->first();
 
         if (!$transaction) {
-            throw new ClientErrorException('Transaction not found', 404);
+            Log::warning('FlutterwaveService: Transaction not found for transfer webhook', [
+                'reference' => $reference,
+            ]);
+            return;
         }
 
         if ($transaction->status === TransactionStatusEnum::SUCCESSFUL->value) {
-            return false;
+            return;
         }
 
         $user = $transaction->user;
 
-        $newBalance = (int)$user->wallet->balance - (int)$transaction->amount;
+        if ($data['status'] === 'SUCCESSFUL') {
+            $newBalance = (int)$user->wallet->balance - (int)$transaction->amount;
 
-        // Update user wallet balance
-        $user->wallet()->decrement('balance', $transaction->amount);
+            // Update user wallet balance
+            $user->wallet()->decrement('balance', $transaction->amount);
 
-        // Update transaction
-        $transaction->update([
-            'status' => TransactionStatusEnum::SUCCESSFUL->value,
-            'wallet_balance_after' => $newBalance,
-            'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
-                'paystack_transaction_id' => $data['id'],
-                'gateway_ref' => $data['reference'],
-                'paid_at' => $data['transferred_at'],
-                'transfer_code' => $data['transfer_code'],
-                'receiver' => $data['recipient']
-            ]),
-        ]);
+            // Update transaction
+            $transaction->update([
+                'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                'wallet_balance_after' => $newBalance,
+                'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                    'flw_transaction_id' => $data['id'],
+                    'gateway_ref' => $data['reference'],
+                    'completed_at' => $data['created_at'],
+                    'bank_name' => $data['bank_name'] ?? null,
+                    'account_number' => $data['account_number'] ?? null,
+                ]),
+            ]);
+        } else {
+            // Handle failed transfer
+            $transaction->update([
+                'status' => TransactionStatusEnum::FAILED->value,
+                'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
+                    'flw_transaction_id' => $data['id'],
+                    'gateway_ref' => $data['reference'],
+                    'failed_at' => $data['created_at'],
+                    'failure_reason' => $data['complete_message'] ?? 'Transfer failed',
+                ]),
+            ]);
+        }
     }
 
-
-    private function handleTransferFailed(array $data)
+    public function getBanks()
     {
-        Log::info('PaystackService: Transfer failed webhook', [
-            'data' => $data,
-        ]);
+        try {
+            $response = Http::withToken($this->secretKey)
+                ->get($this->baseUrl . '/banks/NG');
 
-        $transaction = Transaction::where('transaction_ref', $data['reference'])->first();
+            if (!$response->successful()) {
+                Log::error('FlutterwaveService: Failed to get banks', [
+                    'response' => $response->body()
+                ]);
+                return [];
+            }
 
-        if (!$transaction) {
-            throw new ClientErrorException('Transaction not found', 404);
+            $data = $response->json();
+
+            if ($data['status'] !== 'success' || !isset($data['data'])) {
+                return [];
+            }
+
+            return $data['data'];
+        } catch (\Throwable $th) {
+            Log::error('FlutterwaveService: Get banks exception', [
+                'error' => $th->getMessage(),
+            ]);
+            return [];
         }
-
-        if ($transaction->status === TransactionStatusEnum::SUCCESSFUL->value) {
-            return false;
-        }
-
-        $transaction->update([
-            'status' => TransactionStatusEnum::FAILED->value,
-            'meta_data' => array_merge(json_decode($transaction->meta_data, true) ?? [], [
-                'paystack_transaction_id' => $data['id'],
-                'gateway_ref' => $data['reference'],
-                'paid_at' => $data['transferred_at'],
-                'transfer_code' => $data['transfer_code'],
-                'receiver' => $data['recipient']
-            ]),
-        ]);
     }
 }

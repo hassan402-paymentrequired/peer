@@ -78,7 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::prefix('webhooks')->group(function () {
-    Route::post('/paystack/transfer-verify', [WalletController::class, 'processTransferWebhook']);
+    Route::post('/flutterwave/webhook', [WalletController::class, 'processTransferWebhook']);
 });
 
 Route::post('/save-subscription', [\App\Utils\Services\NotificationService::class, 'storeSubscription'])->name('save.subscription');

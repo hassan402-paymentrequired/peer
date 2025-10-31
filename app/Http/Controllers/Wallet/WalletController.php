@@ -33,7 +33,7 @@ class WalletController extends Controller
     {
         try {
             $authorizeUrl = $this->walletService->initializeWalletFunding(
-                $request->amount
+                $request
             );
             return back()->with('success', $authorizeUrl);
         } catch (\Exception $e) {
@@ -48,11 +48,17 @@ class WalletController extends Controller
 
     public function paymentCallback(Request $request)
     {
-        // return dd();
-        $result = $this->walletService->paymentCallback($request->get('reference'));
+        // For Flutterwave, the reference is passed as tx_ref in the callback
+        $reference = $request->get('tx_ref') ?? $request->get('reference');
+
+        if (!$reference) {
+            return to_route('wallet.index')->with('error', 'Invalid payment reference');
+        }
+
+        $result = $this->walletService->paymentCallback($reference);
 
         if (!$result) {
-            return to_route('wallet.index')->with('error', 'Payment already verified');
+            return to_route('wallet.index')->with('error', 'Payment verification failed or already processed');
         }
 
         return to_route('wallet.index')->with('success', 'Payment successful, your wallet has been funded');
