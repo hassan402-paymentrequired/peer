@@ -357,13 +357,13 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                             ))
                         ) : (
                             <CardContent className="flex flex-col items-center justify-center">
-                                <div className="mb-6 animate-bounce text-6xl">🏆</div>
+                                <div className="mb-6 text-6xl">🏆</div>
                                 <h3 className="mb-2 text-xl font-bold text-slate-900">Be the First Champion!</h3>
                                 <p className="mb-6 max-w-md text-center text-slate-600">
                                     No players have joined this peer yet. Join now and claim your spot in the competition.
                                 </p>
                                 <Link href={joinPeer(peer.peer_id)} prefetch>
-                                    <Button className="transform rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:to-purple-700">
+                                    <Button >
                                         Join Peer
                                         <ArrowDownRight className="ml-2 h-5 w-5" />
                                     </Button>

@@ -14,7 +14,8 @@ export function AppContent({ title = 'Starpick', children, ...props }: AppConten
 
     return (
         <main className="flex h-screen w-full flex-1 flex-col  overflow-hidden overflow-y-auto bg-white lg:mx-auto lg:max-w-7xl" {...props}>
-            <header className="border-b bg-white shadow-sm">
+
+            <header className="border-b bg-stone-50">
                 <div className="mx-auto  pr-4 sm:pr-6 lg:pr-8">
                     <div className="flex h-14 items-center justify-between">
                         <div className="flex items-center ml-3">

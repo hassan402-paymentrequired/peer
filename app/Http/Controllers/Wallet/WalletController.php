@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Wallet;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\WithdrawRequest;
+use App\Models\WithdrawRequest as ModelsWithdrawRequest;
 use App\Utils\Services\Wallet\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -80,13 +81,17 @@ class WalletController extends Controller
                 'account_name' => $validatedData['account_name'],
                 'amount' => $validatedData['amount'],
             ];
-            $withdrawalData = $this->walletService->initiateWithdrawal(
-                $manualBankDetails
-            );
-            if (!$withdrawalData) {
-                return back()->with('error', 'Unable to initiate withdrawal. Please check the bank details.');
-            }
-            return back()->with('success', 'Withdrawal initiated successfully. Please wait for while we confirm your process');
+
+            // send withdrawal
+            ModelsWithdrawRequest::create([
+                'account_number' => $validatedData['account_number'],
+                'account_name' => $validatedData['account_name'],
+                'amount' => $validatedData['amount'],
+                'bank_name' => $validatedData['bank_name']
+            ]);
+
+
+            return back()->with('success', 'Withdrawal request sent successfully. You will get a notification when we verify your reqest');
         } catch (\Exception $e) {
             return null;
         }

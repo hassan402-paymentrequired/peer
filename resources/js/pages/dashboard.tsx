@@ -1,26 +1,31 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/app-layout';
 import { dashboardBreadcrumbs } from '@/lib/breadcrumbs';
 import 'swiper/css';
-
-import { create, joinPeer } from '@/actions/App/Http/Controllers/Peer/PeerController';
+import { create } from '@/actions/App/Http/Controllers/Peer/PeerController';
 import { create as joinTour } from '@/actions/App/Http/Controllers/Tournament/TournamentController';
-import { show } from '@/routes/peers';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowDownRightSquareIcon, Copy, CupSoda, HandCoins, Target, Users } from 'lucide-react';
+import { CupSoda,  Users } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { toast } from 'sonner';
+import PeerCard from '@/components/features/peer-card';
+import StaticPeerCard from '@/components/features/static-peer-card';
+import { Peer } from '@/types';
 
-export default function Dashboard({ tournament, recents, peers }) {
-    const handleCopyPeerLink = async (peerId: string) => {
-        const fullUrl = `${window.location.origin}/peers/join/${peerId}`;
-        await navigator.clipboard.writeText(fullUrl);
-        toast.success('Peer link copied ✅');
-    };
+interface Props {
+    tournament: {
+        id: number,
+        name: string,
+        amount: number
+    },
+    recents: Peer[],
+    peers: {
+        data: Peer[]
+    }
+}
+
+export default function Dashboard({ tournament, recents, peers }: Props) {
+
     return (
         <AppLayout breadcrumbs={dashboardBreadcrumbs}>
             <Head title="Peers" />
@@ -119,85 +124,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                             >
                                 {recents?.map((peer) => (
                                     <SwiperSlide key={peer.id}>
-                                        <div className="relative z-0 rounded-sm border bg-white/10 p-1 backdrop-blur-[1px]">
-                                            <Card className="bg-default/10 group z-50 w-full cursor-pointer rounded border-input p-0 transition-all duration-300">
-                                                <CardContent className="p-3">
-                                                    {/* Header */}
-                                                    <div className="mb-3 flex items-start justify-between">
-                                                        <div className="flex-1">
-                                                            <div className="mb-1 flex items-center gap-2">
-                                                                <h4 className="truncate text-sm font-semibold text-gray-600 capitalize">
-                                                                    {peer.name}
-                                                                </h4>
-                                                            </div>
-                                                            <p className="text-xs text-gray-600">by @{peer.created_by.name}</p>
-                                                        </div>
-                                                        <Badge className={`text-default rounded border bg-gray-50 px-2 py-1 text-xs tracking-wider`}>
-                                                            ₦{Number(peer.amount).toFixed()}
-                                                        </Badge>
-                                                    </div>
-
-                                                    {/* Prize Pool */}
-                                                    <div className="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Participants</span>
-                                                            {peer?.users_count > 0 ? (
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="flex -space-x-2">
-                                                                        {Array.from({
-                                                                            length: Math.min(peer.users_count, 3),
-                                                                        }).map((_, idx) => (
-                                                                            <Avatar
-                                                                                key={idx}
-                                                                                className="h-7 w-7 rounded-full border-2 border-white dark:border-gray-800"
-                                                                            >
-                                                                                <AvatarFallback className="text-xs font-semibold">
-                                                                                    {idx + 1}
-                                                                                </AvatarFallback>
-                                                                            </Avatar>
-                                                                        ))}
-                                                                    </div>
-                                                                    {peer.users_count > 3 && (
-                                                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                                                                            +{peer.users_count - 3}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                                                    Be the first!
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Action Button */}
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <Link href={show(peer?.peer_id)} prefetch>
-                                                            <Button className="w-full rounded-sm text-xs" size="sm" variant="outline">
-                                                                <Target className="mr-1 h-3 w-3" />
-                                                                View
-                                                            </Button>
-                                                        </Link>
-                                                        <Link href={joinPeer(peer.peer_id)} prefetch>
-                                                            <Button className="w-full rounded-sm text-xs" size="sm">
-                                                                Join
-                                                                <ArrowDownRightSquareIcon className="mr-1 h-3 w-3 transition duration-100 group-hover:-rotate-45" />
-                                                            </Button>
-                                                        </Link>
-                                                        <Button
-                                                            onClick={() => handleCopyPeerLink(peer.peer_id)}
-                                                            className="w-full rounded-sm text-xs"
-                                                            size="sm"
-                                                            variant="outline"
-                                                        >
-                                                            <Copy className="mr-1 h-3 w-3" />
-                                                            Copy
-                                                        </Button>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
+                                       <StaticPeerCard peer={peer} key={peer.peer_id} />
                                     </SwiperSlide>
                                 ))}
                             </Swiper>
@@ -219,74 +146,7 @@ export default function Dashboard({ tournament, recents, peers }) {
                     <div className="mt-2 flex flex-col">
                         {(peers.data || []).length > 0 ? (
                             peers.data.map((peer, i) => (
-                                <Card className="group mb-3 rounded border bg-background/10 p-0 ring ring-background" key={i}>
-                                    <Collapsible>
-                                        <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between rounded p-2 transition hover:bg-[var(--clr-surface-a10)]">
-                                            <div className="flex items-center gap-2">
-                                                <Avatar className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--clr-surface-a20)] shadow-sm ring ring-[#c4c4c4]">
-                                                    <AvatarFallback className="rounded shadow-md">
-                                                        {peer.name.substring(0, 2).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex flex-col items-start">
-                                                    <div className="text-sm font-semibold text-gray-600 md:text-base">{peer.name}</div>
-                                                    <div className="text-[10px] text-gray-600 lg:text-xs">by @{peer.created_by.name}</div>
-                                                </div>
-                                            </div>
-                                            <span className="text-sm font-medium text-gray-600 md:text-base">
-                                                {new Date(peer.created_at).toLocaleDateString()}
-                                            </span>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                            <div className="grid grid-cols-2 gap-4 border-t border-border px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-default flex size-10 items-center justify-center rounded-full shadow ring ring-background">
-                                                        <Users size={18} />
-                                                    </div>
-                                                    <div className="flex flex-col items-start">
-                                                        <small className="text-gray-600">Entries</small>
-                                                        <span className="text-gray-600">{peer.users_count}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex size-10 items-center justify-center rounded-full shadow ring ring-background">
-                                                        <HandCoins size={18} />
-                                                    </div>
-                                                    <div className="flex flex-col items-start">
-                                                        <small className="text-gray-600">Entry Fee</small>
-                                                        <span className="text-gray-600">₦{Number(peer.amount).toFixed()}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* <div className="px-4 py-3 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                        </div> */}
-                                            <div className="grid grid-cols-3 gap-2 border-t border-border px-4 py-3">
-                                                <Link href={show(peer?.peer_id)} className="w-full" prefetch>
-                                                    <Button className="w-full text-xs font-medium" size="sm" variant="outline">
-                                                        <Target className="mr-1 h-3 w-3" />
-                                                        View
-                                                    </Button>
-                                                </Link>
-                                                <Link href={joinPeer(peer.peer_id)} className="w-full" prefetch>
-                                                    <Button className="w-full text-xs font-medium" size="sm">
-                                                        Join
-                                                        <ArrowDownRightSquareIcon className="mr-1 h-3 w-3 transition duration-100 group-hover:-rotate-45" />
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    onClick={() => handleCopyPeerLink(peer.peer_id)}
-                                                    className="w-full text-xs font-medium"
-                                                    size="sm"
-                                                    variant="outline"
-                                                >
-                                                    <Copy className="mr-1 h-3 w-3" />
-                                                    Copy
-                                                </Button>
-                                            </div>
-                                        </CollapsibleContent>
-                                    </Collapsible>
-                                </Card>
+                                <PeerCard key={i} peer={peer} />
                             ))
                         ) : (
                             <div className="rounded border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">

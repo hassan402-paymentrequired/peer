@@ -9,7 +9,6 @@ use App\Models\Tournament;
 use App\Models\Peer;
 use App\Models\FixtureLineup;
 use App\Jobs\CalculateCompetitionScoresJob;
-use App\Jobs\FetchFixtureLineupsJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
@@ -46,7 +45,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
             Log::info('Found ' . $activeFixtures->count() . ' active fixtures to process');
 
             // Process fixtures in chunks to avoid timeout
-            $activeFixtures->chunk(5)->each(function ($fixtureChunk) {
+            $activeFixtures->chunk(100)->each(function ($fixtureChunk) {
                 foreach ($fixtureChunk as $fixture) {
                     $this->processFixture($fixture);
                     sleep(1);
@@ -69,9 +68,6 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function getActiveFixtures()
     {
-        // Only fetch statistics for fixtures that are:
-        // 1. Currently ongoing (to get live updates)
-        // 2. Just finished (to get final stats)
         return Fixture::where(function ($query) {
             $query->whereIn('status', [
                 'First Half',
@@ -192,16 +188,12 @@ class FetchLiveStatisticsJob implements ShouldQueue
         $cards = $statistics['cards'] ?? [];
         $tackles = $statistics['tackles'] ?? [];
 
-        // Determine which team this player belongs to
-        $teamId = $this->determinePlayerTeam($fixture, $player['id']);
-
         PlayerStatistic::updateOrCreate(
             [
                 'player_id' => $localPlayer->id,
                 'fixture_id' => $fixture->id,
             ],
             [
-                'team_id' => $teamId,
                 'match_date' => $fixture->date,
 
                 // Goals and assists (mapped correctly from API)

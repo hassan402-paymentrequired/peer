@@ -26,7 +26,6 @@ class TournamentController extends Controller
     {
         $tournament = Tournament::active()->first();
 
-        // Check for recently completed tournament (within last 24 hours)
         $recentlyCompletedTournament = Tournament::where('status', 'closed')
             ->where('updated_at', '>=', now()->subHours(24))
             ->orderBy('updated_at', 'desc')

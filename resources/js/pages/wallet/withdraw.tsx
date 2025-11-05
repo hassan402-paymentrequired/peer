@@ -1,24 +1,24 @@
 // resources/js/Components/WithdrawModal.jsx
-import { initiateWithdrawal, verifyBankAccount } from '@/actions/App/Http/Controllers/Wallet/WalletController';
+import { initiateWithdrawal } from '@/actions/App/Http/Controllers/Wallet/WalletController';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { router, useForm, usePage } from '@inertiajs/react';
+import {  useForm } from '@inertiajs/react';
 import { Loader } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function WithdrawModal() {
-    const { data:  flash } = usePage<{
-        data: {
-            account_name: string;
-            account_number: string;
-            bank_id: string | number;
-        };
-        flash: { success: string; error: string };
-    }>().props;
+    // const { flash } = usePage<{
+    //     data: {
+    //         account_name: string;
+    //         account_number: string;
+    //         bank_id: string | number;
+    //     };
+    //     flash: { success: string; error: string };
+    // }>().props;
     const [code, setCode] = useState('');
     const [accN, setAccN] = useState('');
     const [loading, setLoading] = useState(false);
@@ -30,6 +30,7 @@ export default function WithdrawModal() {
         account_number: '',
         bank_code: '',
         account_name: '',
+        bank_name: ''
     });
 
     useEffect(() => {
@@ -74,6 +75,7 @@ export default function WithdrawModal() {
             if (selectedBank) {
                 setCode(selectedBank.code);
                 setData('bank_code', selectedBank.code);
+                setData('bank_name', selectedBank.name)
             }
         } catch (error) {
             console.error('Error verifying bank:', error);
@@ -82,7 +84,7 @@ export default function WithdrawModal() {
         }
     };
 
-    const handleWithdraw = (e) => {
+    const handleWithdraw = (e: React.FormEvent) => {
         e.preventDefault();
 
         transform((data) => ({

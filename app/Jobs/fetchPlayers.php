@@ -28,7 +28,6 @@ class FetchPlayers implements ShouldQueue
         $apiUrl = 'https://v3.football.api-sports.io/players';
         $apiKey = env('SPORT_API_KEY');
         $page = 1;
-        $insertBatch = [];
 
         while (true) {
             Log::info("Fetching players for league $leagueId, season $season, page $page...");
@@ -42,13 +41,12 @@ class FetchPlayers implements ShouldQueue
 
 
             $body = $response->json();
-            Log::info('Fetch Players Response', $body);
             $players = $body['response'] ?? [];
             $paging = $body['paging'] ?? ['current' => $page, 'total' => $page];
             $currentPage = $paging['current'] ?? $page;
             $totalPages = $paging['total'] ?? $page;
 
-            Log::info("Total players fetched: " . count($players));
+            Log::info("Total players fetched for page {$page}: " . count($players));
 
             foreach ($players as $item) {
                 $player = $item['player'];
@@ -56,32 +54,24 @@ class FetchPlayers implements ShouldQueue
                 $team = $stats['team'] ?? [];
                 $games = $stats['games'] ?? [];
                 $position = $games['position'] ?? '';
-                $insertBatch[] = [
-                    'external_id'  => $player['id'],
-                    'name'         => $player['name'],
-                    'team_id'      => $team['id'] ?? '',
-                    'position'     => $position,
-                    'image'        => $player['photo'] ?? '',
-                    'nationality'  => $player['nationality'] ?? '',
-                    'player_rating' => random_int(1, 5),
-                    'created_at'   => now(),
-                    'updated_at'   => now(),
-                ];
-            }
 
-            if (count($insertBatch) >= 500) {
-                \App\Models\Player::upsert($insertBatch, ['external_id'], ['name', 'team_id', 'position', 'image', 'nationality', 'player_rating', 'updated_at']);
-                $insertBatch = [];
+                \App\Models\Player::query()->updateOrCreate(
+                    ['external_id'  => $player['id'],],
+                    [
+                        'name'         => $player['name'],
+                        'team_id'      => $team['id'] ?? '',
+                        'position'     => $position,
+                        'image'        => $player['photo'] ?? '',
+                        'nationality'  => $player['nationality'] ?? '',
+                        'player_rating' => random_int(1, 5),
+                    ]
+                );
             }
 
             if ($currentPage >= $totalPages) {
                 break;
             }
             $page++;
-        }
-
-        if (!empty($insertBatch)) {
-            \App\Models\Player::upsert($insertBatch, ['external_id'], ['name', 'team_id', 'position', 'image', 'nationality', 'player_rating', 'updated_at']);
         }
 
         Log::info('All players fetched and inserted/updated successfully.');

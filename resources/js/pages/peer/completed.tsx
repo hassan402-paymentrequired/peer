@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { Head, Link } from '@inertiajs/react';
 import Ongoing from './on-going';
+import StaticPeerCard from '@/components/features/static-peer-card';
 
 interface Props {
     history: {
@@ -43,7 +44,7 @@ const Contests = ({ history }: Props) => {
                             </div>
                         // {/* </div> */}
                     )}
-                    {history?.data?.length > 0 && history?.data?.map((p: any) => <Ongoing peer={p} key={p.id} />)}
+                    {history?.data?.length > 0 && history?.data?.map((p: any) => <StaticPeerCard peer={p} key={p.id} />)}
                 </div>
             </div>
         </AppLayout>

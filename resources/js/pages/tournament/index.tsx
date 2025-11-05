@@ -198,7 +198,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                     ) : (
                         <div className="flex justify-center py-8">
                             <div className="flex max-w-xs flex-col items-center p-6">
-                                <span className="mb-2 animate-bounce text-4xl">🌍</span>
+                                <span className="mb-2 text-4xl">🌍</span>
                                 <div className="mb-3 text-center font-semibold text-muted">You haven't joined {tournament.name} yet!</div>
                                 <p className="mb-4 text-center text-muted">
                                     Be part of the excitement—join the contest and compete with other players.

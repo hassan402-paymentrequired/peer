@@ -82,15 +82,7 @@ Route::prefix('webhooks')->group(function () {
     Route::post('/flutterwave/webhook', [WalletController::class, 'processTransferWebhook']);
 });
 
-// Test endpoint to verify webhook is reachable (remove in production)
-Route::get('/webhooks/test', function () {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Webhook endpoint is reachable',
-        'timestamp' => now(),
-        'environment' => app()->environment(),
-    ]);
-});
+
 
 Route::post('/save-subscription', [\App\Utils\Services\NotificationService::class, 'storeSubscription'])->name('save.subscription');
 

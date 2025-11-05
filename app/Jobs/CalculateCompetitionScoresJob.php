@@ -300,7 +300,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
     }
 
     private function determinePeerWinner($participants)
-    {
+    { 
         // Sort participants by total points (descending)
         $sortedParticipants = $participants->sortByDesc('total_points');
 

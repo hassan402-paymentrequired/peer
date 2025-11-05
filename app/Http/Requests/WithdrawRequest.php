@@ -44,6 +44,9 @@ class WithdrawRequest extends FormRequest
                 'required',
                 'string',
             ],
+            'bank_name' => [
+                'string'
+            ]
 
         ];
     }
