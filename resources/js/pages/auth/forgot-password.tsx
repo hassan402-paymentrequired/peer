@@ -13,7 +13,7 @@ import AuthLayout from '@/layouts/auth-layout';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
-        <AuthLayout title="Forgot password" description="Enter your email to receive a password reset link">
+        <AuthLayout title="Forgot password" description="Enter your phone number to receive a password reset link via SMS">
             <Head title="Forgot password" />
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
@@ -23,16 +23,24 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input id="email" type="email" name="email" autoComplete="off" autoFocus placeholder="email@example.com" />
-
-                                <InputError message={errors.email} />
+                                <Label htmlFor="phone">Phone number</Label>
+                                <Input
+                                    id="phone"
+                                    type="tel"
+                                    name="phone"
+                                    autoComplete="tel"
+                                    autoFocus
+                                    placeholder="08012345678"
+                                    pattern="^0[7-9][0-1][0-9]{8}$"
+                                />
+                                <InputError message={errors.phone} />
+                                <p className="text-xs text-muted-foreground">Enter your Nigerian phone number</p>
                             </div>
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button className="w-full" disabled={processing}>
                                     {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                    Email password reset link
+                                    Send SMS reset link
                                 </Button>
                             </div>
                         </>

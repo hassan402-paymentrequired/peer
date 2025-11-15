@@ -173,7 +173,7 @@ class WalletService
                 ]);
 
                 $user = $transaction->user;
-                if ($user->email) {
+                if ($user->phone || $user->email) {
                     $failureReason = $data['processor_response'] ?? 'Payment failed';
                     SendNotificationJob::dispatch($user, new WalletFundingFailedNotification($transaction->fresh(), $failureReason));
                 }
@@ -233,7 +233,7 @@ class WalletService
             ]);
 
             // Send notification to user
-            if ($user->email) {
+            if ($user->phone || $user->email) {
                 SendNotificationJob::dispatch($user, new WalletFundedNotification($transaction->fresh()));
             }
         });

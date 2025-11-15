@@ -2,21 +2,24 @@
 
 namespace App\Notifications;
 
+use App\Channels\SmsChannel;
+use App\Models\Transaction;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class WalletFundedNotification extends Notification
+class WalletFundedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    protected Transaction $transaction;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(Transaction $transaction)
     {
-        //
+        $this->transaction = $transaction;
     }
 
     /**
@@ -26,15 +29,25 @@ class WalletFundedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $channels = ['database'];
+
+        // Add SMS channel if user has phone number
+        if ($notifiable->phone) {
+            $channels[] = SmsChannel::class;
+        }
+
+        return $channels;
     }
 
     /**
-     * Get the mail representation of the notification.
+     * Get the SMS representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toSms(object $notifiable): string
     {
-        return (new MailMessage)->markdown('wallet-funded');
+        $amount = number_format($this->transaction->amount, 2);
+        $balance = number_format($this->transaction->wallet_balance_after, 2);
+
+        return "Hi {$notifiable->name}, your wallet has been funded with ₦{$amount}. New balance: ₦{$balance}. Thank you for using " . config('app.name') . "!";
     }
 
     /**
@@ -45,7 +58,12 @@ class WalletFundedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'type' => 'wallet_funded',
+            'title' => 'Wallet Funded Successfully',
+            'message' => "Your wallet has been funded with ₦" . number_format($this->transaction->amount, 2),
+            'amount' => $this->transaction->amount,
+            'new_balance' => $this->transaction->wallet_balance_after,
+            'transaction_ref' => $this->transaction->transaction_ref,
         ];
     }
 }

@@ -24,7 +24,41 @@ class PrizeWonNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return [WebPushChannel::class];
+        $channels = ['database', WebPushChannel::class];
+
+        // Add SMS channel if user has phone number
+        if ($notifiable->phone) {
+            $channels[] = \App\Channels\SmsChannel::class;
+        }
+
+        return $channels;
+    }
+
+    /**
+     * Get the SMS representation of the notification.
+     */
+    public function toSms(object $notifiable): string
+    {
+        $amount = number_format($this->amount, 2);
+        $balance = number_format($this->newBalance, 2);
+
+        return "🎉 Congratulations {$notifiable->name}! You won ₦{$amount} in {$this->competitionName}! Your new balance is ₦{$balance}. Well done! 🏆";
+    }
+
+    /**
+     * Get the array representation of the notification.
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type' => 'prize_won',
+            'title' => 'Prize Won!',
+            'message' => "You won ₦" . number_format($this->amount, 2) . " in {$this->competitionName}",
+            'amount' => $this->amount,
+            'competition_type' => $this->competitionType,
+            'competition_name' => $this->competitionName,
+            'new_balance' => $this->newBalance,
+        ];
     }
 
     /**
