@@ -61,6 +61,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/api', [\App\Http\Controllers\SearchController::class, 'api'])->name('search.api');
     });
 
+    Route::prefix('sms')->group(function () {
+        Route::post('/test', [\App\Http\Controllers\SmsController::class, 'sendTestSms'])->name('sms.test');
+        Route::get('/balance', [\App\Http\Controllers\SmsController::class, 'getBalance'])->name('sms.balance');
+        Route::post('/update-phone', [\App\Http\Controllers\SmsController::class, 'updatePhone'])->name('sms.update-phone');
+        Route::post('/send-otp', [\App\Http\Controllers\SmsController::class, 'sendOtp'])->name('sms.send-otp');
+        Route::post('/verify-otp', [\App\Http\Controllers\SmsController::class, 'verifyOtp'])->name('sms.verify-otp');
+        Route::get('/sender-ids', [\App\Http\Controllers\SmsController::class, 'getSenderIds'])->name('sms.sender-ids');
+    });
+
     // Push subscription route
     Route::post('/save-subscription', [\App\Http\Controllers\PushSubscriptionController::class, 'saveSubscription'])->name('push.save-subscription');
 

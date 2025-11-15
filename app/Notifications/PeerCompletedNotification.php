@@ -25,7 +25,46 @@ class PeerCompletedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return [WebPushChannel::class];
+        $channels = ['database', WebPushChannel::class];
+
+        // Add SMS channel if user has phone number
+        if ($notifiable->phone) {
+            $channels[] = \App\Channels\SmsChannel::class;
+        }
+
+        return $channels;
+    }
+
+    /**
+     * Get the SMS representation of the notification.
+     */
+    public function toSms(object $notifiable): string
+    {
+        if ($this->isWinner) {
+            $prize = number_format($this->prizeAmount, 2);
+            return "🎯 Amazing {$notifiable->name}! You won '{$this->peerName}' with {$this->totalPoints} points and earned ₦{$prize}! 🏆";
+        } else {
+            return "Hi {$notifiable->name}, '{$this->peerName}' has ended. You scored {$this->totalPoints} points. Winner: {$this->winnerName}";
+        }
+    }
+
+    /**
+     * Get the array representation of the notification.
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type' => 'peer_completed',
+            'title' => $this->isWinner ? 'Peer Champion!' : 'Peer Competition Completed',
+            'message' => $this->isWinner ?
+                "Amazing! You won '{$this->peerName}'" :
+                "'{$this->peerName}' has ended",
+            'peer_name' => $this->peerName,
+            'is_winner' => $this->isWinner,
+            'total_points' => $this->totalPoints,
+            'winner_name' => $this->winnerName,
+            'prize_amount' => $this->prizeAmount,
+        ];
     }
 
     /**

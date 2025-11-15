@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\SmsChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -26,7 +27,26 @@ class WelcomeNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // Prioritize SMS for users with phone numbers
+        $channels = [];
+
+        if ($notifiable->phone) {
+            $channels[] = SmsChannel::class;
+        }
+
+        if ($notifiable->email) {
+            $channels[] = 'mail';
+        }
+
+        return $channels ?: ['mail']; // Fallback to mail if no phone/email
+    }
+
+    /**
+     * Get the SMS representation of the notification.
+     */
+    public function toSms(object $notifiable): string
+    {
+        return "Welcome to " . config('app.name') . ", {$notifiable->name}! Your account has been created successfully. Start playing and winning today!";
     }
 
     /**

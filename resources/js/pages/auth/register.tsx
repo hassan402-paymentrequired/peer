@@ -39,16 +39,24 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="phone">Phone number</Label>
                                 <Input
-                                    id="email"
-                                    type="email"
+                                    id="phone"
+                                    type="tel"
                                     required
                                     tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
+                                    autoComplete="tel"
+                                    name="phone"
+                                    placeholder="08012345678"
+                                    pattern="^0[7-9][0-1][0-9]{8}$"
                                 />
+                                <InputError message={errors.phone} />
+                                <p className="text-xs text-muted-foreground">Enter a valid Nigerian phone number</p>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="email">Email address (optional)</Label>
+                                <Input id="email" type="email" tabIndex={3} autoComplete="email" name="email" placeholder="email@example.com" />
                                 <InputError message={errors.email} />
                             </div>
 
@@ -58,7 +66,7 @@ export default function Register() {
                                     id="password"
                                     type="password"
                                     required
-                                    tabIndex={3}
+                                    tabIndex={4}
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
@@ -72,7 +80,7 @@ export default function Register() {
                                     id="password_confirmation"
                                     type="password"
                                     required
-                                    tabIndex={4}
+                                    tabIndex={5}
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
@@ -80,7 +88,7 @@ export default function Register() {
                                 <InputError message={errors.password_confirmation} />
                             </div>
 
-                            <Button type="submit" className="mt-2 w-full" tabIndex={5}>
+                            <Button type="submit" className="mt-2 w-full" tabIndex={6}>
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                 Create account
                             </Button>
@@ -88,7 +96,7 @@ export default function Register() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
+                            <TextLink href={login()} tabIndex={7}>
                                 Log in
                             </TextLink>
                         </div>

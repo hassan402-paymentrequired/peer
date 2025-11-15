@@ -10,25 +10,25 @@ import AuthLayout from '@/layouts/auth-layout';
 
 interface ResetPasswordProps {
     token: string;
-    email: string;
+    phone: string;
 }
 
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
+export default function ResetPassword({ token, phone }: ResetPasswordProps) {
     return (
         <AuthLayout title="Reset password" description="Please enter your new password below">
             <Head title="Reset password" />
 
             <Form
                 {...NewPasswordController.store.form()}
-                transform={(data) => ({ ...data, token, email })}
+                transform={(data) => ({ ...data, token, phone })}
                 resetOnSuccess={['password', 'password_confirmation']}
             >
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" name="email" autoComplete="email" value={email} className="mt-1 block w-full" readOnly />
-                            <InputError message={errors.email} className="mt-2" />
+                            <Label htmlFor="phone">Phone number</Label>
+                            <Input id="phone" type="tel" name="phone" autoComplete="tel" value={phone} className="mt-1 block w-full" readOnly />
+                            <InputError message={errors.phone} className="mt-2" />
                         </div>
 
                         <div className="grid gap-2">

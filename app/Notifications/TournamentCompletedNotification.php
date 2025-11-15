@@ -24,7 +24,45 @@ class TournamentCompletedNotification extends Notification implements ShouldQueu
      */
     public function via(object $notifiable): array
     {
-        return [WebPushChannel::class];
+        $channels = ['database', WebPushChannel::class];
+
+        // Add SMS channel if user has phone number
+        if ($notifiable->phone) {
+            $channels[] = \App\Channels\SmsChannel::class;
+        }
+
+        return $channels;
+    }
+
+    /**
+     * Get the SMS representation of the notification.
+     */
+    public function toSms(object $notifiable): string
+    {
+        if ($this->isWinner) {
+            $prize = number_format($this->prizeAmount, 2);
+            return "🏆 Congratulations {$notifiable->name}! You won '{$this->tournamentName}' with {$this->totalPoints} points and earned ₦{$prize}! 🎉";
+        } else {
+            return "Hi {$notifiable->name}, '{$this->tournamentName}' has ended. You scored {$this->totalPoints} points. Better luck next time!";
+        }
+    }
+
+    /**
+     * Get the array representation of the notification.
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'type' => 'tournament_completed',
+            'title' => $this->isWinner ? 'Tournament Winner!' : 'Tournament Completed',
+            'message' => $this->isWinner ?
+                "Congratulations! You won '{$this->tournamentName}'" :
+                "'{$this->tournamentName}' has ended",
+            'tournament_name' => $this->tournamentName,
+            'is_winner' => $this->isWinner,
+            'total_points' => $this->totalPoints,
+            'prize_amount' => $this->prizeAmount,
+        ];
     }
 
     /**
