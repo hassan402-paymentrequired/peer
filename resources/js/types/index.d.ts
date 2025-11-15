@@ -69,6 +69,11 @@ export interface Peer {
         username?: string;
         name?: string
     };
+    winner?: {
+        id: number;
+        name: string;
+        email?: string;
+    };
     users?: PeerUser[];
     users_count?: number;
     created_at: string;
