@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('account_number');
             $table->decimal('amount', 10, 2);
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->enum('status', ['pending', 'paid', 'cancel'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'cancelled', 'rejected'])->default('pending');
             $table->text('reason')->nullable();
             $table->timestamps();
         });

@@ -75,6 +75,11 @@ Route::middleware(['auth:admin'])->group(function () {
         // Route::get('/', [\App\Http\Controllers\V1\User\UserController::class, 'index']);
     });
 
+      Route::prefix('withdraw')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\User\UserController::class, 'index']);
+        Route::patch('/{withdrawRequest}/status', [\App\Http\Controllers\Api\User\UserController::class, 'update']);
+    });
+
     Route::prefix('fixtures')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'index']);
         Route::get('/active-fixtures', [\App\Http\Controllers\Api\Fixture\FixtureController::class, 'activeFixtures']);
