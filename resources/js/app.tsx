@@ -22,16 +22,27 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 // ✅ Save subscription to backend (implement this)
-function saveSub(subscription: any) {
-    fetch('/save-subscription', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-        },
-        credentials: 'include',
-        body: subscription,
-    });
+async function saveSub(subscription: any) {
+    try {
+        const response = await fetch('/save-subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            credentials: 'include',
+            body: subscription,
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Failed to save subscription:', response.status, text);
+        } else {
+            console.log('Subscription saved successfully');
+        }
+    } catch (err) {
+        console.error('Error saving subscription:', err);
+    }
 }
 
 // ✅ Register service worker and ask permission automatically
@@ -41,19 +52,27 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
             const registration = await navigator.serviceWorker.register('/service-worker.js');
             console.log('Service Worker registered:', registration);
 
+            if (!vapidPublicKey) {
+                console.error('VAPID Public Key is missing! Check your .env file.');
+                return;
+            }
+
             if (Notification.permission === 'default') {
                 // ask only if user hasn’t answered before
                 const permission = await Notification.requestPermission();
+                console.log('Notification permission requested:', permission);
                 if (permission !== 'granted') return;
             }
 
             if (Notification.permission === 'granted') {
+                console.log('Subscribing to push notifications...');
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
                 });
                 console.log('Push Subscription:', JSON.stringify(subscription));
-                saveSub(JSON.stringify(subscription));
+                await saveSub(JSON.stringify(subscription));
+                console.log('Subscription saved to backend.');
             }
         } catch (error) {
             console.error('Service Worker registration or push setup failed:', error);

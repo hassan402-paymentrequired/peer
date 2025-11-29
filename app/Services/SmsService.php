@@ -4,19 +4,24 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Exception;
 
 class SmsService
 {
+    protected string $driver;
     protected string $apiUrl;
     protected string $apiKey;
     protected string $senderId;
 
     public function __construct()
     {
-        $this->apiUrl = config('sms.termii.api_url', 'https://v3.api.termii.com/api/sms/send');
-        $this->apiKey = config('sms.termii.api_key');
-        $this->senderId = config('sms.termii.sender_id', config('app.name'));
+        $this->driver = config('sms.default', 'kudisms');
+        $driverConfig = config("sms.{$this->driver}");
+        
+        $this->apiUrl = $driverConfig['api_url'];
+        $this->apiKey = $driverConfig['api_key'];
+        $this->senderId = $driverConfig['sender_id'] ?? config('app.name');
     }
 
     /**
@@ -26,12 +31,72 @@ class SmsService
     {
         try {
             $sender = $sender ?? $this->senderId;
-
-            // Clean phone number for international format
             $cleanPhone = $this->cleanPhoneNumber($phoneNumber);
 
+            if ($this->driver === 'kudisms') {
+                return $this->sendKudiSms($cleanPhone, $message, $sender);
+            } else {
+                return $this->sendTermiiSms($cleanPhone, $message, $sender);
+            }
+        } catch (Exception $e) {
+            Log::error("{$this->driver} SMS service exception", [
+                'phone' => $phoneNumber,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send SMS via KudiSMS
+     */
+    protected function sendKudiSms(string $phone, string $message, string $sender): bool
+    {
+        try {
+            $response = Http::post("{$this->apiUrl}/sms", [
+                'token' => $this->apiKey,
+                'senderID' => $sender,
+                'recipients' => $phone,
+                'message' => $message,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                // KudiSMS returns status code 000 for success
+                if (isset($data['status']) && $data['status'] === '000') {
+                    Log::info('SMS sent successfully via KudiSMS', [
+                        'phone' => $phone,
+                        'response' => $data,
+                    ]);
+                    return true;
+                }
+            }
+
+            Log::error('KudiSMS sending failed', [
+                'phone' => $phone,
+                'response' => $response->json(),
+                'status_code' => $response->status(),
+            ]);
+
+            return false;
+        } catch (Exception $e) {
+            Log::error('KudiSMS exception', [
+                'phone' => $phone,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send SMS via Termii (legacy)
+     */
+    protected function sendTermiiSms(string $phone, string $message, string $sender): bool
+    {
+        try {
             $payload = [
-                'to' => $cleanPhone,
+                'to' => $phone,
                 'from' => $sender,
                 'sms' => $message,
                 'type' => 'plain',
@@ -44,10 +109,9 @@ class SmsService
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Termii returns different response structure
                 if (isset($data['message_id']) || (isset($data['code']) && $data['code'] === 'ok')) {
                     Log::info('SMS sent successfully via Termii', [
-                        'phone' => $cleanPhone,
+                        'phone' => $phone,
                         'message_id' => $data['message_id'] ?? null,
                         'balance' => $data['balance'] ?? null,
                     ]);
@@ -56,7 +120,7 @@ class SmsService
             }
 
             Log::error('Termii SMS sending failed', [
-                'phone' => $cleanPhone,
+                'phone' => $phone,
                 'response' => $response->json(),
                 'status_code' => $response->status(),
             ]);
@@ -64,7 +128,7 @@ class SmsService
             return false;
         } catch (Exception $e) {
             Log::error('Termii SMS service exception', [
-                'phone' => $phoneNumber,
+                'phone' => $phone,
                 'error' => $e->getMessage(),
             ]);
             return false;
@@ -84,8 +148,6 @@ class SmsService
 
         return $results;
     }
-
-
 
     /**
      * Clean and format phone number for Nigerian numbers
@@ -112,13 +174,93 @@ class SmsService
     }
 
     /**
-     * Check SMS balance
+     * Send OTP (Local implementation)
+     * Generates OTP locally, stores in cache, and sends via SMS
+     */
+    public function sendOtp(string $phoneNumber, int $pinLength = 6, int $timeToLive = 10): ?string
+    {
+        try {
+            $cleanPhone = $this->cleanPhoneNumber($phoneNumber);
+            
+            // Generate random OTP
+            $otp = str_pad((string) random_int(0, pow(10, $pinLength) - 1), $pinLength, '0', STR_PAD_LEFT);
+            
+            // Store OTP in cache with TTL
+            $cacheKey = "otp_{$cleanPhone}";
+            Cache::put($cacheKey, $otp, now()->addMinutes($timeToLive));
+            
+            // Send OTP via SMS
+            $message = "Your " . config('app.name') . " verification code is {$otp}. Valid for {$timeToLive} minutes.";
+            $sent = $this->sendSms($cleanPhone, $message);
+            
+            if ($sent) {
+                Log::info('OTP sent successfully', [
+                    'phone' => $cleanPhone,
+                    'cache_key' => $cacheKey,
+                ]);
+                // Return phone as pinId for compatibility
+                return $cleanPhone;
+            }
+            
+            // Clean up cache if sending failed
+            Cache::forget($cacheKey);
+            return null;
+        } catch (Exception $e) {
+            Log::error('OTP sending failed', [
+                'phone' => $phoneNumber,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Verify OTP (Local implementation)
+     */
+    public function verifyOtp(string $pinId, string $pin): bool
+    {
+        try {
+            // pinId is the phone number
+            $cacheKey = "otp_{$pinId}";
+            $storedOtp = Cache::get($cacheKey);
+            
+            if ($storedOtp && $storedOtp === $pin) {
+                // OTP is valid, remove from cache
+                Cache::forget($cacheKey);
+                
+                Log::info('OTP verified successfully', [
+                    'phone' => $pinId,
+                ]);
+                return true;
+            }
+            
+            Log::warning('OTP verification failed', [
+                'phone' => $pinId,
+                'reason' => $storedOtp ? 'incorrect_pin' : 'expired_or_not_found',
+            ]);
+            
+            return false;
+        } catch (Exception $e) {
+            Log::error('OTP verification exception', [
+                'pin_id' => $pinId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Check SMS balance (KudiSMS)
      */
     public function getBalance(): ?float
     {
+        if ($this->driver !== 'kudisms') {
+            return null;
+        }
+
         try {
-            $response = Http::get('https://v3.api.termii.com/api/get-balance', [
-                'api_key' => $this->apiKey,
+            $response = Http::get("{$this->apiUrl}/balance", [
+                'token' => $this->apiKey,
             ]);
 
             if ($response->successful()) {
@@ -128,7 +270,7 @@ class SmsService
 
             return null;
         } catch (Exception $e) {
-            Log::error('Termii balance check failed', [
+            Log::error('KudiSMS balance check failed', [
                 'error' => $e->getMessage(),
             ]);
             return null;
@@ -136,116 +278,10 @@ class SmsService
     }
 
     /**
-     * Get sender IDs from Termii
+     * Get sender IDs (Not applicable for KudiSMS)
      */
     public function getSenderIds(): array
     {
-        try {
-            $response = Http::get('https://v3.api.termii.com/api/sender-id', [
-                'api_key' => $this->apiKey,
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return $data['data'] ?? [];
-            }
-
-            return [];
-        } catch (Exception $e) {
-            Log::error('Termii sender ID fetch failed', [
-                'error' => $e->getMessage(),
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Send OTP via Termii
-     */
-    public function sendOtp(string $phoneNumber, int $pinLength = 6, int $timeToLive = 10): ?string
-    {
-        try {
-            $cleanPhone = $this->cleanPhoneNumber($phoneNumber);
-
-            $payload = [
-                'api_key' => $this->apiKey,
-                'message_type' => 'NUMERIC',
-                'to' => $cleanPhone,
-                'from' => $this->senderId,
-                'channel' => 'generic',
-                'pin_attempts' => 3,
-                'pin_time_to_live' => $timeToLive,
-                'pin_length' => $pinLength,
-                'pin_placeholder' => '< 1234 >',
-                'message_text' => 'Your ' . config('app.name') . ' verification code is < 1234 >. Valid for ' . $timeToLive . ' minutes.',
-            ];
-
-            $response = Http::post('https://v3.api.termii.com/api/sms/otp/send', $payload);
-
-            if ($response->successful()) {
-                $data = $response->json();
-
-                if (isset($data['pinId'])) {
-                    Log::info('OTP sent successfully via Termii', [
-                        'phone' => $cleanPhone,
-                        'pin_id' => $data['pinId'],
-                    ]);
-                    return $data['pinId'];
-                }
-            }
-
-            Log::error('Termii OTP sending failed', [
-                'phone' => $cleanPhone,
-                'response' => $response->json(),
-            ]);
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Termii OTP service exception', [
-                'phone' => $phoneNumber,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        }
-    }
-
-    /**
-     * Verify OTP via Termii
-     */
-    public function verifyOtp(string $pinId, string $pin): bool
-    {
-        try {
-            $payload = [
-                'api_key' => $this->apiKey,
-                'pin_id' => $pinId,
-                'pin' => $pin,
-            ];
-
-            $response = Http::post('https://v3.api.termii.com/api/sms/otp/verify', $payload);
-
-            if ($response->successful()) {
-                $data = $response->json();
-
-                if (isset($data['verified']) && $data['verified'] === true) {
-                    Log::info('OTP verified successfully via Termii', [
-                        'pin_id' => $pinId,
-                    ]);
-                    return true;
-                }
-            }
-
-            Log::error('Termii OTP verification failed', [
-                'pin_id' => $pinId,
-                'response' => $response->json(),
-            ]);
-
-            return false;
-        } catch (Exception $e) {
-            Log::error('Termii OTP verification exception', [
-                'pin_id' => $pinId,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        return [];
     }
 }

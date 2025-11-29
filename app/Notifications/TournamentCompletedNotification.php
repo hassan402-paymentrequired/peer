@@ -94,16 +94,5 @@ class TournamentCompletedNotification extends Notification implements ShouldQueu
             ->options(['TTL' => 86400]); // 24 hours
     }
 
-    /**
-     * Get the array representation of the notification.
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'tournament_name' => $this->tournamentName,
-            'is_winner' => $this->isWinner,
-            'total_points' => $this->totalPoints,
-            'prize_amount' => $this->prizeAmount,
-        ];
-    }
+
 }

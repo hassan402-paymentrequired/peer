@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'default' => env('SMS_DRIVER', 'termii'),
+    'default' => env('SMS_DRIVER', 'kudisms'),
 
     /*
     |--------------------------------------------------------------------------
@@ -31,6 +31,11 @@ return [
             'api_key' => env('TERMII_API_KEY'),
             'sender_id' => env('TERMII_SENDER_ID', 'Starpick'),
         ],
+        'kudisms' => [
+            'api_url' => env('KUDISMS_API_URL', 'https://my.kudisms.net/api'),
+            'api_key' => env('KUDISMS_API_KEY'),
+            'sender_id' => env('KUDISMS_SENDER_ID', 'Starpick'),
+        ],
     ],
 
     /*
@@ -47,5 +52,20 @@ return [
         'api_key' => env('TERMII_API_KEY'),
         'sender_id' => env('TERMII_SENDER_ID', 'Starpick'),
         'channel' => env('TERMII_CHANNEL', 'generic'), // generic, dnd, whatsapp
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | KudiSMS Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration specific to KudiSMS service
+    |
+    */
+
+    'kudisms' => [
+        'api_url' => env('KUDISMS_API_URL', 'https://my.kudisms.net/api'),
+        'api_key' => env('KUDISMS_API_KEY'),
+        'sender_id' => env('KUDISMS_SENDER_ID', 'Starpick'),
     ],
 ];

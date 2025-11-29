@@ -97,17 +97,5 @@ class PeerCompletedNotification extends Notification implements ShouldQueue
             ->options(['TTL' => 86400]); // 24 hours
     }
 
-    /**
-     * Get the array representation of the notification.
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'peer_name' => $this->peerName,
-            'is_winner' => $this->isWinner,
-            'total_points' => $this->totalPoints,
-            'winner_name' => $this->winnerName,
-            'prize_amount' => $this->prizeAmount,
-        ];
-    }
+
 }

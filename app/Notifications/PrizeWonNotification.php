@@ -85,16 +85,5 @@ class PrizeWonNotification extends Notification implements ShouldQueue
             ->options(['TTL' => 86400]); // 24 hours
     }
 
-    /**
-     * Get the array representation of the notification.
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'amount' => $this->amount,
-            'competition_type' => $this->competitionType,
-            'competition_name' => $this->competitionName,
-            'new_balance' => $this->newBalance,
-        ];
-    }
+
 }
