@@ -28,10 +28,10 @@ class PhoneRegistrationRequest extends FormRequest
             'phone' => [
                 'required',
                 'string',
-                'regex:/^0[7-9][0-1][0-9]{8}$/', // Nigerian phone number format
+                'regex:/^0[7-9][0-1][0-9]{8}$/',
                 'unique:' . User::class
             ],
-            'email' => 'nullable|string|lowercase|email|max:255|unique:' . User::class,
+            // 'email' => 'nullable|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ];
     }

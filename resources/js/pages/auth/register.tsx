@@ -4,6 +4,7 @@ import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 
 import InputError from '@/components/input-error';
+import { PasswordInput } from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,17 +55,16 @@ export default function Register() {
                                 <p className="text-xs text-muted-foreground">Enter a valid Nigerian phone number</p>
                             </div>
 
-                            <div className="grid gap-2">
+                            {/* <div className="grid gap-2">
                                 <Label htmlFor="email">Email address (optional)</Label>
                                 <Input id="email" type="email" tabIndex={3} autoComplete="email" name="email" placeholder="email@example.com" />
                                 <InputError message={errors.email} />
-                            </div>
+                            </div> */}
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input
+                                <PasswordInput
                                     id="password"
-                                    type="password"
                                     required
                                     tabIndex={4}
                                     autoComplete="new-password"
@@ -76,9 +76,8 @@ export default function Register() {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password_confirmation">Confirm password</Label>
-                                <Input
+                                <PasswordInput
                                     id="password_confirmation"
-                                    type="password"
                                     required
                                     tabIndex={5}
                                     autoComplete="new-password"

@@ -55,6 +55,22 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('password.confirm.store');
 
+    // Phone Verification Routes
+    Route::get('verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'show'])
+        ->name('phone.verification.notice');
+    
+    Route::post('verify-phone/send', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'sendOtp'])
+        ->middleware('throttle:6,1')
+        ->name('phone.verification.send');
+    
+    Route::post('verify-phone/verify', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'verify'])
+        ->middleware('throttle:6,1')
+        ->name('phone.verification.verify');
+    
+    Route::post('verify-phone/resend', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'resend'])
+        ->middleware('throttle:6,1')
+        ->name('phone.verification.resend');
+
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });

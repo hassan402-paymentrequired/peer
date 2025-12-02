@@ -174,8 +174,19 @@ class SmsService
     }
 
     /**
+     * Check if current time is within SMS delivery window (8 AM - 8 PM Nigeria time)
+     */
+    protected function isWithinDeliveryWindow(): bool
+    {
+        $nigeriaTime = now()->timezone('Africa/Lagos');
+        $hour = (int) $nigeriaTime->format('H');
+        
+        return $hour >= 8 && $hour < 20;
+    }
+
+    /**
      * Send OTP (Local implementation)
-     * Generates OTP locally, stores in cache, and sends via SMS
+     * Generates OTP locally, stores in cache, and sends via SMS or WhatsApp
      */
     public function sendOtp(string $phoneNumber, int $pinLength = 6, int $timeToLive = 10): ?string
     {
@@ -189,16 +200,28 @@ class SmsService
             $cacheKey = "otp_{$cleanPhone}";
             Cache::put($cacheKey, $otp, now()->addMinutes($timeToLive));
             
-            // Send OTP via SMS
+            // Determine delivery method based on time
+            $useWhatsApp = !$this->isWithinDeliveryWindow();
+            $deliveryMethod = $useWhatsApp ? 'WhatsApp' : 'SMS';
+            
+            // Send OTP
             $message = "Your " . config('app.name') . " verification code is {$otp}. Valid for {$timeToLive} minutes.";
-            $sent = $this->sendSms($cleanPhone, $message);
+            
+            if ($useWhatsApp && $this->driver === 'kudisms') {
+                $sent = $this->sendWhatsAppOtp($cleanPhone, $message);
+            } else {
+                $sent = $this->sendSms($cleanPhone, $message);
+            }
             
             if ($sent) {
                 Log::info('OTP sent successfully', [
                     'phone' => $cleanPhone,
                     'cache_key' => $cacheKey,
+                    'delivery_method' => $deliveryMethod,
                 ]);
                 // Return phone as pinId for compatibility
+                // Store delivery method in cache for frontend feedback
+                Cache::put("otp_method_{$cleanPhone}", $deliveryMethod, now()->addMinutes($timeToLive));
                 return $cleanPhone;
             }
             
@@ -275,6 +298,55 @@ class SmsService
             ]);
             return null;
         }
+    }
+
+    /**
+     * Send OTP via WhatsApp (KudiSMS)
+     */
+    protected function sendWhatsAppOtp(string $phone, string $message): bool
+    {
+        try {
+            $response = Http::post("{$this->apiUrl}/whatsapp", [
+                'token' => $this->apiKey,
+                'senderID' => $this->senderId,
+                'recipients' => $phone,
+                'message' => $message,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                if (isset($data['status']) && $data['status'] === '000') {
+                    Log::info('WhatsApp OTP sent successfully', [
+                        'phone' => $phone,
+                        'response' => $data,
+                    ]);
+                    return true;
+                }
+            }
+
+            Log::error('WhatsApp OTP sending failed', [
+                'phone' => $phone,
+                'response' => $response->json(),
+            ]);
+
+            return false;
+        } catch (Exception $e) {
+            Log::error('WhatsApp OTP exception', [
+                'phone' => $phone,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get delivery method used for last OTP
+     */
+    public function getOtpDeliveryMethod(string $phoneNumber): ?string
+    {
+        $cleanPhone = $this->cleanPhoneNumber($phoneNumber);
+        return Cache::get("otp_method_{$cleanPhone}");
     }
 
     /**

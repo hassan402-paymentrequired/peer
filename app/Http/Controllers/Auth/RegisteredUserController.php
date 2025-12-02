@@ -34,7 +34,7 @@ class RegisteredUserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'phone' => $request->phone,
-            'email' => $request->email,
+            // 'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
@@ -44,6 +44,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('phone.verification.notice');
     }
 }
