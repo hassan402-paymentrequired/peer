@@ -22,7 +22,7 @@ class PhoneVerificationController extends Controller
     public function show(): Response
     {
         $user = authUser();
-        
+
         return Inertia::render('auth/verify-phone', [
             'phone' => $user->phone,
             'isVerified' => $user->hasVerifiedPhone(),
@@ -38,9 +38,9 @@ class PhoneVerificationController extends Controller
         $request->validate([
             'channel' => 'required|in:sms,whatsapp',
         ]);
-        
+
         $user = authUser();
-        
+
         if ($user->hasVerifiedPhone()) {
             return response()->json([
                 'success' => false,
@@ -48,19 +48,18 @@ class PhoneVerificationController extends Controller
             ], 400);
         }
 
-        // $message = "Your OTP is " . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT) . ". Please enter this code to verify your phone number.";
-        $message =  str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        // $message = "Your OTP is " . $user->otp . ". Please enter this code to verify your phone number.";
 
-        $pinId = $this->smsService->sendSms($user->phone, $message, $request->channel);
-        
+        $pinId = $this->smsService->sendSms($user->phone, $user->otp, $request->channel);
+
         if (!$pinId) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send OTP. Please try again.',
             ], 500);
         }
-        
-        
+
+
         return response()->json([
             'success' => true,
             'message' => "OTP sent successfully via {$request->channel}",
@@ -86,7 +85,7 @@ class PhoneVerificationController extends Controller
         ]);
 
         $user = authUser();
-        
+
         if ($user->hasVerifiedPhone()) {
             return response()->json([
                 'success' => false,
@@ -94,8 +93,8 @@ class PhoneVerificationController extends Controller
             ], 400);
         }
 
-        $verified = $this->smsService->verifyOtp($user->phone, $request->otp);
-        
+        $verified = $user->verifyOtp($request->otp);
+
         if (!$verified) {
             return response()->json([
                 'success' => false,
@@ -103,8 +102,8 @@ class PhoneVerificationController extends Controller
             ], 400);
         }
 
-        // Mark phone as verified
         $user->phone_verified_at = now();
+        $user->otp = null;
         $user->save();
 
         return response()->json([

@@ -211,4 +211,9 @@ class User extends Authenticatable implements JWTSubject
             'otp' => $code
         ]);
     }
+
+    public function verifyOtp(string $code): bool
+    {
+        return $this->otp === $code && $this->otp_expires_at >= now();
+    }
 }
