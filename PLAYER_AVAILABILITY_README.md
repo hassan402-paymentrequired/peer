@@ -1,161 +1,133 @@
-# Player Availability & Lineup System
+import {
+Field,
+FieldContent,
+FieldDescription,
+FieldGroup,
+FieldLabel,
+FieldSet,
+FieldTitle,
+} from "@/components/ui/field"
+import {
+RadioGroup,
+RadioGroupItem,
+} from "@/components/ui/radio-group"
 
-## Overview
+export function FieldChoiceCard() {
+return (
+<div className="w-full max-w-md">
+<FieldGroup>
+<FieldSet>
+<FieldLabel htmlFor="compute-environment-p8w">
+Compute Environment
+</FieldLabel>
+<FieldDescription>
+Select the compute environment for your cluster.
+</FieldDescription>
+<RadioGroup defaultValue="kubernetes">
+<FieldLabel htmlFor="kubernetes-r2h">
+<Field orientation="horizontal">
+<FieldContent>
+<FieldTitle>Kubernetes</FieldTitle>
+<FieldDescription>
+Run GPU workloads on a K8s configured cluster.
+</FieldDescription>
+</FieldContent>
+<RadioGroupItem value="kubernetes" id="kubernetes-r2h" />
+</Field>
+</FieldLabel>
+<FieldLabel htmlFor="vm-z4k">
+<Field orientation="horizontal">
+<FieldContent>
+<FieldTitle>Virtual Machine</FieldTitle>
+<FieldDescription>
+Access a VM configured cluster to run GPU workloads.
+</FieldDescription>
+</FieldContent>
+<RadioGroupItem value="vm" id="vm-z4k" />
+</Field>
+</FieldLabel>
+</RadioGroup>
+</FieldSet>
+</FieldGroup>
+</div>
+)
+}
 
-Enhanced player availability tracking system that uses actual fixture lineups from the Football API to determine which players are available for match creation.
+import { GalleryVerticalEnd } from "lucide-react"
 
-## Key Features
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+Field,
+FieldDescription,
+FieldGroup,
+FieldLabel,
+FieldSeparator,
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
-### ✅ **Lineup-Based Availability**
-
-- Uses real lineup data from `https://v3.football.api-sports.io/fixtures/lineups`
-- Only shows players who are actually selected to play (starting XI + substitutes)
-- Prevents creating matches for players not in the lineup
-
-### ✅ **Automated Lineup Fetching**
-
-- **FetchFixtureLineupsJob** runs every 30 minutes via cron
-- Fetcineups for fixtures that are starting soon, ongoing, or recently finished
-- Stores lineup data in `fixture_lineups` table
-
-### ✅ **Enhanced Match Creation**
-
-- Admins only see available players (those in lineups and not already matched)
-- Comprehensive validation prevents conflicts
-- Real-time availability checking
-
-## Database Schema
-
-### `fixture_lineups` Table
-
-```sql
-- fixture_id (foreign key to fixtures)
-- team_id (external team ID from API)
-- team_name
-- formation (e.g., "4-3-3")
-- starting_xi (JSON array of starting players)
-- substitutes (JSON array of substitute players)
-- coach (JSON object with coach info)
-- raw_data (full API response)
-```
-
-## API Endpoints
-
-### **Player Availability**
-
-- `GET /admin/match/available-players/fixture?fixture_id=123` - Get available players for fixture
-- `POST /admin/match/check-availability` - Check if specific players are available
-- `GET /admin/match/player-status?player_id=456` - Get detailed player status
-- `GET /admin/match/availability-summary` - Get overall availability stats
-
-### **Lineup Management**
-
-- `POST /admin/match/fetch-lineup` - Manually fetch lineup for fixture
-- `GET /admin/match/lineup?fixture_id=123` - Get lineup data for fixture
-
-## Console Commands
-
-### Fetch Lineups
-
-```bash
-# Fetch lineups for all relevant fixtures
-php artisan lineups:fetch
-
-# Fetch lineup for specific fixture
-php artisan lineups:fetch 12345
-```
-
-### Test Commands
-
-```bash
-# Fetch live statistics (includes lineup fetching)
-php artisan statistics:fetch-live
-
-# Test scoring calculation
-php artisan scoring:test tournament 1
-```
-
-## How It Works
-
-### 1. **Lineup Fetching Process**
-
-1. **Cron Schedule**: `FetchFixtureLineupsJob` runs every 30 minutes
-2. **API Call**: Fetches lineups from Football API for relevant fixtures
-3. **Data Storage**: Stores lineup data in `fixture_lineups` table
-4. **Player Tracking**: Tracks which players are selected to play
-
-### 2. **Match Creation Process**
-
-1. **Admin selects fixture**: Admin chooses a fixture to create matches for
-2. **Lineup check**: System checks if lineup data exists, fetches if missing
-3. **Available players**: Only shows players who are in the fixture lineup
-4. **Validation**: Prevents creating matches for unavailable players
-5. **Match creation**: Creates PlayerMatch records for selected players
-
-### 3. **Live Statistics Process**
-
-1. **Lineup first**: Ensures lineup data exists before fetching statistics
-2. **Statistics fetch**: Gets live stats only for players in lineups
-3. **Data update**: Updates PlayerStatistic records
-4. **Completion check**: Marks matches as completed when fixtures finish
-
-## Player Availability Logic
-
-A player is considered **AVAILABLE** if:
-
-- ✅ Player is active (`status = true`)
-- ✅ Player is in the fixture lineup (starting XI or substitute)
-- ✅ Player doesn't already have a match for this fixture
-- ✅ Player is not currently in another ongoing match
-
-A player is **UNAVAILABLE** if:
-
-- ❌ Player is inactive
-- ❌ Player is not in the fixture lineup
-- ❌ Player already has a match for this fixture
-- ❌ Player is currently in another ongoing match
-
-## Benefits
-
-### **Accuracy**
-
-- Uses real lineup data instead of assumptions
-- Only tracks players who are actually playing
-- Eliminates false positives from team-based matching
-
-### **Efficiency**
-
-- Reduces API calls by focusing on relevant players
-- Prevents unnecessary match creation for bench players
-- Improves admin workflow with accurate player lists
-
-### **Reliability**
-
-- Comprehensive validation prevents conflicts
-- Real-time status checking
-- Automatic lineup updates
-
-## Monitoring
-
-Check logs for:
-
-- Lineup fetch success/failures
-- API rate limit issues
-- Player availability conflicts
-- Match creation validation errors
-
-## Testing
-
-1. **Create test fixture** with known lineup
-2. **Use `/admin/match/fetch-lineup`** to get lineup data
-3. **Check `/admin/match/available-players/fixture`** to see available players
-4. **Try creating matches** for players in/out of lineup
-5. **Verify validation** prevents conflicts
-
-## Important Notes
-
-- Lineups are typically available 1-2 hours before kickoff
-- System gracefully handles missing lineup data
-- API rate limits respected with proper delays
-- All operations logged for debugging
-- Lineup data cached until fixture completion
+export function LoginForm({
+className,
+...props
+}: React.ComponentProps<"div">) {
+return (
+<div className={cn("flex flex-col gap-6", className)} {...props}>
+<form>
+<FieldGroup>
+<div className="flex flex-col items-center gap-2 text-center">
+<a
+              href="#"
+              className="flex flex-col items-center gap-2 font-medium"
+            >
+<div className="flex size-8 items-center justify-center rounded-md">
+<GalleryVerticalEnd className="size-6" />
+</div>
+<span className="sr-only">Acme Inc.</span>
+</a>
+<h1 className="text-xl font-bold">Welcome to Acme Inc.</h1>
+<FieldDescription>
+Don&apos;t have an account? <a href="#">Sign up</a>
+</FieldDescription>
+</div>
+<Field>
+<FieldLabel htmlFor="email">Email</FieldLabel>
+<Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+            />
+</Field>
+<Field>
+<Button type="submit">Login</Button>
+</Field>
+<FieldSeparator>Or</FieldSeparator>
+<Field className="grid gap-4 sm:grid-cols-2">
+<Button variant="outline" type="button">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<path
+                  d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"
+                  fill="currentColor"
+                />
+</svg>
+Continue with Apple
+</Button>
+<Button variant="outline" type="button">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<path
+                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                  fill="currentColor"
+                />
+</svg>
+Continue with Google
+</Button>
+</Field>
+</FieldGroup>
+</form>
+<FieldDescription className="px-6 text-center">
+By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+and <a href="#">Privacy Policy</a>.
+</FieldDescription>
+</div>
+)
+}

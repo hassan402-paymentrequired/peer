@@ -18,17 +18,7 @@ class User extends Authenticatable implements JWTSubject
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasPushSubscriptions;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'phone',
-        'password',
-    ];
+   
 
     /**
      * The attributes that should be hidden for serialization.
@@ -209,5 +199,16 @@ class User extends Authenticatable implements JWTSubject
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new PhonePasswordResetNotification($token));
+    }
+
+    public function setOtp()
+    {
+        $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $this->update([
+            'otp_sent_at' => now(),
+            'otp_expires_at' => now()->addMinutes(30),
+            'otp' => $code
+        ]);
     }
 }

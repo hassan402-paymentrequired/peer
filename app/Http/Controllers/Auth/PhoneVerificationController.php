@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\SmsService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -33,6 +34,11 @@ class PhoneVerificationController extends Controller
      */
     public function sendOtp(Request $request): JsonResponse
     {
+        try{
+        $request->validate([
+            'channel' => 'required|in:sms,whatsapp',
+        ]);
+        
         $user = authUser();
         
         if ($user->hasVerifiedPhone()) {
@@ -42,7 +48,10 @@ class PhoneVerificationController extends Controller
             ], 400);
         }
 
-        $pinId = $this->smsService->sendOtp($user->phone);
+        // $message = "Your OTP is " . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT) . ". Please enter this code to verify your phone number.";
+        $message =  str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $pinId = $this->smsService->sendSms($user->phone, $message, $request->channel);
         
         if (!$pinId) {
             return response()->json([
@@ -50,15 +59,21 @@ class PhoneVerificationController extends Controller
                 'message' => 'Failed to send OTP. Please try again.',
             ], 500);
         }
-
-        $deliveryMethod = $this->smsService->getOtpDeliveryMethod($user->phone);
+        
         
         return response()->json([
             'success' => true,
-            'message' => "OTP sent successfully via {$deliveryMethod}",
-            'delivery_method' => $deliveryMethod,
+            'message' => "OTP sent successfully via {$request->channel}",
+            'delivery_method' => $request->channel,
             'pin_id' => $pinId,
         ]);
+        }catch(Exception $e)
+        {
+            return response()->json([
+            'success' => false,
+            'message' => "Failed to send otp please try again later."
+            ]);
+        }
     }
 
     /**

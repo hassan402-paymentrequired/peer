@@ -39,6 +39,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $user->wallet()->create();
+        $user->setOtp();
 
         event(new Registered($user));
 

@@ -6,19 +6,15 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsurePhoneIsVerified
+class PhoneVerifyNotification
 {
     /**
      * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if (!$user || !$user->hasVerifiedPhone()) {
-            return redirect()->route('phone.verification.notice')->with('error', 'Please verify your phone number.');
-        }
-
         return $next($request);
     }
 }
