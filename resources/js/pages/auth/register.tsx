@@ -102,7 +102,6 @@ export default function Register() {
                                             type="text"
                                             required
                                             autoFocus
-                                            autoComplete="name"
                                             name="name"
                                             value={formData.name}
                                             onChange={(e) => handleInputChange('name', e.target.value)}
@@ -126,7 +125,6 @@ export default function Register() {
                                             id="phone"
                                             type="tel"
                                             required
-                                            autoComplete="tel"
                                             name="phone"
                                             value={formData.phone}
                                             onChange={(e) => handleInputChange('phone', e.target.value)}
@@ -166,7 +164,6 @@ export default function Register() {
                                     <PasswordInput
                                         id="password"
                                         required
-                                        autoComplete="new-password"
                                         name="password"
                                         value={formData.password}
                                         onChange={(e) => handleInputChange('password', e.target.value)}
@@ -213,7 +210,6 @@ export default function Register() {
                                     <PasswordInput
                                         id="password_confirmation"
                                         required
-                                        autoComplete="new-password"
                                         name="password_confirmation"
                                         value={formData.password_confirmation}
                                         onChange={(e) => handleInputChange('password_confirmation', e.target.value)}

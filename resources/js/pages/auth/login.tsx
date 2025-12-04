@@ -10,7 +10,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
-import { Loader } from 'lucide-react';
+import { Loader, Phone } from 'lucide-react';
 
 interface LoginProps {
     status?: string;
@@ -26,10 +26,19 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="phone">Phone number</Label>
-                                <Input
-                                    id="phone"
+
+
+<div className="space-y-2">
+                                    <Label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium">
+                                        <Phone className="h-4 w-4" />
+                                        Phone Number
+                                    </Label>
+                                    <div className="relative">
+                                        <div className="absolute top-1/2 left-3 flex -translate-y-1/2 items-center gap-1 text-sm text-muted-foreground">
+                                            <span className="text-base">🇳🇬</span>
+                                        </div>
+                                        <Input
+                                            id="phone"
                                     type="tel"
                                     name="phone"
                                     required
@@ -38,10 +47,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     autoComplete="tel"
                                     placeholder="08012345678"
                                     pattern="^0[7-9][0-1][0-9]{8}$"
-                                />
-                                <InputError message={errors.phone} />
-                                <p className="text-xs text-muted-foreground">Enter your Nigerian phone number</p>
-                            </div>
+                                    className="pl-10"
+                                        />
+                                    </div>
+                                    <InputError message={errors.phone} />
+                                    <p className="text-xs text-muted-foreground">Enter a valid Nigerian phone number</p>
+                                </div>
+
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
@@ -52,6 +64,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         </TextLink>
                                     )}
                                 </div>
+
+                                
+
+
                                 <PasswordInput
                                     id="password"
                                     name="password"
@@ -60,6 +76,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
+
+
                                 <InputError message={errors.password} />
                             </div>
 
