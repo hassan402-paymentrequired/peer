@@ -69,6 +69,22 @@ export default function Register() {
             >
                 {({ processing, errors }) => (
                     <>
+                        {/* Show errors from any step */}
+                        {(errors.name || errors.phone) && step === 2 && (
+                            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                                <p className="font-medium">Registration Error:</p>
+                                {errors.name && <p>• {errors.name}</p>}
+                                {errors.phone && <p>• {errors.phone}</p>}
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(1)}
+                                    className="mt-2 text-xs underline hover:no-underline"
+                                >
+                                    Go back to fix these issues
+                                </button>
+                            </div>
+                        )}
+
                         {/* Step 1: Basic Information */}
                         {step === 1 && (
                             <div className="space-y-5 duration-300 animate-in fade-in slide-in-from-right-4">
