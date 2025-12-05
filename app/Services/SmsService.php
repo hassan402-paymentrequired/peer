@@ -66,8 +66,14 @@ class SmsService
                 'message' => $message,
             ]);
 
+            Log::info('SMS sent successfully via KudiSMS', [
+                        'res' => $response->json()
+                    ]);
+
             if ($response->successful()) {
                 $data = $response->json();
+
+
 
                     Log::info('SMS sent successfully via KudiSMS', [
                         'phone' => $phone,
