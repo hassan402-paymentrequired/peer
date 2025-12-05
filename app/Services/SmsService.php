@@ -151,40 +151,23 @@ class SmsService
     /**
      * Send OTP via WhatsApp (KudiSMS)
      */
-    protected function sendWhatsAppOtp(string $phone, string $message): bool
-    {
-        try {
-            $response = Http::post("{$this->apiUrl}/whatsapp", [
-                'token' => $this->apiKey,
-                'senderID' => $this->senderId,
-                'recipients' => $phone,
-                'message' => $message,
-            ]);
+    protected function sendWhatsAppOtp(string $phone, string $message): string
+{
+    // remove + and spaces
+    // $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
 
-            if ($response->successful()) {
-                $data = $response->json();
+    // encode the message for URL
+    $encodedMessage = urlencode($message);
 
-                if (isset($data['status']) && $data['status'] === '000') {
-                    Log::info('WhatsApp OTP sent successfully', [
-                        'phone' => $phone,
-                        'response' => $data,
-                    ]);
-                    return true;
-                }
-            }
+    // public WhatsApp endpoint link
+    $waLink = "https://wa.me/{$phone}?text={$encodedMessage}";
 
-            Log::error('WhatsApp OTP sending failed', [
-                'phone' => $phone,
-                'response' => $response->json(),
-            ]);
+    Log::info('Generated WhatsApp OTP link', [
+        'phone' => $phone,
+        'link'  => $waLink,
+    ]);
 
-            return false;
-        } catch (Exception $e) {
-            Log::error('WhatsApp OTP exception', [
-                'phone' => $phone,
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
-    }
+    return $waLink;
+}
+
 }
