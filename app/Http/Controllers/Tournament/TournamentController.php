@@ -137,11 +137,6 @@ class TournamentController extends Controller
     {
         $user = authUser();
 
-        // Remove the restriction - users can join multiple times
-        // if ($user->AlreadyJoinedTodayTournament()) {
-        //     return to_route('tournament.index')->with('error', 'You have already joined the tournament');
-        // }
-
         $tournament = Tournament::active()->withCount('users')->first();
 
         $players = $this->playerService->groupedByStar();

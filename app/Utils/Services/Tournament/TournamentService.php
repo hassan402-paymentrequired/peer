@@ -17,6 +17,13 @@ class TournamentService
             return false;
         }
 
+        Log::info([
+            'tournament_id' => $tournament->id,
+            'user_id' => Auth::guard($guard)->id(),
+            'total_points' => 0,
+            'is_winner' => false
+        ]);
+
         // Create peer_user record
         $contestUser = \App\Models\TournamentUser::create([
             'tournament_id' => $tournament->id,
