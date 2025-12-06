@@ -70,6 +70,10 @@ Route::middleware('auth')->group(function () {
     Route::post('verify-phone/resend', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('phone.verification.resend');
+    
+    Route::post('verify-phone/update', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'updatePhone'])
+        ->middleware('throttle:6,1')
+        ->name('phone.verification.update');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');

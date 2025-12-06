@@ -88,9 +88,29 @@ const Wallet = ({ transactions }) => {
                                                 <p className="text-sm font-medium">
                                                     {t.description}
                                                 </p>
-                                                <p className="text-xs text-gray-400">
-                                                    {formatDate(t.created_at)}
-                                                </p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-xs text-gray-400">
+                                                        {formatDate(t.created_at)}
+                                                    </p>
+                                                    {t.status === 1 ? (
+                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                                                            Pending
+                                                        </span>
+                                                    ) : t.status === 2 ? (
+                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                                            Completed
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                            Failed
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {t.type && (
+                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                        Type: {t.type}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         <div>

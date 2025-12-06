@@ -116,4 +116,21 @@ class PhoneVerificationController extends Controller
     {
         return $this->sendOtp($request);
     }
+
+    /**
+     * Update user's phone number
+     */
+    public function updatePhone(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string|regex:/^0[7-9][0-1][0-9]{8}$/|unique:users,phone',
+        ]);
+
+        $user = authUser();
+        $user->phone = $request->phone;
+        $user->phone_verified_at = null; // Reset verification
+        $user->save();
+
+        return back()->with('success', 'Phone number updated successfully!');
+    }
 }

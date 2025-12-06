@@ -51,11 +51,22 @@ class WalletController extends Controller
     {
         // For Flutterwave, the reference is passed as tx_ref in the callback
         $reference = $request->get('tx_ref') ?? $request->get('reference');
+        $status = $request->get('status');
 
         if (!$reference) {
             return to_route('wallet.index')->with('error', 'Invalid payment reference');
         }
 
+        // Handle cancelled or failed payments
+        if ($status === 'cancelled') {
+            return to_route('wallet.index')->with('error', 'Payment was cancelled. Please try again if you wish to fund your wallet.');
+        }
+
+        if ($status === 'failed') {
+            return to_route('wallet.index')->with('error', 'Payment failed. Please try again or contact support if the issue persists.');
+        }
+
+        // Process successful payment
         $result = $this->walletService->paymentCallback($reference);
 
         if (!$result) {

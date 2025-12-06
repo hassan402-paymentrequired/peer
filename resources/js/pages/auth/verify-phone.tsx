@@ -5,10 +5,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import AuthLayout from '@/layouts/auth-layout';
 import { dashboard } from '@/routes';
 import { send, verify as verifyRoute } from '@/routes/phone/verification';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { CheckCircle2, Loader2, MessageSquare, Phone, Shield } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { logout } from '@/routes';
+import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { ChangeNumber } from '@/components/features/change-number';
 
 interface Props {
     phone: string;
@@ -21,6 +24,7 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(0);
+    const cleanup = useMobileNavigation();
 
     useEffect(() => {
         if (countdown > 0) {
@@ -28,6 +32,7 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
             return () => clearTimeout(timer);
         }
     }, [countdown]);
+
 
     const sendOtp = async () => {
         setLoading(true);
@@ -139,6 +144,11 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
         );
     }
 
+     const handleLogout = () => {
+        cleanup();
+        router.flushAll();
+    };
+
     return (
         <AuthLayout
             title={step === 'channel' ? 'Verify Your Phone' : 'Enter Verification Code'}
@@ -165,7 +175,8 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
                                                 </div>
                                                 <div>
                                                     <FieldTitle className='text-sm'>SMS Message</FieldTitle>
-                                                    <FieldDescription className='text-xs'>Receive code via text message</FieldDescription>
+                                                    <FieldDescription className='text-xs'>Receive code via text message  
+                                                       </FieldDescription>
                                                 </div>
                                             </div>
                                         </FieldContent>
@@ -196,6 +207,7 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
                                 {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
                                 Send Verification Code
                             </Button>
+                            
                         </Field>
 
                         <FieldDescription className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
@@ -203,6 +215,7 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
                             <br />• SMS: Instant delivery (8 AM - 8 PM)
                             <br />• WhatsApp: Available 24/7
                         </FieldDescription>
+                    
                     </FieldGroup>
                 </form>
             ) : (
@@ -239,7 +252,9 @@ export default function VerifyPhone({ phone, isVerified }: Props) {
                             </Button>
                         </Field>
 
-                        <Field className="text-center">
+                        <Field className=" flex items-center justify-between">
+                           <ChangeNumber />
+
                             {countdown > 0 ? (
                                 <FieldDescription>
                                     Resend code in <strong>{countdown}s</strong>
