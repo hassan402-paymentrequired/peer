@@ -13,13 +13,14 @@ class TournamentService
 {
     public function create($request, $tournament = null, $guard = WEB)
     {
-        if ($tournament->users()->where('user_id', Auth::guard($guard)->id())->exists()) {
-            return false;
-        }
+         $user = authUser();
+        // if ($tournament->users()->where('user_id', Auth::guard($guard)->id())->exists()) {
+        //     return false;
+        // }
 
         Log::info([
             'tournament_id' => $tournament->id,
-            'user_id' => Auth::guard($guard)->id(),
+            'user_id' => $user->id,
             'total_points' => 0,
             'is_winner' => false
         ]);
@@ -27,7 +28,7 @@ class TournamentService
         // Create peer_user record
         $contestUser = \App\Models\TournamentUser::create([
             'tournament_id' => $tournament->id,
-            'user_id' => Auth::guard($guard)->id(),
+            'user_id' => $user->id,
             'total_points' => 0,
             'is_winner' => false
         ]);
