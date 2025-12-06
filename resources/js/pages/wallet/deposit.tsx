@@ -38,6 +38,7 @@ export function Deposit() {
             toast.error(
                 "Please enter a valid amount and greater than 100 naira"
             );
+            return;
         }
 
         console.log(data.amount);

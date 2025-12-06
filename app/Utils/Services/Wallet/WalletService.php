@@ -59,14 +59,14 @@ class WalletService
                 'currency' => 'NGN',
                 'redirect_url' => $callbackUrl,
                 'customer' => [
-                    'email' => $user->email,
+                    'email' => str_replace(' ', '', strtolower($user->name)) . '@gmail.com',
                     'name' => $user->name,
                     'phonenumber' => $user->phone ?? '',
                 ],
                 'customizations' => [
                     'title' => 'Wallet Funding - ' . config('app.name'),
                     'description' => 'Deposit to wallet',
-                    'logo' => config('app.url') . '/logo.png',
+                    'logo' => asset('images/logo.png'),
                 ],
                 'meta' => [
                     'user_id' => $user->id,
@@ -119,7 +119,6 @@ class WalletService
 
     public function paymentCallback(string $reference)
     {
-
         $transaction = Transaction::where('transaction_ref', $reference)->first();
 
         if (!$transaction) {
