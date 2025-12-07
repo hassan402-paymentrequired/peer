@@ -7,17 +7,19 @@ use App\Jobs\FetchLiveStatisticsJob;
 use App\Jobs\FetchPreMatchLineupsJob;
 use App\Jobs\UpdateFixtureStatusJob;
 use App\Jobs\UpdatePeerAndTournamentTotalPoint;
-
-
+use App\Jobs\UpdateTournamentTotalPoint;
 
 Schedule::job(UpdateFixtureStatusJob::class)
     ->everyTwoMinutes();
 
 Schedule::job(FetchPreMatchLineupsJob::class)
-    ->everyTenMinutes();
+    ->everyFiveMinutes();
 
 Schedule::job(FetchLiveStatisticsJob::class)
-    ->everyFiveMinutes();
+    ->everyTwoMinutes();
 
 Schedule::job(UpdatePeerAndTournamentTotalPoint::class)
-    ->everyFiveMinutes();
+    ->everyTwoMinutes();
+
+Schedule::job(UpdateTournamentTotalPoint::class)
+    ->everyTwoMinutes();
