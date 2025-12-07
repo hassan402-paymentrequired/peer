@@ -98,22 +98,21 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                         };
 
                                         return (
-                                            <div
+                                            <Link
+                                                href={`/tournament/squad/${user.tournament_user_id}`}
                                                 key={user.tournament_user_id || `${user.id}-${i}`}
-                                                className={`grid grid-cols-12 items-center px-4 py-3 transition-colors hover:bg-gray-50 ${
-                                                    isCurrentUser ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''
-                                                }`}
+                                                className={`grid grid-cols-12 items-center px-4 py-3 transition-colors hover:bg-gray-50 cursor-pointer ${isCurrentUser ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''
+                                                    }`}
                                             >
                                                 {/* Rank */}
                                                 <div className="col-span-2">
                                                     <span
-                                                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                                                            i < 3
+                                                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${i < 3
                                                                 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
                                                                 : isCurrentUser
-                                                                  ? 'bg-blue-100 text-blue-800'
-                                                                  : 'bg-gray-100 text-gray-600'
-                                                        }`}
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-gray-100 text-gray-600'
+                                                            }`}
                                                     >
                                                         {i < 3 ? getRankIcon(i + 1).slice(-1) : i + 1}
                                                     </span>
@@ -137,18 +136,6 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                                     <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
                                                                         You
                                                                     </span>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            // Toggle squad visibility
-                                                                            const squadElement = document.getElementById(`squad-${user.tournament_user_id || user.id}`);
-                                                                            if (squadElement) {
-                                                                                squadElement.style.display = squadElement.style.display === 'none' ? 'block' : 'none';
-                                                                            }
-                                                                        }}
-                                                                        className="text-xs text-blue-600 hover:text-blue-800 underline"
-                                                                    >
-                                                                        View Squad
-                                                                    </button>
                                                                 </>
                                                             )}
                                                             {user.total_entries > 1 && !isCurrentUser && (
@@ -162,55 +149,25 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                                 {i === 0 ? 'Tournament Leader' : i === 1 ? 'Runner Up' : 'Third Place'}
                                                             </p>
                                                         )}
-                                                        
-                                                        {/* Squad Details - Only for current user */}
-                                                        {isCurrentUser && user.squads && (
-                                                            <div id={`squad-${user.tournament_user_id || user.id}`} style={{ display: 'none' }} className="mt-2 rounded-lg bg-blue-50 p-3">
-                                                                <h5 className="text-xs font-semibold text-blue-900 mb-2">Your Squad</h5>
-                                                                <div className="grid grid-cols-1 gap-2">
-                                                                    {user.squads.map((squad, squadIndex) => (
-                                                                        <div key={squadIndex} className="text-xs">
-                                                                            <div className="flex justify-between">
-                                                                                <span className="text-blue-800">
-                                                                                    ⭐ {squad.star_rating}-Star: {squad.main_player?.name || 'Unknown'}
-                                                                                </span>
-                                                                                <span className="text-blue-600">
-                                                                                    {squad.main_player?.statistics?.total_points || 0} pts
-                                                                                </span>
-                                                                            </div>
-                                                                            <div className="flex justify-between text-blue-600">
-                                                                                <span className="ml-2">
-                                                                                    Sub: {squad.sub_player?.name || 'Unknown'}
-                                                                                </span>
-                                                                                <span>
-                                                                                    {squad.sub_player?.statistics?.total_points || 0} pts
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
 
                                                 {/* Points */}
                                                 <div className="col-span-3 text-right">
                                                     <span
-                                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold ${
-                                                            i === 0
+                                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold ${i === 0
                                                                 ? 'bg-yellow-100 text-yellow-800'
                                                                 : i < 3
-                                                                  ? 'bg-orange-100 text-orange-800'
-                                                                  : isCurrentUser
-                                                                    ? 'bg-blue-100 text-blue-800'
-                                                                    : 'bg-gray-100 text-gray-800'
-                                                        }`}
+                                                                    ? 'bg-orange-100 text-orange-800'
+                                                                    : isCurrentUser
+                                                                        ? 'bg-blue-100 text-blue-800'
+                                                                        : 'bg-gray-100 text-gray-800'
+                                                            }`}
                                                     >
                                                         {user.total_point.toLocaleString()}
                                                     </span>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         );
                                     })}
                                 </div>

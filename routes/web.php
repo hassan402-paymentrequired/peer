@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/join', [TournamentController::class, 'store'])->name('tournament.store');
         Route::get('/leaderboard', [TournamentController::class, 'leaderboard'])->name('tournament.leaderboard');
         Route::get('/{user}', [TournamentController::class, 'show'])->name('tournament.user.show');
+        Route::get('/squad/{tournamentUser}', [TournamentController::class, 'squad'])->name('tournament.squad');
     });
 
 

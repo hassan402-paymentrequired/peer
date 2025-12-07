@@ -12,7 +12,14 @@ class TournamentUser extends Model
         'total_points',
         'is_winner'
     ];
+
+
     public function daily_contest()
+    {
+        return $this->belongsTo(Tournament::class);
+    }
+
+    public function tournament()
     {
         return $this->belongsTo(Tournament::class);
     }

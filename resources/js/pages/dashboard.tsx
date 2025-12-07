@@ -64,7 +64,7 @@ export default function Dashboard({ tournament, recents, peers }: Props) {
                                         size={'default'}
                                         className="w-full transform rounded bg-gradient-to-r from-blue-600 to-blue-700 font-semibold tracking-wide shadow-lg transition-all duration-200 hover:scale-105 hover:from-blue-700 hover:to-blue-800"
                                     >
-                                        Join {tournament?.name}
+                                        Join Tournament
                                     </Button>
                                 </Link>
                                 <Link href={create()} prefetch>

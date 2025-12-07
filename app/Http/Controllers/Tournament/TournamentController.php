@@ -27,7 +27,6 @@ class TournamentController extends Controller
         $tournament = Tournament::active()->first();
 
         $recentlyCompletedTournament = Tournament::where('status', 'closed')
-            ->where('updated_at', '>=', now()->subHours(24))
             ->orderBy('updated_at', 'desc')
             ->first();
 
@@ -280,5 +279,14 @@ class TournamentController extends Controller
     public function show(User $user)
     {
         return Inertia::render('peers/global/show');
+    }
+
+    public function squad(\App\Models\TournamentUser $tournamentUser)
+    {
+        $tournamentUser->load(['user', 'squads.mainPlayer', 'squads.subPlayer']);
+
+        return Inertia::render('tournament/squad', [
+            'user' => $this->formatTournamentUser($tournamentUser),
+        ]);
     }
 }
