@@ -51,33 +51,14 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                     </div>
                 </div>
             ) : (
-                <div className="flex h-screen flex-col">
-                    {isAmoung() ? (
+                <div className="flex h-screen flex-col relative">
+                    {tournament.status !== 'close' && (
+                        <Button size="sm" className="text-xs absolute bottom-5 right-5">
+                            {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'}
+                        </Button>
+                    )}
+                    {isAmoung() || tournament.status === 'close' ? (
                         <div className="flex-1 bg-white">
-                            <div className="mb-4 ml-1 flex items-center justify-between">
-                                <div className="flex w-full items-center justify-between p-2">
-                                    <p className="text-base text-muted capitalize">Current tournament standings</p>
-                                    <Link
-                                        className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary transition"
-                                        prefetch
-                                        href={create()}
-                                    >
-                                        <Button size="sm" className="text-xs">
-                                            {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'}
-                                        </Button>
-                                    </Link>
-                                </div>
-
-                                {/* Show leaderboard button if there's a recently completed tournament */}
-                                {recentlyCompletedTournament && (
-                                    <Link href={leaderboard()}>
-                                        <Button variant="outline" size="sm" className="text-xs">
-                                            View Last Tournament Results
-                                        </Button>
-                                    </Link>
-                                )}
-                            </div>
-
                             <div className="overflow-hidden border border-gray-200 shadow-sm">
                                 {/* Header */}
                                 <div className="grid grid-cols-12 items-center border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3">
@@ -108,10 +89,10 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                 <div className="col-span-2">
                                                     <span
                                                         className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${i < 3
-                                                                ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
-                                                                : isCurrentUser
-                                                                    ? 'bg-blue-100 text-blue-800'
-                                                                    : 'bg-gray-100 text-gray-600'
+                                                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
+                                                            : isCurrentUser
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : 'bg-gray-100 text-gray-600'
                                                             }`}
                                                     >
                                                         {i < 3 ? getRankIcon(i + 1).slice(-1) : i + 1}
@@ -156,12 +137,12 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                 <div className="col-span-3 text-right">
                                                     <span
                                                         className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold ${i === 0
-                                                                ? 'bg-yellow-100 text-yellow-800'
-                                                                : i < 3
-                                                                    ? 'bg-orange-100 text-orange-800'
-                                                                    : isCurrentUser
-                                                                        ? 'bg-blue-100 text-blue-800'
-                                                                        : 'bg-gray-100 text-gray-800'
+                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                            : i < 3
+                                                                ? 'bg-orange-100 text-orange-800'
+                                                                : isCurrentUser
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-gray-100 text-gray-800'
                                                             }`}
                                                     >
                                                         {user.total_point.toLocaleString()}
@@ -203,12 +184,14 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                 <p className="mb-4 text-center text-muted">
                                     Be part of the excitement—join the contest and compete with other players.
                                 </p>
-                                <Link prefetch href={create()}>
-                                    <Button className="capitalize">
-                                        <span>Join {tournament.name}</span>
-                                        <span className="text-lg">⚔️</span>
-                                    </Button>
-                                </Link>
+                                {tournament.status !== 'close' && (
+                                    <Link prefetch href={create()}>
+                                        <Button className="capitalize">
+                                            <span>Join {tournament.name}</span>
+                                            <span className="text-lg">⚔️</span>
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     )}

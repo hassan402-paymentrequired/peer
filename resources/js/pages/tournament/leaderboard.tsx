@@ -91,27 +91,6 @@ const Leaderboard = ({ tournament, users }: LeaderboardProps) => {
 
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
-                <div className="bg-white shadow-sm">
-                    <div className="mx-auto max-w-7xl px-4 py-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <Link href={index()}>
-                                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                                        <ArrowLeft className="h-4 w-4" />
-                                        Back
-                                    </Button>
-                                </Link>
-                                <div>
-                                    <h1 className="text-2xl font-bold text-gray-900">{tournament.name}</h1>
-                                    <p className="text-sm text-gray-500">Final Leaderboard</p>
-                                </div>
-                            </div>
-                            <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                Tournament Completed
-                            </Badge>
-                        </div>
-                    </div>
-                </div>
 
                 {/* Tournament Stats */}
                 <div className="mx-auto max-w-7xl px-4 py-6">
@@ -143,35 +122,6 @@ const Leaderboard = ({ tournament, users }: LeaderboardProps) => {
                         ) : null;
                     })()}
 
-                    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div className="rounded-lg bg-white p-4 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <Calendar className="h-8 w-8 text-blue-500" />
-                                <div>
-                                    <p className="text-sm text-gray-500">Completed</p>
-                                    <p className="font-semibold text-gray-900">{formatDate(tournament.updated_at)}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="rounded-lg bg-white p-4 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <Users className="h-8 w-8 text-green-500" />
-                                <div>
-                                    <p className="text-sm text-gray-500">Total Players</p>
-                                    <p className="font-semibold text-gray-900">{users.length}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="rounded-lg bg-white p-4 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <DollarSign className="h-8 w-8 text-yellow-500" />
-                                <div>
-                                    <p className="text-sm text-gray-500">Prize Pool</p>
-                                    <p className="font-semibold text-gray-900">₦{tournament.amount.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Top 3 Podium */}
                     {users.length >= 3 && (
@@ -219,7 +169,7 @@ const Leaderboard = ({ tournament, users }: LeaderboardProps) => {
                     )}
 
                     {/* Full Leaderboard */}
-                    <div className="rounded-lg bg-white shadow-sm">
+                    <div className="rounded- bg-white shadow-sm">
                         <div className="border-b border-gray-200 px-6 py-4">
                             <h2 className="text-lg font-semibold text-gray-900">Complete Leaderboard</h2>
                         </div>

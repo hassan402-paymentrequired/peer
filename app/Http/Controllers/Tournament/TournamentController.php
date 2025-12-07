@@ -26,16 +26,20 @@ class TournamentController extends Controller
     {
         $tournament = Tournament::active()->first();
 
-        $recentlyCompletedTournament = Tournament::where('status', 'closed')
+        $recentlyCompletedTournament = Tournament::where('status', 'close')
             ->orderBy('updated_at', 'desc')
             ->first();
 
         if (!$tournament) {
-            return Inertia::render('tournament/index', [
-                'tournament' => $tournament,
-                'users' => [],
-                'recentlyCompletedTournament' => $recentlyCompletedTournament
-            ]);
+            if ($recentlyCompletedTournament) {
+                $tournament = $recentlyCompletedTournament;
+            } else {
+                return Inertia::render('tournament/index', [
+                    'tournament' => null,
+                    'users' => [],
+                    'recentlyCompletedTournament' => null
+                ]);
+            }
         }
 
         $currentUserId = Auth::id();
@@ -49,10 +53,10 @@ class TournamentController extends Controller
         $users = collect();
 
         foreach ($groupedUsers as $userId => $userEntries) {
-            if ($userId == $currentUserId) {
+            if ((string)$userId === (string)$currentUserId) {
                 // For current user, show all entries
                 foreach ($userEntries as $index => $tournamentUser) {
-                    $users->push($this->formatTournamentUser($tournamentUser, $index + 1));
+                    $users->push($this->formatTournamentUser($tournamentUser, $index + 1, $userEntries->count()));
                 }
             } else {
                 // For other users, show only their best entry
@@ -192,7 +196,7 @@ class TournamentController extends Controller
     public function leaderboard()
     {
         // Get the most recently completed tournament
-        $tournament = Tournament::where('status', 'closed')
+        $tournament = Tournament::where('status', 'close')
             ->orderBy('updated_at', 'desc')
             ->first();
 
