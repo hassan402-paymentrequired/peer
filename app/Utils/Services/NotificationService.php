@@ -8,7 +8,7 @@ class NotificationService
 {
     public static function send($user, $notification)
     {
-        $user->notify($notification);
+        // $user->notify($notification);
     }
 
     public function storeSubscription(Request $request)

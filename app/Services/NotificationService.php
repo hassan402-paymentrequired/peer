@@ -81,12 +81,12 @@ class NotificationService
                 );
 
                 // Send WebPush notification
-                $user->notify(new TournamentCompletedNotification(
-                    $tournament->name,
-                    $isWinner,
-                    $participant->total_points ?? 0,
-                    $isWinner ? ($winner->prize_amount ?? 0) : 0
-                ));
+                // $user->notify(new TournamentCompletedNotification(
+                //     $tournament->name,
+                //     $isWinner,
+                //     $participant->total_points ?? 0,
+                //     $isWinner ? ($winner->prize_amount ?? 0) : 0
+                // ));
             }
 
             Log::info("Tournament completion notifications sent for tournament {$tournament->id}");
@@ -136,13 +136,13 @@ class NotificationService
                 );
 
                 // Send WebPush notification
-                $user->notify(new PeerCompletedNotification(
-                    $peer->name,
-                    $isWinner,
-                    $participant->total_points ?? 0,
-                    $winner->user->name ?? 'Unknown',
-                    $isWinner ? ($winner->prize_amount ?? 0) : 0
-                ));
+                // $user->notify(new PeerCompletedNotification(
+                //     $peer->name,
+                //     $isWinner,
+                //     $participant->total_points ?? 0,
+                //     $winner->user->name ?? 'Unknown',
+                //     $isWinner ? ($winner->prize_amount ?? 0) : 0
+                // ));
             }
 
             Log::info("Peer completion notifications sent for peer {$peer->id}");
@@ -182,12 +182,12 @@ class NotificationService
             );
 
             // Send WebPush notification
-            $user->notify(new PrizeWonNotification(
-                $amount,
-                $competitionType,
-                $competitionName,
-                $user->fresh()->balance ?? 0
-            ));
+            // $user->notify(new PrizeWonNotification(
+            //     $amount,
+            //     $competitionType,
+            //     $competitionName,
+            //     $user->fresh()->balance ?? 0
+            // ));
 
             Log::info("Prize won notification sent to user {$user->id}: ₦{$amount}");
         } catch (\Exception $e) {

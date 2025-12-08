@@ -96,58 +96,7 @@ Route::prefix('webhooks')->group(function () {
 
 Route::post('/save-subscription', [\App\Utils\Services\NotificationService::class, 'storeSubscription'])->name('save.subscription');
 
-Route::get('/test', function () {
-    $user = \App\Models\User::find(1);
 
-    $user->notify(new TestNotification());
-    return 'hello';
-});
-
-// Test routes for webhook verification (remove in production)
-Route::prefix('test-webhook')->middleware(['auth'])->group(function () {
-    Route::get('/simulate-transfer', function () {
-        return view('test-webhook');
-    });
-
-    Route::post('/simulate-flutterwave', function (Illuminate\Http\Request $request) {
-        // Simulate a Flutterwave transfer webhook
-        $testPayload = [
-            'event' => 'transfer.completed',
-            'data' => [
-                'id' => 'test_transfer_' . time(),
-                'reference' => $request->get('reference', 'STA_test_reference'),
-                'status' => $request->get('status', 'SUCCESSFUL'),
-                'amount' => $request->get('amount', 1000),
-                'fee' => 50,
-                'currency' => 'NGN',
-                'bank_name' => 'Test Bank',
-                'account_number' => '1234567890',
-                'created_at' => now()->toISOString(),
-                'complete_message' => $request->get('status') === 'FAILED' ? 'Transfer failed' : 'Transfer successful',
-            ]
-        ];
-
-        // Make internal request to webhook endpoint
-        $response = app()->handle(
-            Illuminate\Http\Request::create(
-                '/webhooks/flutterwave/webhook',
-                'POST',
-                $testPayload,
-                [],
-                [],
-                ['HTTP_verif-hash' => env('FLW_SECRET_HASH')]
-            )
-        );
-
-        return response()->json([
-            'test_payload' => $testPayload,
-            'webhook_response' => [
-                'status_code' => $response->getStatusCode(),
-                'content' => json_decode($response->getContent(), true)
-            ]
-        ]);
-    });
-});
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
