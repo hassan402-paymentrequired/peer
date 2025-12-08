@@ -42,7 +42,7 @@ class TournamentController extends Controller
             }
         }
 
-        $currentUserId = Auth::id();
+        $currentUserId = authUser()->id;
         $allTournamentUsers = \App\Models\TournamentUser::with(['user', 'squads'])
             ->where('tournament_id', $tournament->id)
             ->get();
@@ -50,16 +50,19 @@ class TournamentController extends Controller
         // Group by user_id to handle multiple entries
         $groupedUsers = $allTournamentUsers->groupBy('user_id');
 
+        // dd($groupedUsers);
+
         $users = collect();
 
         foreach ($groupedUsers as $userId => $userEntries) {
-            if ((string)$userId === (string)$currentUserId) {
+            // Check if this is the current user
+            if ((int)$userId === (int)$currentUserId) {
                 // For current user, show all entries
                 foreach ($userEntries as $index => $tournamentUser) {
                     $users->push($this->formatTournamentUser($tournamentUser, $index + 1, $userEntries->count()));
                 }
             } else {
-                // For other users, show only their best entry
+                // For other users, show only their best entry (highest total_points)
                 $bestEntry = $userEntries->sortByDesc('total_points')->first();
                 $users->push($this->formatTournamentUser($bestEntry, 1, $userEntries->count()));
             }
@@ -74,6 +77,7 @@ class TournamentController extends Controller
             'recentlyCompletedTournament' => $recentlyCompletedTournament
         ]);
     }
+    
 
     private function formatTournamentUser($tournamentUser, $entryNumber = 1, $totalEntries = 1)
     {

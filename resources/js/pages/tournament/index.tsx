@@ -53,9 +53,11 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
             ) : (
                 <div className="flex h-screen flex-col relative">
                     {tournament.status !== 'close' && (
-                        <Button size="sm" className="text-xs absolute bottom-5 right-5">
-                            {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'}
-                        </Button>
+                        <Link href={create()}>
+                            <Button size="sm" className="text-xs absolute bottom-5 right-5">
+                                {!isAmoung() ? 'Join' + ' ' + tournament.name : 'Join Again'}
+                            </Button>
+                        </Link>
                     )}
                     {isAmoung() || tournament.status === 'close' ? (
                         <div className="flex-1 bg-white">
@@ -109,7 +111,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                                 @{user.username.substring(0, 20)}
                                                                 {user.username.length > 20 && '...'}
                                                                 {isCurrentUser && user.entry_number && (
-                                                                    <span className="ml-1 text-xs text-gray-500">(Entry {user.entry_number})</span>
+                                                                    <span className="ml-1 text-xs text-gray-500"></span>
                                                                 )}
                                                             </h4>
                                                             {isCurrentUser && (
