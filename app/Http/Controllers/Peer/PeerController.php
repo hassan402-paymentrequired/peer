@@ -56,7 +56,6 @@ class PeerController extends Controller
     {
         // dd($peer);
         $players = $this->playerService->groupedByStar();
-        // Log::info($players->toArray());
         $peer = $peer->loadCount('users');
         return Inertia::render('peer/join', [
             'peer' => $peer,

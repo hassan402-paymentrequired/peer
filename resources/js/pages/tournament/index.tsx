@@ -121,11 +121,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                                     </span>
                                                                 </>
                                                             )}
-                                                            {user.total_entries > 1 && !isCurrentUser && (
-                                                                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                                                                    {user.total_entries} entries
-                                                                </span>
-                                                            )}
+                                                            
                                                         </div>
                                                         {i < 3 && (
                                                             <p className="mt-0.5 text-xs text-gray-500">

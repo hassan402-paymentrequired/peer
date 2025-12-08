@@ -125,7 +125,6 @@ class MatchController extends Controller
                 'player_id' => $matchData['playerId'],
                 'opponent_team_id' => $team->id,
                 'fixture_id' => $fixture->id,
-                // 'event_id' => $request->fixture_id,
                 'is_completed' => false,
             ]);
 
@@ -152,7 +151,7 @@ class MatchController extends Controller
                     'passes_total'     => 0,
                     'position'         => null,
                     'tackles_total'    => 0,
-                    'yellow_cards'     => 0,   // ✅ matches your table
+                    'yellow_cards'     => 0,  
                     'is_injured'       => false,
                     'did_play'         => true,
                 ]
