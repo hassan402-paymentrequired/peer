@@ -33,7 +33,8 @@ class PlayerStatistic extends Model
         'number',
         'clean_sheet',
         'red_cards',
-        'total_point'
+        'total_point',
+        'fouls_committed'
     ];
     public function getPointsAttribute()
     {
@@ -110,6 +111,9 @@ class PlayerStatistic extends Model
                 }
             }
         }
+
+        // Fouls committed (penalty)
+        $points += ($this->fouls_committed ?? 0) * config('point.fouls_committed', -2);
 
         $total =  max(0, $points); 
 

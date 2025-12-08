@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 
-const SquadField = ({ user }: {user: any}) => {
+const SquadField = ({ user }: { user: any }) => {
     // 5 positions layout - Adjusted for better spacing on a full mobile screen
     const positions = [
         { top: '10%', left: '50%', transform: 'translate(-50%, 0)' }, // Top Center (Striker)
@@ -109,9 +109,9 @@ const SquadField = ({ user }: {user: any}) => {
                                                     </div>
                                                 )}
                                             </div>
-                                            {/* Star Rating Badge */}
-                                            <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-[10px] font-bold text-yellow-900 shadow-sm border border-white">
-                                                {squad.star_rating}
+                                            {/* Points Badge */}
+                                            <div className="absolute -right-1 -top-1 flex h-auto min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1 py-0.5 text-[10px] font-bold text-white shadow-sm border border-white">
+                                                {mainPlayer?.statistics?.total_point || 0}
                                             </div>
                                         </div>
 

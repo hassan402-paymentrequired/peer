@@ -187,6 +187,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
         $shots = $statistics['shots'] ?? [];
         $cards = $statistics['cards'] ?? [];
         $tackles = $statistics['tackles'] ?? [];
+        $fouls = $statistics['fouls'] ?? [];
 
         PlayerStatistic::updateOrCreate(
             [
@@ -230,6 +231,9 @@ class FetchLiveStatisticsJob implements ShouldQueue
                 // Goalkeeper specific
                 'goals_conceded' => is_null($goals['conceded']) ? 0 : (int)$goals['conceded'],
                 'goals_saves' => is_null($goals['saves']) ? 0 : (int)$goals['saves'],
+
+                // Fouls
+                'fouls_committed' => is_null($fouls['committed']) ? 0 : (int)$fouls['committed'],
             ]
         );
     }
