@@ -93,18 +93,45 @@ class WalletController extends Controller
                 'amount' => $validatedData['amount'],
             ];
 
-            // send withdrawal
-            ModelsWithdrawRequest::create([
-                'account_number' => $validatedData['account_number'],
-                'account_name' => $validatedData['account_name'],
-                'amount' => $validatedData['amount'],
-                'bank_name' => $validatedData['bank_name']
-            ]);
+            $user = authUser();
+            
+            if ($user->wallet->balance < $validatedData['amount']) {
+                return back()->with('error', 'Insufficient wallet balance.');
+            }
 
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $validatedData) {
+                // Deduct balance immediately to lock funds
+                $user->wallet()->decrement('balance', $validatedData['amount']);
+                
+                $reference = 'WDR_' . \Illuminate\Support\Str::random(12);
 
-            return back()->with('success', 'Withdrawal request sent successfully. You will get a notification when we verify your reqest');
+                // Create transaction record
+                $transaction = \App\Models\Transaction::create([
+                    'user_id' => $user->id,
+                    'transaction_ref' => $reference,
+                    'action_type' => 'debit',
+                    'amount' => $validatedData['amount'],
+                    'description' => 'Manual Withdrawal Request',
+                    'status' => 1, // Pending
+                    'wallet_balance_before' => $user->wallet->balance + $validatedData['amount'], 
+                    'wallet_balance_after' => $user->wallet->balance,
+                ]);
+
+                // Create withdrawal request linked to transaction
+                ModelsWithdrawRequest::create([
+                    'user_id' => $user->id,
+                    'account_number' => $validatedData['account_number'],
+                    'account_name' => $validatedData['account_name'],
+                    'amount' => $validatedData['amount'],
+                    'bank_name' => $validatedData['bank_name'],
+                    'transaction_id' => $transaction->id
+                ]);
+            });
+
+            return back()->with('success', 'Withdrawal request sent successfully.');
         } catch (\Exception $e) {
-            return null;
+            Log::error('Withdrawal failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to process withdrawal request. Please try again.');
         }
     }
 

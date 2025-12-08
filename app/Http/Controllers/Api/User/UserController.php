@@ -30,10 +30,26 @@ class UserController extends  Controller
             'reason' => 'required_if:status,cancelled,rejected'
         ]);
         
-        $withdrawRequest->update([
-            'status' => $payload['status'],
-            'reason' => $payload['reason'] ?? null
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($withdrawRequest, $payload) {
+            $withdrawRequest->update([
+                'status' => $payload['status'],
+                'reason' => $payload['reason'] ?? null
+            ]);
+
+            $transaction = $withdrawRequest->transaction;
+
+            if ($transaction) {
+                if ($payload['status'] === 'paid') {
+                    $transaction->update(['status' => 2]); // Successful
+                } elseif (in_array($payload['status'], ['cancelled', 'rejected'])) {
+                    // Refund the user if not already refunded (check transaction status to be safe)
+                    if ($transaction->status !== 3) {
+                        $transaction->update(['status' => 3]); // Failed
+                        $withdrawRequest->user->wallet()->increment('balance', $transaction->amount);
+                    }
+                }
+            }
+        });
 
         return $this->respondWithCustomData([
             'message' => 'Request updated successfully'
