@@ -91,25 +91,53 @@ class TournamentController extends Controller
 
             // Get main player stats using player_id and fixture_id
             $mainStats = null;
+            $mainFixture = null;
             if ($main_fixture_id) {
                 $mainStats = \App\Models\PlayerStatistic::where('player_id', $squad->main_player_id)
                     ->where('fixture_id', $main_fixture_id)
                     ->first();
+                $mainFixture = \App\Models\Fixture::find($main_fixture_id);
             }
 
             // Get sub player stats using player_id and fixture_id
             $subStats = null;
+            $subFixture = null;
             if ($sub_fixture_id) {
                 $subStats = \App\Models\PlayerStatistic::where('player_id', $squad->sub_player_id)
                     ->where('fixture_id', $sub_fixture_id)
                     ->first();
+                $subFixture = \App\Models\Fixture::find($sub_fixture_id);
             }
 
             $mainPlayer = $squad->mainPlayer ? $squad->mainPlayer->toArray() : [];
             $mainPlayer['statistics'] = $mainStats ? $mainStats->toArray() : [];
+            if ($mainStats) {
+                $mainPlayer['statistics']['points_breakdown'] = $mainStats->points_breakdown;
+                $mainPlayer['statistics']['fixture'] = $mainFixture ? [
+                    'home_team_name' => $mainFixture->home_team_name,
+                    'home_team_logo' => $mainFixture->home_team_logo,
+                    'away_team_name' => $mainFixture->away_team_name,
+                    'away_team_logo' => $mainFixture->away_team_logo,
+                    'goals_home' => $mainFixture->goals_home,
+                    'goals_away' => $mainFixture->goals_away,
+                    'status' => $mainFixture->status,
+                ] : null;
+            }
 
             $subPlayer = $squad->subPlayer ? $squad->subPlayer->toArray() : [];
             $subPlayer['statistics'] = $subStats ? $subStats->toArray() : [];
+            if ($subStats) {
+                $subPlayer['statistics']['points_breakdown'] = $subStats->points_breakdown;
+                 $subPlayer['statistics']['fixture'] = $subFixture ? [
+                    'home_team_name' => $subFixture->home_team_name,
+                    'home_team_logo' => $subFixture->home_team_logo,
+                    'away_team_name' => $subFixture->away_team_name,
+                    'away_team_logo' => $subFixture->away_team_logo,
+                    'goals_home' => $subFixture->goals_home,
+                    'goals_away' => $subFixture->goals_away,
+                    'status' => $subFixture->status,
+                ] : null;
+            }
 
             return [
                 'id' => $squad->id,

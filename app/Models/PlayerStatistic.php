@@ -122,4 +122,129 @@ class PlayerStatistic extends Model
 
         return $total;
     }
+
+    public function getPointsBreakdownAttribute()
+    {
+        $breakdown = [];
+
+        if (!$this->did_play || $this->is_injured) {
+             return $breakdown;
+        }
+
+        // Minutes Played (Base points)
+        if (($this->minutes ?? 0) > 0) {
+             $points = ($this->minutes >= 60) ? 2 : 1;
+             $breakdown[] = [
+                 'label' => 'Minutes played',
+                 'value' => $this->minutes,
+                 'points' => $points
+             ];
+        }
+
+        // Goals
+        if (($this->goals_total ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Goals',
+                'value' => $this->goals_total,
+                'points' => $this->goals_total * config('point.goal', 13)
+            ];
+        }
+
+        // Assists
+        if (($this->goals_assists ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Assists',
+                'value' => $this->goals_assists,
+                'points' => $this->goals_assists * config('point.assist', 7)
+            ];
+        }
+
+        // Shots total
+        if (($this->shots_total ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Shots total',
+                'value' => $this->shots_total,
+                'points' => $this->shots_total * config('point.shots_total', 2)
+            ];
+        }
+
+        // Shots on target
+        if (($this->shots_on_target ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Shots on target',
+                'value' => $this->shots_on_target,
+                'points' => $this->shots_on_target * config('point.shot_on_target', 1)
+            ];
+        }
+
+        // Shots on goal
+        if (isset($this->shots_on_goal) && $this->shots_on_goal !== $this->shots_on_target && ($this->shots_on_goal ?? 0) > 0) {
+             $breakdown[] = [
+                'label' => 'Shots on goal',
+                'value' => $this->shots_on_goal,
+                'points' => $this->shots_on_goal * config('point.shot_on_goal', 1)
+            ];
+        }
+
+         // Yellow cards
+         if (($this->yellow_cards ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Yellow cards',
+                'value' => $this->yellow_cards,
+                'points' => $this->yellow_cards * config('point.yellow_card', -1)
+            ];
+        }
+
+        // Red cards
+        if (($this->red_cards ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Red cards',
+                'value' => $this->red_cards,
+                'points' => $this->red_cards * config('point.red_card', -5)
+            ];
+        }
+        
+        // Fouls committed
+        if (($this->fouls_committed ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Fouls committed',
+                'value' => $this->fouls_committed,
+                'points' => $this->fouls_committed * config('point.fouls_committed', -2)
+            ];
+        }
+
+        // Clean Sheet & Saves (GK/DEF)
+        if (in_array($this->position, ['G', 'D']) && ($this->minutes ?? 0) >= 65) {
+            $goalsConceeded = $this->goals_conceded ?? 0;
+
+            if ($this->position === 'G') {
+                 // Saves
+                if (($this->goals_saves ?? 0) > 0) {
+                    $breakdown[] = [
+                        'label' => 'Saves',
+                        'value' => $this->goals_saves,
+                        'points' => $this->goals_saves * config('point.goals_saves', 3)
+                    ];
+                }
+
+                if ($goalsConceeded === 0) {
+                     $breakdown[] = [
+                        'label' => 'Clean sheet',
+                        'value' => 1,
+                        'points' => config('point.clean_sheet_goalkeeper', 15)
+                    ];
+                }
+            } else if ($this->position === 'D') {
+                 if ($goalsConceeded === 0) {
+                     $breakdown[] = [
+                        'label' => 'Clean sheet',
+                        'value' => 1,
+                        'points' => config('point.clean_sheet_defender', 10)
+                    ];
+                }
+            }
+        }
+
+        return $breakdown;
+    }
 }
