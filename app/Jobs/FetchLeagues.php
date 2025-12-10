@@ -31,12 +31,15 @@ class FetchLeagues implements ShouldQueue
         $totalPages = 1;
 
         $params = [
-            'id' => $id ??= '',
             'season'  => '2025'
         ];
 
         if ($country) {
             $params['country'] = $country;
+        }
+
+        if ($id) {
+            $params['id'] = $id;
         }
 
         do {
