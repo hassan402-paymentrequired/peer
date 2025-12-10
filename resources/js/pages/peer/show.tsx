@@ -181,7 +181,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                     {squad.main_player?.name}
                                                                                 </span>
                                                                                 <Badge variant="outline" className="text-[10px] md:text-xs">
-                                                                                    {squad.main_player?.position}
+                                                                                    {squad.main_player?.statistics?.position || squad.main_player?.position}
                                                                                 </Badge>
                                                                             </div>
                                                                             {getPlayerStatusIcon(squad.main_player?.statistics?.did_play)}
@@ -268,7 +268,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                         {squad.sub_player?.name}
                                                                                     </span>
                                                                                     <Badge variant="outline" className="text-[10px] md:text-xs">
-                                                                                        {squad.sub_player?.position}
+                                                                                        {squad.sub_player?.statistics?.position || squad.sub_player?.position}
                                                                                     </Badge>
                                                                                 </div>
                                                                                 {getPlayerStatusIcon(squad.sub_player?.statistics?.did_play)}

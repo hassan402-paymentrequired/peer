@@ -135,9 +135,14 @@ const SquadField = ({ user }: { user: any }) => {
                                             <span className="max-w-[100px] truncate text-xs font-bold text-white">
                                                 {mainPlayer?.name?.split(' ').slice(-1)[0] || 'Unknown'}
                                             </span>
-                                            <span className="text-[10px] font-medium text-emerald-400">
-                                                {mainPlayer?.statistics?.total_point || 0} pts
-                                            </span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-[10px] font-medium text-gray-400 border border-gray-600 rounded px-1">
+                                                    {mainPlayer?.statistics?.position || mainPlayer?.position || '-'}
+                                                </span>
+                                                <span className="text-[10px] font-medium text-emerald-400">
+                                                    {mainPlayer?.statistics?.total_point || 0} pts
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* Sub Player Section - Connected visually */}

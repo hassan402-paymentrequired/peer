@@ -61,6 +61,11 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                     )}
                     {isAmoung() || tournament.status === 'close' ? (
                         <div className="flex-1 bg-white">
+                            {tournament.status === 'close' && (
+                                <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-center text-sm text-yellow-800">
+                                    🛑 This tournament is <strong>closed</strong>. You are viewing the final results.
+                                </div>
+                            )}
                             <div className="overflow-hidden border border-gray-200 shadow-sm">
                                 {/* Header */}
                                 <div className="grid grid-cols-12 items-center border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3">
@@ -121,7 +126,7 @@ const Tournament = ({ tournament, users, recentlyCompletedTournament }) => {
                                                                     </span>
                                                                 </>
                                                             )}
-                                                            
+
                                                         </div>
                                                         {i < 3 && (
                                                             <p className="mt-0.5 text-xs text-gray-500">
