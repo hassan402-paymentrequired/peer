@@ -34,11 +34,11 @@ class FetchLeagues implements ShouldQueue
             'season'  => '2025'
         ];
 
-        if (isset($country)) {
+        if (isset($country) && $country !== '') {
             $params['country'] = $country;
         }
 
-        if (isset($id)) {
+        if (isset($id) && $id !== '') {
             $params['id'] = $id;
         }
 
