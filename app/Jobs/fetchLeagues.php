@@ -30,21 +30,27 @@ class FetchLeagues implements ShouldQueue
         $page = 1;
         $totalPages = 1;
 
+        $params = [
+            'id' => $id ??= '',
+            'season'  => '2025'
+        ];
+
+        if ($country) {
+            $params['country'] = $country;
+        }
+
         do {
             Log::info("Fetching page $page...");
 
             $response = Http::withHeaders([
                 'x-rapidapi-key' => env('SPORT_API_KEY')
-            ])->get("https://v3.football.api-sports.io/leagues", [
-                'country' => $country,
-                'season'  => '2025'
-            ]);
+            ])->get("https://v3.football.api-sports.io/leagues", $params);
 
             $body = $response->json();
 
             // dd($body);
 
-            Log::info("Fetching page $response...");
+            Log::info("Fetching page...", [$body]);
 
             $totalPages = $body['paging']['total'] ?? 1;
             $leagues = $body['response'] ?? [];

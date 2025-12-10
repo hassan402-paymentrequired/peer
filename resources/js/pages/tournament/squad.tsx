@@ -151,7 +151,7 @@ const SquadField = ({ user }: { user: any }) => {
                                                         {subPlayer?.name?.split(' ').slice(-1)[0] || 'None'}
                                                     </span>
                                                     <span className="text-[8px] font-semibold text-gray-500">
-                                                        {subPlayer?.statistics?.total_points || 0} pts
+                                                        {subPlayer?.statistics?.total_point || 0} pts
                                                     </span>
                                                 </div>
                                                 {/* Swap Icon indicating substitution possibility (visual only for now) */}
@@ -170,8 +170,8 @@ const SquadField = ({ user }: { user: any }) => {
 
                 {/* Stats Modal */}
                 {isStatsModalOpen && selectedPlayer && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-200" onClick={closeStatsModal}>
-                        <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                    <div className="fixed inset-0 z-[999999999] flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200" onClick={closeStatsModal}>
+                        <div className="relative w-full max-w-md overflow-hidden rounded bg-white shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                             {/* Close Button */}
                             <button
                                 onClick={closeStatsModal}
@@ -189,7 +189,7 @@ const SquadField = ({ user }: { user: any }) => {
                                 </h3>
 
                                 {/* Match Score Card */}
-                                <div className="w-full rounded-2xl bg-white p-4 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] border border-gray-100 mb-6">
+                                <div className="w-full rounded bg-white p-4  border border-gray-100 mb-6">
                                     {selectedPlayer.statistics?.fixture ? (
                                         <div className="flex items-center justify-between">
                                             <div className="flex flex-col items-center w-1/3">
@@ -202,7 +202,7 @@ const SquadField = ({ user }: { user: any }) => {
                                             </div>
 
                                             <div className="flex flex-col items-center">
-                                                <div className="flex items-center gap-3 bg-[#2d1b4e] text-white px-3 py-1 rounded-lg">
+                                                <div className="flex items-center gap-3 text-[#2d1b4e] px-3 py-1 rounded-lg">
                                                     <span className="text-xl font-bold">{selectedPlayer.statistics.fixture.goals_home ?? 0}</span>
                                                     <span className="text-xs opacity-80">-</span>
                                                     <span className="text-xl font-bold">{selectedPlayer.statistics.fixture.goals_away ?? 0}</span>
@@ -258,7 +258,7 @@ const SquadField = ({ user }: { user: any }) => {
                             <div className="p-4 bg-gray-50">
                                 <button
                                     onClick={closeStatsModal}
-                                    className="w-full rounded-xl bg-[#2d1b4e] py-3 text-sm font-bold text-white shadow-lg active:scale-95 transition-transform"
+                                    className="w-full rounded bg-[#2d1b4e] py-3 text-sm font-bold text-white shadow-lg active:scale-95 transition-transform"
                                 >
                                     Close
                                 </button>
