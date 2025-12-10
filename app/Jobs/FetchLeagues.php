@@ -30,7 +30,7 @@ class FetchLeagues implements ShouldQueue
         $page = 1;
         $totalPages = 1;
 
-        $params = [
+ $params = [
             'id' => $id ??= '',
             'season'  => '2025'
         ];
@@ -38,6 +38,7 @@ class FetchLeagues implements ShouldQueue
         if ($country) {
             $params['country'] = $country;
         }
+
 
         do {
             Log::info("Fetching page $page...");
@@ -50,7 +51,7 @@ class FetchLeagues implements ShouldQueue
 
             // dd($body);
 
-            Log::info("Fetching page...", [$body]);
+            Log::info("Fetching page $response...");
 
             $totalPages = $body['paging']['total'] ?? 1;
             $leagues = $body['response'] ?? [];
