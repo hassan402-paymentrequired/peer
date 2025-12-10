@@ -189,52 +189,60 @@ class FetchLiveStatisticsJob implements ShouldQueue
         $tackles = $statistics['tackles'] ?? [];
         $fouls = $statistics['fouls'] ?? [];
 
+        // Prepare attributes for update and calculation
+        $attributes = [
+            'match_date' => $fixture->date,
+
+            // Goals and assists (mapped correctly from API)
+            'goals_total' => is_null($goals['total']) ? 0 : (int)$goals['total'],
+            'goals_assists' => is_null($goals['assists']) ? 0 : (int)$goals['assists'],
+            'assists' => is_null($goals['assists']) ? 0 : (int)$goals['assists'],
+
+            // Shots (corrected mapping)
+            'shots_total' => is_null($shots['total']) ? 0 : (int)$shots['total'],
+            'shots_on_target' => is_null($shots['on']) ? 0 : (int)$shots['on'],
+            'shots_on_goal' => is_null($shots['on']) ? 0 : (int)$shots['on'],
+
+            // Cards
+            'yellow_cards' => $cards['yellow'] ?? 0,
+            'red_cards' => $cards['red'] ?? 0,
+
+            // Game info
+            'minutes' => $games['minutes'] ?? 0,
+            'rating' => $games['rating'] ?? null,
+            'captain' => $games['captain'] ?? false,
+            'substitute' => $games['substitute'] ?? false,
+            'position' => $games['position'] ?? null,
+            'number' => $games['number'] ?? null,
+
+            // Playing status
+            'did_play' => ($games['minutes'] ?? 0) > 0,
+            'is_injured' => false,
+
+            // Additional stats
+            'passes_total' => is_null($passes['total']) ? 0 : (int)$passes['total'],
+            'offsides' => is_null($statistics['offsides']) ? 0 : (int)$statistics['offsides'],
+            'tackles_total' => is_null($tackles['total']) ? 0 : (int)$tackles['total'],
+
+            // Goalkeeper specific
+            'goals_conceded' => is_null($goals['conceded']) ? 0 : (int)$goals['conceded'],
+            'goals_saves' => is_null($goals['saves']) ? 0 : (int)$goals['saves'],
+
+            // Fouls
+            'fouls_committed' => is_null($fouls['committed']) ? 0 : (int)$fouls['committed'],
+        ];
+
+        // Calculate points and clean sheet
+        $calculated = PlayerStatistic::calculatePoints($attributes);
+        $attributes['total_point'] = $calculated['points'];
+        $attributes['clean_sheet'] = $calculated['clean_sheet'];
+
         PlayerStatistic::updateOrCreate(
             [
                 'player_id' => $localPlayer->id,
                 'fixture_id' => $fixture->id,
             ],
-            [
-                'match_date' => $fixture->date,
-
-                // Goals and assists (mapped correctly from API)
-                'goals_total' => is_null($goals['total']) ? 0 : (int)$goals['total'],
-                'goals_assists' => is_null($goals['assists']) ? 0 : (int)$goals['assists'],
-                'assists' => is_null($goals['assists']) ? 0 : (int)$goals['assists'],
-
-                // Shots (corrected mapping)
-                'shots_total' => is_null($shots['total']) ? 0 : (int)$shots['total'],
-                'shots_on_target' => is_null($shots['on']) ? 0 : (int)$shots['on'],
-                'shots_on_goal' => is_null($shots['on']) ? 0 : (int)$shots['on'],
-
-                // Cards
-                'yellow_cards' => $cards['yellow'] ?? 0,
-                'red_cards' => $cards['red'] ?? 0,
-
-                // Game info
-                'minutes' => $games['minutes'] ?? 0,
-                'rating' => $games['rating'] ?? null,
-                'captain' => $games['captain'] ?? false,
-                'substitute' => $games['substitute'] ?? false,
-                'position' => $games['position'] ?? null,
-                'number' => $games['number'] ?? null,
-
-                // Playing status
-                'did_play' => ($games['minutes'] ?? 0) > 0,
-                'is_injured' => false,
-
-                // Additional stats
-                'passes_total' => is_null($passes['total']) ? 0 : (int)$passes['total'],
-                'offsides' => is_null($statistics['offsides']) ? 0 : (int)$statistics['offsides'],
-                'tackles_total' => is_null($tackles['total']) ? 0 : (int)$tackles['total'],
-
-                // Goalkeeper specific
-                'goals_conceded' => is_null($goals['conceded']) ? 0 : (int)$goals['conceded'],
-                'goals_saves' => is_null($goals['saves']) ? 0 : (int)$goals['saves'],
-
-                // Fouls
-                'fouls_committed' => is_null($fouls['committed']) ? 0 : (int)$fouls['committed'],
-            ]
+            $attributes
         );
     }
 

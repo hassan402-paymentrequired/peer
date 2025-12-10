@@ -36,89 +36,109 @@ class PlayerStatistic extends Model
         'total_point',
         'fouls_committed'
     ];
-    public function getPointsAttribute()
+    public static function calculatePoints(array $attributes): array
     {
-        if (!$this->did_play || $this->is_injured) {
-            return 0;
+        $points = 0;
+        $cleanSheet = 0;
+
+        // Check if player played
+        $minutes = $attributes['minutes'] ?? 0;
+        $didPlay = ($attributes['did_play'] ?? false) || $minutes > 0;
+        $isInjured = $attributes['is_injured'] ?? false;
+
+        if (!$didPlay || $isInjured) {
+            return ['points' => 0, 'clean_sheet' => 0];
         }
 
-        $points = 0;
-
         // Goals (most important)
-        $points += ($this->goals_total ?? 0) * config('point.goal', 13);
+        $points += ($attributes['goals_total'] ?? 0) * config('point.goal', 13);
 
-        // Assists
-        $points += ($this->goals_assists ?? 0) * config('point.assist', 7);
+        // Assists - Use 'goals_assists' as per existing logic
+        $points += ($attributes['goals_assists'] ?? 0) * config('point.assist', 7);
 
         // Shots total
-        $points += ($this->shots_total ?? 0) * config('point.shots_total', 2);
+        $points += ($attributes['shots_total'] ?? 0) * config('point.shots_total', 2);
 
         // Shots on target (bonus for accuracy)
-        $points += ($this->shots_on_target ?? 0) * config('point.shot_on_target', 1);
+        $shotsOnTarget = $attributes['shots_on_target'] ?? 0;
+        $points += $shotsOnTarget * config('point.shot_on_target', 1);
 
         // Shots on goal (if different from shots on target)
-        if (isset($this->shots_on_goal) && $this->shots_on_goal !== $this->shots_on_target) {
-            $points += ($this->shots_on_goal ?? 0) * config('point.shot_on_goal', 1);
+        $shotsOnGoal = $attributes['shots_on_goal'] ?? 0;
+        if ($shotsOnGoal > 0 && $shotsOnGoal !== $shotsOnTarget) {
+            $points += $shotsOnGoal * config('point.shot_on_goal', 1);
         }
 
         // Yellow cards (penalty)
-        $points += ($this->yellow_cards ?? 0) * config('point.yellow_card', -1);
+        $points += ($attributes['yellow_cards'] ?? 0) * config('point.yellow_card', -1);
 
         // Red cards (penalty)
-        $points += ($this->red_cards ?? 0) * config('point.red_card', -5);
+        $points += ($attributes['red_cards'] ?? 0) * config('point.red_card', -5);
 
         // Goalkeeper and Defender Clean Sheet Logic
-        if (in_array($this->position, ['G', 'D']) && ($this->minutes ?? 0) >= 65) {
-            $goalsConceeded = $this->goals_conceded ?? 0;
+        $position = $attributes['position'] ?? '';
+        
+        // Handle full position names from API just in case (though DB script showed abbreviations, simple safety)
+        if (in_array($position, ['Goalkeeper', 'G', 'Defender', 'D']) && $minutes >= 65) {
+            $goalsConceded = $attributes['goals_conceded'] ?? 0;
+            $goalsSaved = $attributes['goals_saves'] ?? 0;
 
-            if ($this->position === 'G') {
+            if (in_array($position, ['G', 'Goalkeeper'])) {
                 // GOALKEEPER LOGIC
-                $goalsSaved = $this->goals_saves ?? 0;
-
-                if ($goalsConceeded === 0) {
+                if ($goalsConceded === 0) {
                     // Clean sheet: 15 points + (saves * 3 points each)
                     $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 15);
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
+                    
                     $totalCleanSheetPoints = $cleanSheetPoints + $savePoints;
-
                     $points += $totalCleanSheetPoints;
-
-
-                    $this->clean_sheet = $totalCleanSheetPoints;
-                    $this->save();
+                    $cleanSheet = $totalCleanSheetPoints;
                 } else {
                     // Conceded goals: lose clean sheet bonus, only get save points
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
                     $points += $savePoints;
-                    $this->clean_sheet = 0;
-                    $this->save();
+                    $cleanSheet = 0;
                 }
-            } else if ($this->position === 'D') {
+            } else if (in_array($position, ['D', 'Defender'])) {
                 // DEFENDER LOGIC
-                if ($goalsConceeded === 0) {
+                if ($goalsConceded === 0) {
                     // Clean sheet: 10 points
                     $cleanSheetPoints = config('point.clean_sheet_defender', 10);
                     $points += $cleanSheetPoints;
-
-                    
-                        $this->clean_sheet = $cleanSheetPoints;
-                        $this->save();
-                    
+                    $cleanSheet = $cleanSheetPoints;
                 } else {
-                    // Conceded goals: no clean sheet bonus
-                        $this->clean_sheet = 0;
-                        $this->save();
+                    $cleanSheet = 0;
                 }
             }
         }
 
         // Fouls committed (penalty)
-        $points += ($this->fouls_committed ?? 0) * config('point.fouls_committed', -2);
+        $points += ($attributes['fouls_committed'] ?? 0) * config('point.fouls_committed', -2);
 
-        $total =  max(0, $points); 
+        return [
+            'points' => max(0, $points),
+            'clean_sheet' => $cleanSheet
+        ];
+    }
 
-        $this->total_point = $total;
-        $this->save();
+    public function getPointsAttribute()
+    {
+        // Use the static calculation method with current model attributes
+        $result = self::calculatePoints($this->attributes);
+
+        $total = $result['points'];
+        $cleanSheet = $result['clean_sheet'];
+        
+        // Only save if values are different to avoid unnecessary writes/recursion
+        if ($this->total_point !== $total || $this->clean_sheet !== $cleanSheet) {
+            $this->total_point = $total;
+            $this->clean_sheet = $cleanSheet;
+            // $this->save(); // Side-effect kept for compatibility/self-healing but guarded
+            
+            // NOTE: calling save() here is still risky but if we guard it, it reduces loop risk.
+            // Ideally, we move away from this, but to be safe with existing codebase:
+            $this->saveQuietly(); // Use saveQuietly to avoid triggering events if any
+        }
 
         return $total;
     }
