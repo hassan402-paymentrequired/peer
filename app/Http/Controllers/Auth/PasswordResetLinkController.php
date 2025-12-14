@@ -35,11 +35,9 @@ class PasswordResetLinkController extends Controller
     {
         $phone = $request->phone;
         
-        // Check if user exists
         $user = \App\Models\User::where('phone', $phone)->first();
         
         if (!$user) {
-            // Don't reveal if user exists or not for security
             return back()->with('status', __('If this phone number is registered, you will receive an OTP shortly.'));
         }
         
@@ -51,7 +49,7 @@ class PasswordResetLinkController extends Controller
             ['phone' => $phone],
             [
                 'phone' => $phone,
-                'token' => Hash::make($otp),
+                'token' => $otp,
                 'created_at' => now(),
             ]
         );

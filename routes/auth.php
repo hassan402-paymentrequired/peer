@@ -59,6 +59,12 @@ Route::middleware('auth')->group(function () {
     Route::get('verify-phone', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'show'])
         ->name('phone.verification.notice');
     
+    Route::get('verify-phone/select-channel', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'showSelectChannel'])
+        ->name('phone.verification.select-channel');
+    
+    Route::get('verify-phone/enter-otp', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'showEnterOtp'])
+        ->name('phone.verification.enter-otp');
+    
     Route::post('verify-phone/send', [\App\Http\Controllers\Auth\PhoneVerificationController::class, 'sendOtp'])
         ->middleware('throttle:6,1')
         ->name('phone.verification.send');

@@ -101,7 +101,6 @@ export default function Register() {
                                             id="name"
                                             type="text"
                                             required
-                                            autoFocus
                                             name="name"
                                             value={formData.name}
                                             onChange={(e) => handleInputChange('name', e.target.value)}
@@ -129,7 +128,6 @@ export default function Register() {
                                             value={formData.phone}
                                             onChange={(e) => handleInputChange('phone', e.target.value)}
                                             placeholder="08012345678"
-                                            pattern="^0[7-9][0-1][0-9]{8}$"
                                             className="pl-10"
                                         />
                                     </div>

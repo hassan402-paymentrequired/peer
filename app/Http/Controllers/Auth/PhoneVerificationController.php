@@ -28,6 +28,30 @@ class PhoneVerificationController extends Controller
     }
 
     /**
+     * Show the channel selection page
+     */
+    public function showSelectChannel(): Response
+    {
+        $user = authUser();
+
+        return Inertia::render('auth/select-verification-channel', [
+            'phone' => $user->phone,
+        ]);
+    }
+
+    /**
+     * Show the OTP entry page
+     */
+    public function showEnterOtp(): Response
+    {
+        $user = authUser();
+
+        return Inertia::render('auth/enter-verification-otp', [
+            'phone' => $user->phone,
+        ]);
+    }
+
+    /**
      * Send OTP to user's phone
      */
     public function sendOtp(Request $request): JsonResponse
@@ -45,6 +69,7 @@ class PhoneVerificationController extends Controller
                     'message' => 'Phone number is already verified',
                 ], 400);
             }
+            $user->setOtp();
 
             // $message = "Your OTP is " . $user->otp . ". Please enter this code to verify your phone number.";
 

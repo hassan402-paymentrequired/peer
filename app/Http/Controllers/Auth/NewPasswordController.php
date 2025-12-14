@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -22,8 +23,12 @@ class NewPasswordController extends Controller
      */
     public function create(Request $request): Response
     {
+        $phone = $request->phone ?? $request->query('phone') ?? '';
+        
+        // Always show the reset password form
+        // Users can access this page directly to enter their OTP
         return Inertia::render('auth/reset-password', [
-            'phone' => $request->phone ?? '',
+            'phone' => $phone,
         ]);
     }
 
@@ -45,7 +50,7 @@ class NewPasswordController extends Controller
         ]);
 
         // Find the reset token
-        $resetRecord = \DB::table('password_reset_tokens')
+        $resetRecord = DB::table('password_reset_tokens')
             ->where('phone', $request->phone)
             ->first();
 
@@ -57,14 +62,15 @@ class NewPasswordController extends Controller
 
         // Check if token is expired (60 minutes)
         if (now()->diffInMinutes($resetRecord->created_at) > 60) {
-            \DB::table('password_reset_tokens')->where('phone', $request->phone)->delete();
+            DB::table('password_reset_tokens')->where('phone', $request->phone)->delete();
             throw ValidationException::withMessages([
                 'otp' => ['This OTP has expired. Please request a new one.'],
             ]);
         }
 
         // Verify OTP
-        if (!\Hash::check($request->otp, $resetRecord->token)) {
+        // if (!Hash::check($request->otp, $resetRecord->token)) {
+        if ($request->otp !== $resetRecord->token) {
             throw ValidationException::withMessages([
                 'otp' => ['The OTP you entered is incorrect.'],
             ]);
@@ -85,7 +91,7 @@ class NewPasswordController extends Controller
         ])->save();
 
         // Delete the reset token
-        \DB::table('password_reset_tokens')->where('phone', $request->phone)->delete();
+        DB::table('password_reset_tokens')->where('phone', $request->phone)->delete();
 
         event(new PasswordReset($user));
 
