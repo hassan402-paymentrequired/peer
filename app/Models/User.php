@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -203,7 +204,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function setOtp()
     {
-        $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = Str::random(6);
 
         $this->update([
             'otp_sent_at' => now(),

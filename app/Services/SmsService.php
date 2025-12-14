@@ -39,15 +39,6 @@ class SmsService
     {
         try {
             $cleanPhone = $this->cleanPhoneNumber($phoneNumber);
-            // $bulk = new Ebulksms();
-
-            // $result = $bulk->useJSON($message, [$phoneNumber]);
-
-            // Log::info('bulk response', [
-            //     'res' => $result
-            // ]);
-            // return true;
-
             if ($channel === 'sms') {
                 return $this->sendKudiSms($cleanPhone, $message);
             } else {
