@@ -116,7 +116,7 @@ class PlayerStatistic extends Model
         $points += ($attributes['fouls_committed'] ?? 0) * config('point.fouls_committed', -2);
 
         return [
-            'points' => max(0, $points),
+            'points' =>  $points,
             'clean_sheet' => $cleanSheet
         ];
     }

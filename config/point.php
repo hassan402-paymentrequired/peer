@@ -12,5 +12,6 @@ return [
     'save' => 1,
     'shots_total' => 2,
     'goals_saves' => 3,
+    'fouls_committed' => -2
 
 ];

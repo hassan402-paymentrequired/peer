@@ -235,7 +235,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
         // Calculate points and clean sheet
         $calculated = PlayerStatistic::calculatePoints($attributes);
         $attributes['clean_sheet'] = $calculated['clean_sheet'];
-        $attributes['total_point'] = (int)$calculated['points'] + (int)$calculated['clean_sheet'];
+        $attributes['total_point'] = $calculated['points'];
 
         PlayerStatistic::updateOrCreate(
             [
