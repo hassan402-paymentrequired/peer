@@ -36,6 +36,13 @@ return [
             'api_key' => env('KUDISMS_API_KEY'),
             'sender_id' => env('KUDISMS_SENDER_ID', 'Starpick'),
         ],
+        'ebulksms' => [
+            'api_url' => env('EBULK_API_URL', 'https://api.ebulksms.com/sendsms.json'),
+            'api_key' => env('EBULK_API_KEY'),
+            'sender_name' => env('EBULK_SENDER_NAME', 'Starpick'),
+            'user_name' => env('EBULK_SENDER_NAME', 'Starpick'),
+        ],
+
     ],
 
     /*
@@ -67,5 +74,12 @@ return [
         'api_url' => env('KUDISMS_API_URL', 'https://my.kudisms.net/api'),
         'api_key' => env('KUDISMS_API_KEY'),
         'sender_id' => env('KUDISMS_SENDER_ID', 'Starpick'),
+    ],
+
+    'ebulksms' => [
+        'api_url' => env('EBULK_API_URL', 'https://api.ebulksms.com/sendsms.json'),
+        'api_key' => env('EBULK_API_KEY'),
+        'sender_name' => env('EBULK_SENDER_NAME', 'Starpick'),
+        'user_name' => env('EBULK_SENDER_NAME', 'Starpick'),
     ],
 ];

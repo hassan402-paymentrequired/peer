@@ -23,8 +23,7 @@ class NewPasswordController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('auth/reset-password', [
-            'phone' => $request->phone,
-            'token' => $request->route('token'),
+            'phone' => $request->phone ?? '',
         ]);
     }
 
@@ -36,7 +35,7 @@ class NewPasswordController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'token' => 'required',
+            'otp' => 'required|string|size:6',
             'phone' => [
                 'required',
                 'string',
@@ -45,30 +44,51 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
-            $request->only('phone', 'password', 'password_confirmation', 'token'),
-            function (User $user) use ($request) {
-                $user->forceFill([
-                    'password' => Hash::make($request->password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        // Find the reset token
+        $resetRecord = \DB::table('password_reset_tokens')
+            ->where('phone', $request->phone)
+            ->first();
 
-                event(new PasswordReset($user));
-            }
-        );
-
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        if ($status == Password::PasswordReset) {
-            return to_route('login')->with('status', __($status));
+        if (!$resetRecord) {
+            throw ValidationException::withMessages([
+                'phone' => ['No password reset request found for this phone number.'],
+            ]);
         }
 
-        throw ValidationException::withMessages([
-            'phone' => [__($status)],
-        ]);
+        // Check if token is expired (60 minutes)
+        if (now()->diffInMinutes($resetRecord->created_at) > 60) {
+            \DB::table('password_reset_tokens')->where('phone', $request->phone)->delete();
+            throw ValidationException::withMessages([
+                'otp' => ['This OTP has expired. Please request a new one.'],
+            ]);
+        }
+
+        // Verify OTP
+        if (!\Hash::check($request->otp, $resetRecord->token)) {
+            throw ValidationException::withMessages([
+                'otp' => ['The OTP you entered is incorrect.'],
+            ]);
+        }
+
+        // Find user and reset password
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'phone' => ['User not found.'],
+            ]);
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($request->password),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        // Delete the reset token
+        \DB::table('password_reset_tokens')->where('phone', $request->phone)->delete();
+
+        event(new PasswordReset($user));
+
+        return to_route('login')->with('status', __('Your password has been reset successfully!'));
     }
 }

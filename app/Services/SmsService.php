@@ -39,6 +39,14 @@ class SmsService
     {
         try {
             $cleanPhone = $this->cleanPhoneNumber($phoneNumber);
+            // $bulk = new Ebulksms();
+
+            // $result = $bulk->useJSON($message, [$phoneNumber]);
+
+            // Log::info('bulk response', [
+            //     'res' => $result
+            // ]);
+            // return true;
 
             if ($channel === 'sms') {
                 return $this->sendKudiSms($cleanPhone, $message);
@@ -46,7 +54,7 @@ class SmsService
                 return $this->sendWhatsAppOtp($cleanPhone, $message);
             }
         } catch (Exception $e) {
-            Log::error("{$this->driver} SMS service exception", [
+            Log::error(" SMS service exception", [
                 'phone' => $phoneNumber,
                 'error' => $e->getMessage(),
             ]);
@@ -64,22 +72,16 @@ class SmsService
                 'senderID' => $this->senderId,
                 'recipients' => $phone,
                 'message' => $message,
+                'gateway' => '2'
             ]);
 
             Log::info('SMS sent successfully via KudiSMS', [
-                        'res' => $response->json()
-                    ]);
+                'res' => $response->json()
+            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-
-
-
-                    Log::info('SMS sent successfully via KudiSMS', [
-                        'phone' => $phone,
-                        'response' => $data,
-                    ]);
-                    return true;
+                return true;
             }
 
             Log::error('KudiSMS sending failed', [
@@ -152,22 +154,21 @@ class SmsService
      * Send OTP via WhatsApp (KudiSMS)
      */
     protected function sendWhatsAppOtp(string $phone, string $message): string
-{
-    // remove + and spaces
-    // $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+    {
+        // remove + and spaces
+        // $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
 
-    // encode the message for URL
-    $encodedMessage = urlencode($message);
+        // encode the message for URL
+        $encodedMessage = urlencode($message);
 
-    // public WhatsApp endpoint link
-    $waLink = "https://wa.me/{$phone}?text={$encodedMessage}";
+        // public WhatsApp endpoint link
+        $waLink = "https://wa.me/{$phone}?text={$encodedMessage}";
 
-    Log::info('Generated WhatsApp OTP link', [
-        'phone' => $phone,
-        'link'  => $waLink,
-    ]);
+        Log::info('Generated WhatsApp OTP link', [
+            'phone' => $phone,
+            'link'  => $waLink,
+        ]);
 
-    return $waLink;
-}
-
+        return $waLink;
+    }
 }

@@ -13,7 +13,7 @@ import AuthLayout from '@/layouts/auth-layout';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
-        <AuthLayout title="Forgot password" description="Enter your phone number to receive a password reset link via SMS">
+        <AuthLayout title="Forgot password" description="Enter your phone number to receive a 6-digit OTP via SMS">
             <Head title="Forgot password" />
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
@@ -40,7 +40,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <div className="my-6 flex items-center justify-start">
                                 <Button className="w-full" disabled={processing}>
                                     {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                    Send SMS reset link
+                                    Send OTP
                                 </Button>
                             </div>
                         </>

@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PhonePasswordResetRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,10 +33,41 @@ class PasswordResetLinkController extends Controller
      */
     public function store(PhonePasswordResetRequest $request): RedirectResponse
     {
-        Password::sendResetLink(
-            $request->only('phone')
+        $phone = $request->phone;
+        
+        // Check if user exists
+        $user = \App\Models\User::where('phone', $phone)->first();
+        
+        if (!$user) {
+            // Don't reveal if user exists or not for security
+            return back()->with('status', __('If this phone number is registered, you will receive an OTP shortly.'));
+        }
+        
+        // Generate 6-digit OTP
+        $otp = Str::random(6);
+        
+        // Store OTP in password_reset_tokens table
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['phone' => $phone],
+            [
+                'phone' => $phone,
+                'token' => Hash::make($otp),
+                'created_at' => now(),
+            ]
         );
 
-        return back()->with('status', __('A reset link will be sent via SMS if the account exists.'));
+        $message = "here you go -> {$otp}";
+        
+        // Send OTP via SMS
+        try {
+            $smsService = app(\App\Services\SmsService::class);
+            $smsService->sendSms($phone, $message, 'sms');
+        } catch (\Exception $e) {
+            Log::error('Failed to send password reset OTP: ' . $e->getMessage());
+        }
+        
+        // Redirect to reset password page with phone number
+        return redirect()->route('password.reset', ['phone' => $phone])
+            ->with('status', __('OTP sent! Please check your phone and enter the code below.'));
     }
 }
