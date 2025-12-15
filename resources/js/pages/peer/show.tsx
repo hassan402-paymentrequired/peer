@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/app-layout';
 import { PeerShowProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowDownRight, Award, ChevronDown, ChevronUp, Copy, Crown, Flame, Star, Trophy, Users } from 'lucide-react';
+import { ArrowDownRight, Award, ChevronDown, ChevronUp, Copy, Crown, Flame, Gavel, Star, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -226,6 +226,13 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                             </div>
 
                                                                             <div className="text-center">
+                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                    {squad.main_player?.statistics?.fouls_committed ?? 0}
+                                                                                </div>
+                                                                                <div className="text-slate-600">Fouls</div>
+                                                                            </div>
+
+                                                                            <div className="text-center">
                                                                                 <div className="text-sm md:text-lg">
                                                                                     {squad.main_player?.statistics?.red_cards ?? 0}
                                                                                 </div>
@@ -239,15 +246,15 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                 <div className="text-slate-600">🟨 Cards</div>
                                                                             </div>
 
-                                                                            {squad.main_player?.statistics?.position === 'G' ||
-                                                                                (squad.main_player?.statistics?.position === 'D' && (
+                                                                            {(squad.main_player?.statistics?.position === 'G' ||
+                                                                                squad.main_player?.statistics?.position === 'D') && (
                                                                                     <div className="text-center">
                                                                                         <div className="text-sm font-bold text-green-600 md:text-lg">
                                                                                             {squad.main_player?.statistics?.clean_sheet ?? 0}
                                                                                         </div>
                                                                                         <div className="text-slate-600">Clean sheet</div>
                                                                                     </div>
-                                                                                ))}
+                                                                                )}
 
                                                                             <div className="text-center">
                                                                                 <div className="text-sm font-bold text-green-600 md:text-lg">
@@ -313,6 +320,13 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                 </div>
                                                                                 <div className="text-center">
                                                                                     <div className="text-sm md:text-lg">
+                                                                                        {squad.sub_player?.statistics?.fouls_committed ?? 0}
+                                                                                    </div>
+                                                                                    <div className="text-slate-600">Fouls</div>
+                                                                                </div>
+
+                                                                                <div className="text-center">
+                                                                                    <div className="text-sm md:text-lg">
                                                                                         {squad.sub_player?.statistics?.red_cards ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">🟥 Cards</div>
@@ -325,15 +339,15 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                     <div className="text-slate-600">🟨 Cards</div>
                                                                                 </div>
 
-                                                                                {squad.main_player?.statistics?.position === 'G' ||
-                                                                                    (squad.main_player?.statistics?.position === 'D' && (
+                                                                                {(squad.sub_player?.statistics?.position === 'G' ||
+                                                                                    squad.sub_player?.statistics?.position === 'D') && (
                                                                                         <div className="text-center">
                                                                                             <div className="text-sm font-bold text-green-600 md:text-lg">
                                                                                                 {squad.sub_player?.statistics?.clean_sheet ?? 0}
                                                                                             </div>
                                                                                             <div className="text-slate-600">Clean sheet</div>
                                                                                         </div>
-                                                                                    ))}
+                                                                                    )}
                                                                                 <div className="text-center">
                                                                                     <div className="text-sm font-bold text-green-600 md:text-lg">
                                                                                         {squad.sub_player?.statistics?.total_point ?? 0}

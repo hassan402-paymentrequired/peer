@@ -77,7 +77,7 @@ class PlayerStatistic extends Model
 
         // Goalkeeper and Defender Clean Sheet Logic
         $position = $attributes['position'] ?? '';
-        
+
         // Handle full position names from API just in case (though DB script showed abbreviations, simple safety)
         if (in_array($position, ['Goalkeeper', 'G', 'Defender', 'D']) && $minutes >= 65) {
             $goalsConceded = $attributes['goals_conceded'] ?? 0;
@@ -89,7 +89,7 @@ class PlayerStatistic extends Model
                     // Clean sheet: 15 points + (saves * 3 points each)
                     $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 15);
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
-                    
+
                     $totalCleanSheetPoints = $cleanSheetPoints + $savePoints;
                     $points += $totalCleanSheetPoints;
                     $cleanSheet = $totalCleanSheetPoints;
@@ -112,6 +112,19 @@ class PlayerStatistic extends Model
             }
         }
 
+        // Tackles
+        $points += ($attributes['tackles_total'] ?? 0) * config('point.tackle', 2);
+
+        // Goals Conceded (Penalty - usually for GK/DEF but applied if recorded)
+        // Note: Clean sheet logic already handles the bonus/loss of bonus. This is the raw penalty per goal.
+        // If strict GK/DEF is required for this penalty, we can check position.
+        // Assuming global application if the stat exists, or we can check position if 'goal_concede' config implies it.
+        // Given user request "we are not calculating tackle and goal concede", implies adding it.
+        // Often goal concede penalty is only for DEF/GK.
+        if (in_array($position, ['Goalkeeper', 'G', 'Defender', 'D'])) {
+             $points += ($attributes['goals_conceded'] ?? 0) * config('point.goal_concede', -2);
+        }
+
         // Fouls committed (penalty)
         $points += ($attributes['fouls_committed'] ?? 0) * config('point.fouls_committed', -2);
 
@@ -128,13 +141,13 @@ class PlayerStatistic extends Model
 
         $total = $result['points'];
         $cleanSheet = $result['clean_sheet'];
-        
+
         // Only save if values are different to avoid unnecessary writes/recursion
         if ($this->total_point !== $total || $this->clean_sheet !== $cleanSheet) {
             $this->total_point = $total;
             $this->clean_sheet = $cleanSheet;
             // $this->save(); // Side-effect kept for compatibility/self-healing but guarded
-            
+
             // NOTE: calling save() here is still risky but if we guard it, it reduces loop risk.
             // Ideally, we move away from this, but to be safe with existing codebase:
             $this->saveQuietly(); // Use saveQuietly to avoid triggering events if any
@@ -223,13 +236,32 @@ class PlayerStatistic extends Model
                 'points' => $this->red_cards * config('point.red_card', -5)
             ];
         }
-        
+
         // Fouls committed
         if (($this->fouls_committed ?? 0) > 0) {
             $breakdown[] = [
                 'label' => 'Fouls committed',
                 'value' => $this->fouls_committed,
                 'points' => $this->fouls_committed * config('point.fouls_committed', -2)
+            ];
+        }
+
+        // Tackles
+        if (($this->tackles_total ?? 0) > 0) {
+            $breakdown[] = [
+                'label' => 'Tackles',
+                'value' => $this->tackles_total,
+                'points' => $this->tackles_total * config('point.tackle', 2)
+            ];
+        }
+
+        // Goals Conceded breakdown
+        // Logic inside calculatePoints adds this for G/D.
+        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) > 0) {
+             $breakdown[] = [
+                'label' => 'Goals conceded',
+                'value' => $this->goals_conceded,
+                'points' => $this->goals_conceded * config('point.goal_concede', -2)
             ];
         }
 
