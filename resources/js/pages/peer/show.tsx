@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/app-layout';
 import { PeerShowProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowDownRight, Award, ChevronDown, ChevronUp, Copy, Crown, Flame, Gavel, Star, Trophy, Users } from 'lucide-react';
+import { ArrowDownRight, Award, ChevronDown, ChevronUp, Copy, Crown, Flame, Star, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -181,35 +181,29 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                     {squad.main_player?.name}
                                                                                 </span>
                                                                                 <Badge variant="outline" className="text-[10px] md:text-xs">
-                                                                                    {squad.main_player?.statistics?.position || squad.main_player?.position}
+                                                                                    {squad.main_player?.statistics?.position ||
+                                                                                        squad.main_player?.position}
                                                                                 </Badge>
                                                                             </div>
                                                                             {getPlayerStatusIcon(squad.main_player?.statistics?.did_play)}
                                                                         </div>
 
                                                                         <div className="grid grid-cols-4 gap-3 text-xs md:grid-cols-7 md:text-sm">
-
-                                                                            {(squad.main_player?.statistics?.position === 'G') ? (
-                                                                                    <div className="text-center">
-                                                                                        <div className="text-xs font-bold text-red-500 sm:text-sm">
-                                                                                            {squad.main_player?.statistics?.goals_conceded ?? 0}
-                                                                                        </div>
-                                                                                        <div className="text-slate-600">Conceded</div>
+                                                                            {squad.main_player?.statistics?.position === 'G' ? (
+                                                                                <div className="text-center">
+                                                                                    <div className="text-xs font-bold text-red-500 sm:text-sm">
+                                                                                        {squad.main_player?.statistics?.goals_conceded ?? 0}
                                                                                     </div>
-                                                                                ) : 
-                                                                                (
-<div className="text-center">
-                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
-                                                                                    {squad.main_player?.statistics?.goals_total ?? 0}
+                                                                                    <div className="text-slate-600">Conceded</div>
                                                                                 </div>
-                                                                                <div className="text-slate-600">Goals</div>
-                                                                            </div>
-                                                                                )
-                                                                                }
-
-
-
-
+                                                                            ) : (
+                                                                                <div className="text-center">
+                                                                                    <div className="text-xs font-bold text-slate-900 sm:text-sm">
+                                                                                        {squad.main_player?.statistics?.goals_total ?? 0}
+                                                                                    </div>
+                                                                                    <div className="text-slate-600">Goals</div>
+                                                                                </div>
+                                                                            )}
 
                                                                             <div className="text-center">
                                                                                 <div className="text-xs font-bold text-slate-900 sm:text-sm">
@@ -265,13 +259,13 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
 
                                                                             {(squad.main_player?.statistics?.position === 'G' ||
                                                                                 squad.main_player?.statistics?.position === 'D') && (
-                                                                                    <div className="text-center">
-                                                                                        <div className="text-xs font-bold text-green-600 sm:text-sm">
-                                                                                            {squad.main_player?.statistics?.clean_sheet ?? 0}
-                                                                                        </div>
-                                                                                        <div className="text-slate-600">Clean sheet</div>
+                                                                                <div className="text-center">
+                                                                                    <div className="text-xs font-bold text-green-600 sm:text-sm">
+                                                                                        {squad.main_player?.statistics?.clean_sheet ?? 0}
                                                                                     </div>
-                                                                                )}
+                                                                                    <div className="text-slate-600">Clean sheet</div>
+                                                                                </div>
+                                                                            )}
 
                                                                             <div className="text-center">
                                                                                 <div className="text-xs font-bold text-green-600 sm:text-sm">
@@ -292,34 +286,29 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                         {squad.sub_player?.name}
                                                                                     </span>
                                                                                     <Badge variant="outline" className="text-[10px] md:text-xs">
-                                                                                        {squad.sub_player?.statistics?.position || squad.sub_player?.position}
+                                                                                        {squad.sub_player?.statistics?.position ||
+                                                                                            squad.sub_player?.position}
                                                                                     </Badge>
                                                                                 </div>
                                                                                 {getPlayerStatusIcon(squad.sub_player?.statistics?.did_play)}
                                                                             </div>
 
                                                                             <div className="grid grid-cols-4 gap-3 text-sm md:grid-cols-8">
-
- {(squad.main_player?.statistics?.position === 'G') ? (
+                                                                                {squad.sub_player?.statistics?.position === 'G' ? (
                                                                                     <div className="text-center">
                                                                                         <div className="text-xs font-bold text-red-500 sm:text-sm">
                                                                                             {squad.sub_player?.statistics?.goals_conceded ?? 0}
                                                                                         </div>
                                                                                         <div className="text-slate-600">Conceded</div>
                                                                                     </div>
-                                                                                ) : 
-                                                                                (
-<div className="text-center">
-                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
-                                                                                    {squad.sub_player?.statistics?.goals_total ?? 0}
-                                                                                </div>
-                                                                                <div className="text-slate-600">Goals</div>
-                                                                            </div>
-                                                                                )
-                                                                                }
-
-                                                                               
-
+                                                                                ) : (
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-xs font-bold text-slate-900 sm:text-sm">
+                                                                                            {squad.sub_player?.statistics?.goals_total ?? 0}
+                                                                                        </div>
+                                                                                        <div className="text-slate-600">Goals</div>
+                                                                                    </div>
+                                                                                )}
 
                                                                                 <div className="text-center">
                                                                                     <div className="text-xs font-bold text-slate-900 sm:text-sm">
@@ -374,23 +363,23 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
 
                                                                                 {(squad.sub_player?.statistics?.position === 'G' ||
                                                                                     squad.sub_player?.statistics?.position === 'D') && (
-                                                                                        <div className="text-center">
-                                                                                            <div className="text-xs font-bold text-green-600 sm:text-sm">
-                                                                                                {squad.sub_player?.statistics?.clean_sheet ?? 0}
-                                                                                            </div>
-                                                                                            <div className="text-slate-600">Clean sheet</div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-xs font-bold text-green-600 sm:text-sm">
+                                                                                            {squad.sub_player?.statistics?.clean_sheet ?? 0}
                                                                                         </div>
-                                                                                    )}
+                                                                                        <div className="text-slate-600">Clean sheet</div>
+                                                                                    </div>
+                                                                                )}
 
                                                                                 {(squad.sub_player?.statistics?.position === 'G' ||
                                                                                     squad.sub_player?.statistics?.position === 'D') && (
-                                                                                        <div className="text-center">
-                                                                                            <div className="text-xs font-bold text-red-500 sm:text-sm">
-                                                                                                {squad.sub_player?.statistics?.goals_conceded ?? 0}
-                                                                                            </div>
-                                                                                            <div className="text-slate-600">Conceded</div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-xs font-bold text-red-500 sm:text-sm">
+                                                                                            {squad.sub_player?.statistics?.goals_conceded ?? 0}
                                                                                         </div>
-                                                                                    )}
+                                                                                        <div className="text-slate-600">Conceded</div>
+                                                                                    </div>
+                                                                                )}
                                                                                 <div className="text-center">
                                                                                     <div className="text-xs font-bold text-green-600 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.total_point ?? 0}
@@ -420,7 +409,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                     No players have joined this peer yet. Join now and claim your spot in the competition.
                                 </p>
                                 <Link href={joinPeer(peer.peer_id)} prefetch>
-                                    <Button >
+                                    <Button>
                                         Join Peer
                                         <ArrowDownRight className="ml-2 h-5 w-5" />
                                     </Button>
