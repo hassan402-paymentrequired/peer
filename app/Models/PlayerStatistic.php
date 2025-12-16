@@ -126,7 +126,7 @@ class PlayerStatistic extends Model
         }
 
         // Fouls committed (penalty)
-        $points += ($attributes['fouls_committed'] ?? 0) * config('point.fouls_committed', -2);
+        $points += ($attributes['fouls_committed'] ?? 0) * config('point.fouls_committed', -1);
 
         return [
             'points' =>  $points,
@@ -242,7 +242,7 @@ class PlayerStatistic extends Model
             $breakdown[] = [
                 'label' => 'Fouls committed',
                 'value' => $this->fouls_committed,
-                'points' => $this->fouls_committed * config('point.fouls_committed', -2)
+                'points' => $this->fouls_committed * config('point.fouls_committed', -1)
             ];
         }
 

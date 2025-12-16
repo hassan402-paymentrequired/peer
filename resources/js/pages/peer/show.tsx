@@ -188,59 +188,76 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                         </div>
 
                                                                         <div className="grid grid-cols-4 gap-3 text-xs md:grid-cols-7 md:text-sm">
-                                                                            <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+
+                                                                            {(squad.main_player?.statistics?.position === 'G') ? (
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-xs font-bold text-red-500 sm:text-sm">
+                                                                                            {squad.main_player?.statistics?.goals_conceded ?? 0}
+                                                                                        </div>
+                                                                                        <div className="text-slate-600">Conceded</div>
+                                                                                    </div>
+                                                                                ) : 
+                                                                                (
+<div className="text-center">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.goals_total ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Goals</div>
                                                                             </div>
+                                                                                )
+                                                                                }
+
+
+
+
+
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.goals_assists ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Assists</div>
                                                                             </div>
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.shots_on_target ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Shots On</div>
                                                                             </div>
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.shots_total ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Shots</div>
                                                                             </div>
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.tackles_total ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Tackles</div>
                                                                             </div>
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.goals_saves ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Saves</div>
                                                                             </div>
 
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.fouls_committed ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Fouls</div>
                                                                             </div>
 
                                                                             <div className="text-center">
-                                                                                <div className="text-sm md:text-lg">
+                                                                                <div className="text-xs sm:text-sm">
                                                                                     {squad.main_player?.statistics?.red_cards ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">🟥 Cards</div>
                                                                             </div>
 
                                                                             <div className="text-center">
-                                                                                <div className="text-sm md:text-lg">
+                                                                                <div className="text-xs sm:text-sm">
                                                                                     {squad.main_player?.statistics?.yellow_cards ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">🟨 Cards</div>
@@ -249,7 +266,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                             {(squad.main_player?.statistics?.position === 'G' ||
                                                                                 squad.main_player?.statistics?.position === 'D') && (
                                                                                     <div className="text-center">
-                                                                                        <div className="text-sm font-bold text-green-600 md:text-lg">
+                                                                                        <div className="text-xs font-bold text-green-600 sm:text-sm">
                                                                                             {squad.main_player?.statistics?.clean_sheet ?? 0}
                                                                                         </div>
                                                                                         <div className="text-slate-600">Clean sheet</div>
@@ -257,7 +274,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                 )}
 
                                                                             <div className="text-center">
-                                                                                <div className="text-sm font-bold text-green-600 md:text-lg">
+                                                                                <div className="text-xs font-bold text-green-600 sm:text-sm">
                                                                                     {squad.main_player?.statistics?.total_point ?? 0}
                                                                                 </div>
                                                                                 <div className="text-slate-600">Points</div>
@@ -271,7 +288,7 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                             <div className="mb-3 flex items-center justify-between">
                                                                                 <div className="flex items-center gap-3">
                                                                                     <Badge className="bg-slate-600 px-2 py-1 text-white">Sub</Badge>
-                                                                                    <span className="text-sm font-bold text-slate-900 lg:text-base">
+                                                                                    <span className="text-xs font-bold text-slate-900 lg:text-base">
                                                                                         {squad.sub_player?.name}
                                                                                     </span>
                                                                                     <Badge variant="outline" className="text-[10px] md:text-xs">
@@ -282,58 +299,74 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                             </div>
 
                                                                             <div className="grid grid-cols-4 gap-3 text-sm md:grid-cols-8">
-                                                                                <div className="text-center">
-                                                                                    <div className="text-lg font-bold text-slate-900">
-                                                                                        {squad.sub_player?.statistics?.goals_total ?? 0}
+
+ {(squad.main_player?.statistics?.position === 'G') ? (
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-xs font-bold text-red-500 sm:text-sm">
+                                                                                            {squad.sub_player?.statistics?.goals_conceded ?? 0}
+                                                                                        </div>
+                                                                                        <div className="text-slate-600">Conceded</div>
                                                                                     </div>
-                                                                                    <div className="text-slate-600">Goals</div>
+                                                                                ) : 
+                                                                                (
+<div className="text-center">
+                                                                                <div className="text-xs font-bold text-slate-900 sm:text-sm">
+                                                                                    {squad.sub_player?.statistics?.goals_total ?? 0}
                                                                                 </div>
+                                                                                <div className="text-slate-600">Goals</div>
+                                                                            </div>
+                                                                                )
+                                                                                }
+
+                                                                               
+
+
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                    <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.goals_assists ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Assists</div>
                                                                                 </div>
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                    <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.shots_on_target ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Shots On</div>
                                                                                 </div>
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                    <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.shots_total ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Shots</div>
                                                                                 </div>
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                    <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.tackles_total ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Tackles</div>
                                                                                 </div>
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm font-bold text-slate-900 md:text-lg">
+                                                                                    <div className="text-xs font-bold text-slate-900 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.goals_saves ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Saves</div>
                                                                                 </div>
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm md:text-lg">
+                                                                                    <div className="text-xs sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.fouls_committed ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Fouls</div>
                                                                                 </div>
 
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm md:text-lg">
+                                                                                    <div className="text-xs sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.red_cards ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">🟥 Cards</div>
                                                                                 </div>
 
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm md:text-lg">
+                                                                                    <div className="text-xs sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.yellow_cards ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">🟨 Cards</div>
@@ -342,14 +375,24 @@ export default function PeerShow({ peer, users }: PeerShowProps) {
                                                                                 {(squad.sub_player?.statistics?.position === 'G' ||
                                                                                     squad.sub_player?.statistics?.position === 'D') && (
                                                                                         <div className="text-center">
-                                                                                            <div className="text-sm font-bold text-green-600 md:text-lg">
+                                                                                            <div className="text-xs font-bold text-green-600 sm:text-sm">
                                                                                                 {squad.sub_player?.statistics?.clean_sheet ?? 0}
                                                                                             </div>
                                                                                             <div className="text-slate-600">Clean sheet</div>
                                                                                         </div>
                                                                                     )}
+
+                                                                                {(squad.sub_player?.statistics?.position === 'G' ||
+                                                                                    squad.sub_player?.statistics?.position === 'D') && (
+                                                                                        <div className="text-center">
+                                                                                            <div className="text-xs font-bold text-red-500 sm:text-sm">
+                                                                                                {squad.sub_player?.statistics?.goals_conceded ?? 0}
+                                                                                            </div>
+                                                                                            <div className="text-slate-600">Conceded</div>
+                                                                                        </div>
+                                                                                    )}
                                                                                 <div className="text-center">
-                                                                                    <div className="text-sm font-bold text-green-600 md:text-lg">
+                                                                                    <div className="text-xs font-bold text-green-600 sm:text-sm">
                                                                                         {squad.sub_player?.statistics?.total_point ?? 0}
                                                                                     </div>
                                                                                     <div className="text-slate-600">Points</div>
