@@ -33,9 +33,9 @@ class FetchPlayers implements ShouldQueue
             Log::info("Fetching players for league $leagueId, season $season, page $page...");
             $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'x-rapidapi-key' => $apiKey
-            ])->get($apiUrl, [
+            ])->get($apiUrl + "?season=$season", [
                 'league' => $leagueId,
-                'season' => $season,
+                // 'season' => $season,
                 'page' => $page
             ]);
 
