@@ -115,57 +115,64 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
     };
 
     const handleSubmitTeam = async () => {
+        // Prevent duplicate submissions
+        if (loading) {
+            return;
+        }
+
         setLoading(true);
+
         if (selectedPlayers.length !== 10) {
             toast.error('Please select exactly 10 players (5 main + 5 substitutes)');
             setLoading(false);
             return;
         }
 
-        const peers = [5, 4, 3, 2, 1].map((star) => {
-            const mainPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'main');
-            const subPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'sub');
-
-            if (!mainPlayer || !subPlayer) {
-                throw new Error(`Missing players for ${star}-star tier`);
-            }
-
-            return {
-                star,
-                main: mainPlayer.player_id,
-                sub: subPlayer.player_id,
-                main_player_match_id: mainPlayer.player_match_id,
-                sub_player_match_id: subPlayer.player_match_id,
-            };
-        });
-
-        const formData = {
-            peer_id: peer.id,
-            peers: peers,
-        };
-
         try {
+            const peers = [5, 4, 3, 2, 1].map((star) => {
+                const mainPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'main');
+                const subPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'sub');
+
+                if (!mainPlayer || !subPlayer) {
+                    throw new Error(`Missing players for ${star}-star tier`);
+                }
+
+                return {
+                    star,
+                    main: mainPlayer.player_id,
+                    sub: subPlayer.player_id,
+                    main_player_match_id: mainPlayer.player_match_id,
+                    sub_player_match_id: subPlayer.player_match_id,
+                };
+            });
+
+            const formData = {
+                peer_id: peer.id,
+                peers: peers,
+            };
+
             // Use Inertia router to submit the form
             router.post(storeJoinPeer(peer.id), formData, {
                 onError: (errors) => {
                     console.error('Validation errors:', errors);
-                    alert(`Error: ${Object.values(errors).join(', ')}`);
+                    toast.error(`Error: ${Object.values(errors).join(', ')}`);
+                },
+                onSuccess: () => {
+                    if (flash?.success) {
+                        toast.success(flash.success);
+                    }
                 },
                 onFinish: () => {
-                    if (flash?.error) {
-                        toast.error(flash?.error);
-                    }
+                    setLoading(false);
 
-                    if (flash?.success) {
-                        toast.success(flash?.success);
+                    if (flash?.error) {
+                        toast.error(flash.error);
                     }
                 },
             });
-            console.log('joined');
         } catch (error) {
             console.error('Error submitting team:', error);
             toast.error('Failed to submit team. Please try again.');
-        } finally {
             setLoading(false);
         }
     };
@@ -375,8 +382,8 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                                                                     disabled={mainCount >= 1 && selectedPlayer?.type !== 'main'}
                                                                     onClick={() => handlePlayerSelect(player, 'main')}
                                                                     className={`h-8 flex-1 ${selectedPlayer?.type === 'main'
-                                                                            ? 'bg-[var(--clr-primary-a0)] text-muted'
-                                                                            : 'text-muted-white'
+                                                                        ? 'bg-[var(--clr-primary-a0)] text-muted'
+                                                                        : 'text-muted-white'
                                                                         }`}
                                                                 >
                                                                     {selectedPlayer?.type === 'main' ? 'Main ✓' : 'Main Squad'}
@@ -387,8 +394,8 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                                                                     disabled={subCount >= 1 && selectedPlayer?.type !== 'sub'}
                                                                     onClick={() => handlePlayerSelect(player, 'sub')}
                                                                     className={`h-8 flex-1 ${selectedPlayer?.type === 'sub'
-                                                                            ? 'bg-[var(--clr-secondary-a0)] text-muted'
-                                                                            : 'text-muted-white'
+                                                                        ? 'bg-[var(--clr-secondary-a0)] text-muted'
+                                                                        : 'text-muted-white'
                                                                         }`}
                                                                 >
                                                                     {selectedPlayer?.type === 'sub' ? 'Sub ✓' : 'Substitute'}

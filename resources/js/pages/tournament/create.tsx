@@ -116,42 +116,56 @@ export default function JoinPeer({ tournament, players }: { tournament: Tourname
     };
 
     const handleSubmitTeam = async () => {
-        setProcessing(true);
-        console.log('clicked');
-        if (selectedPlayers.length !== 10) {
-            toast.error('Please select exactly 10 players (5 main + 5 substitutes)');
+        // Prevent duplicate submissions
+        if (processing) {
             return;
         }
 
-        const peers = [5, 4, 3, 2, 1].map((star) => {
-            const mainPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'main');
-            const subPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'sub');
+        setProcessing(true);
+        console.log('clicked');
 
-            if (!mainPlayer || !subPlayer) {
-                throw new Error(`Missing players for ${star}-star tier`);
-            }
-
-            return {
-                star,
-                main: mainPlayer.player_id,
-                sub: subPlayer.player_id,
-                main_player_match_id: mainPlayer.player_match_id,
-                sub_player_match_id: subPlayer.player_match_id,
-            };
-        });
-
-        const formData = {
-            peers: peers,
-        };
+        if (selectedPlayers.length !== 10) {
+            toast.error('Please select exactly 10 players (5 main + 5 substitutes)');
+            setProcessing(false);
+            return;
+        }
 
         try {
+            const peers = [5, 4, 3, 2, 1].map((star) => {
+                const mainPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'main');
+                const subPlayer = selectedPlayers.find((p) => getPlayerStarRating(p.player_id) === star && p.type === 'sub');
+
+                if (!mainPlayer || !subPlayer) {
+                    throw new Error(`Missing players for ${star}-star tier`);
+                }
+
+                return {
+                    star,
+                    main: mainPlayer.player_id,
+                    sub: subPlayer.player_id,
+                    main_player_match_id: mainPlayer.player_match_id,
+                    sub_player_match_id: subPlayer.player_match_id,
+                };
+            });
+
+            const formData = {
+                peers: peers,
+            };
+
             // Use Inertia router to submit the form
             router.post(store(), formData, {
                 onError: (errors) => {
                     console.error('Validation errors:', errors);
-                    alert(`Error: ${Object.values(errors).join(', ')}`);
+                    toast.error(`Error: ${Object.values(errors).join(', ')}`);
+                },
+                onSuccess: () => {
+                    if (flash?.success) {
+                        toast.success(flash.success);
+                    }
                 },
                 onFinish: () => {
+                    setProcessing(false);
+
                     if (flash?.error) {
                         toast.error(flash.error);
                     }
@@ -159,8 +173,7 @@ export default function JoinPeer({ tournament, players }: { tournament: Tourname
             });
         } catch (error) {
             console.error('Error submitting team:', error);
-            alert('Failed to submit team. Please try again.');
-        } finally {
+            toast.error('Failed to submit team. Please try again.');
             setProcessing(false);
         }
     };
@@ -377,8 +390,8 @@ export default function JoinPeer({ tournament, players }: { tournament: Tourname
                                                                     disabled={mainCount >= 1 && selectedPlayer?.type !== 'main'}
                                                                     onClick={() => handlePlayerSelect(player, 'main')}
                                                                     className={`h-8 flex-1 ${selectedPlayer?.type === 'main'
-                                                                            ? 'bg-[var(--clr-primary-a0)] text-muted'
-                                                                            : 'text-muted-white'
+                                                                        ? 'bg-[var(--clr-primary-a0)] text-muted'
+                                                                        : 'text-muted-white'
                                                                         }`}
                                                                 >
                                                                     {selectedPlayer?.type === 'main' ? 'Main ✓' : 'Main Squad'}
@@ -389,8 +402,8 @@ export default function JoinPeer({ tournament, players }: { tournament: Tourname
                                                                     disabled={subCount >= 1 && selectedPlayer?.type !== 'sub'}
                                                                     onClick={() => handlePlayerSelect(player, 'sub')}
                                                                     className={`h-8 flex-1 ${selectedPlayer?.type === 'sub'
-                                                                            ? 'bg-[var(--clr-secondary-a0)] text-muted'
-                                                                            : 'text-muted-white'
+                                                                        ? 'bg-[var(--clr-secondary-a0)] text-muted'
+                                                                        : 'text-muted-white'
                                                                         }`}
                                                                 >
                                                                     {selectedPlayer?.type === 'sub' ? 'Sub ✓' : 'Substitute'}
