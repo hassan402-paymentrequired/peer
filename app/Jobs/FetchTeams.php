@@ -48,6 +48,8 @@ class FetchTeams implements ShouldQueue
 
             $body = $response->json();
 
+            Log::info('res from api: ' , [$response->json()]);
+
             $teams = $body['response'] ?? [];
             $paging = $body['paging'] ?? ['current' => $page, 'total' => $page];
             $totalPages = $paging['total'] ?? 1;
