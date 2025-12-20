@@ -56,6 +56,7 @@
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-select": "^5.10.2",
+        "react-swipeable": "^7.0.2",
         "sonner": "^2.0.7",
         "swiper": "^11.2.10",
         "tailwind-merge": "^3.0.1",

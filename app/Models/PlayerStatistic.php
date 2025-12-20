@@ -36,6 +36,9 @@ class PlayerStatistic extends Model
         'total_point',
         'fouls_committed'
     ];
+
+
+    
     public static function calculatePoints(array $attributes): array
     {
         $points = 0;

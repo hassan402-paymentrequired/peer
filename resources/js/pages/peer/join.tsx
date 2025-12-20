@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { router, usePage } from '@inertiajs/react';
 import { Check, Clock, Star, Users } from 'lucide-react';
 import { useState } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import { toast } from 'sonner';
 
 interface Player {
@@ -52,6 +53,27 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
     const [activeTab, setActiveTab] = useState('5');
     const [loading, setLoading] = useState(false);
     const { flash } = usePage<{ flash: { error?: string; success?: string } }>().props;
+
+    // Swipe handlers for tab navigation
+    const tiers = [5, 4, 3, 2, 1];
+    const currentIndex = tiers.indexOf(parseInt(activeTab));
+
+    const swipeHandlers = useSwipeable({
+        onSwipedLeft: () => {
+            // Swipe left = go to next tab (lower tier)
+            if (currentIndex < tiers.length - 1) {
+                setActiveTab(tiers[currentIndex + 1].toString());
+            }
+        },
+        onSwipedRight: () => {
+            // Swipe right = go to previous tab (higher tier)
+            if (currentIndex > 0) {
+                setActiveTab(tiers[currentIndex - 1].toString());
+            }
+        },
+        trackMouse: false, // Only track touch, not mouse
+        preventScrollOnSwipe: false,
+    });
 
     const getTierColor = (tier: number) => {
         switch (tier) {
@@ -209,9 +231,8 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                                         return (
                                             <div key={tier} className="flex items-center gap-1">
                                                 <Star
-                                                    className={`h-3 w-3 ${count > 0 ? getTierColor(tier) : 'text-[var(--clr-surface-a50)]'} ${
-                                                        count > 0 ? 'fill-current' : ''
-                                                    }`}
+                                                    className={`h-3 w-3 ${count > 0 ? getTierColor(tier) : 'text-[var(--clr-surface-a50)]'} ${count > 0 ? 'fill-current' : ''
+                                                        }`}
                                                 />
                                                 {count > 0 && <Check className="h-3 w-3 text-[var(--clr-success-a0)]" />}
                                             </div>
@@ -228,9 +249,8 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                                         return (
                                             <div key={tier} className="flex items-center gap-1">
                                                 <Star
-                                                    className={`h-3 w-3 ${count > 0 ? getTierColor(tier) : 'text-[var(--clr-surface-a50)]'} ${
-                                                        count > 0 ? 'fill-current' : ''
-                                                    }`}
+                                                    className={`h-3 w-3 ${count > 0 ? getTierColor(tier) : 'text-[var(--clr-surface-a50)]'} ${count > 0 ? 'fill-current' : ''
+                                                        }`}
                                                 />
                                                 {count > 0 && <Check className="h-3 w-3 text-[var(--clr-success-a0)]" />}
                                             </div>
@@ -243,7 +263,7 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                 </div>
 
                 {/* Player Selection */}
-                <div className="px-1">
+                <div className="px-1" {...swipeHandlers}>
                     {players.length === 0 ? (
                         <div className="py-12 text-center">
                             <h3 className="mb-2 text-xl font-semibold text-muted-foreground">No Players Available</h3>
@@ -354,11 +374,10 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                                                                     variant={selectedPlayer?.type === 'main' ? 'default' : 'outline'}
                                                                     disabled={mainCount >= 1 && selectedPlayer?.type !== 'main'}
                                                                     onClick={() => handlePlayerSelect(player, 'main')}
-                                                                    className={`h-8 flex-1 ${
-                                                                        selectedPlayer?.type === 'main'
+                                                                    className={`h-8 flex-1 ${selectedPlayer?.type === 'main'
                                                                             ? 'bg-[var(--clr-primary-a0)] text-muted'
                                                                             : 'text-muted-white'
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     {selectedPlayer?.type === 'main' ? 'Main ✓' : 'Main Squad'}
                                                                 </Button>
@@ -367,11 +386,10 @@ export default function JoinPeer({ peer, players }: { peer: Peer; players: Playe
                                                                     variant={selectedPlayer?.type === 'sub' ? 'secondary' : 'outline'}
                                                                     disabled={subCount >= 1 && selectedPlayer?.type !== 'sub'}
                                                                     onClick={() => handlePlayerSelect(player, 'sub')}
-                                                                    className={`h-8 flex-1 ${
-                                                                        selectedPlayer?.type === 'sub'
+                                                                    className={`h-8 flex-1 ${selectedPlayer?.type === 'sub'
                                                                             ? 'bg-[var(--clr-secondary-a0)] text-muted'
                                                                             : 'text-muted-white'
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     {selectedPlayer?.type === 'sub' ? 'Sub ✓' : 'Substitute'}
                                                                 </Button>
