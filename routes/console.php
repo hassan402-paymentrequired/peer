@@ -16,10 +16,10 @@ Schedule::job(FetchPreMatchLineupsJob::class)
     ->everyFiveMinutes();
 
 Schedule::job(FetchLiveStatisticsJob::class)
-    ->everyTwoMinutes();
+    ->everyMinute();
 
-Schedule::job(UpdatePeerAndTournamentTotalPoint::class)
-    ->everyTwoMinutes();
+// Schedule::job(UpdatePeerAndTournamentTotalPoint::class)
+//     ->everyTwoMinutes();
 
-Schedule::job(UpdateTournamentTotalPoint::class)
-    ->everyTwoMinutes();
+// Schedule::job(UpdateTournamentTotalPoint::class)
+//     ->everyTwoMinutes();
