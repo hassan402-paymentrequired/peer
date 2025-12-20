@@ -151,14 +151,14 @@ class PlayerStatistic extends Model
         }
 
         // Minutes Played (Base points)
-        if (($this->minutes ?? 0) > 0) {
-             $points = ($this->minutes >= 60) ? 2 : 1;
-             $breakdown[] = [
-                 'label' => 'Minutes played',
-                 'value' => $this->minutes,
-                 'points' => $points
-             ];
-        }
+        // if (($this->minutes ?? 0) > 0) {
+        //      $points = ($this->minutes >= 60) ? 2 : 1;
+        //      $breakdown[] = [
+        //          'label' => 'Minutes played',
+        //          'value' => $this->minutes,
+        //          'points' => $points
+        //      ];
+        // }
 
         // Goals
         if (($this->goals_total ?? 0) > 0) {
@@ -201,7 +201,7 @@ class PlayerStatistic extends Model
              $breakdown[] = [
                 'label' => 'Shots on goal',
                 'value' => $this->shots_on_goal,
-                'points' => $this->shots_on_goal * config('point.shot_on_goal', 1)
+                'points' => $this->shots_on_goal * config('point.shot_on_goal', 2)
             ];
         }
 
@@ -243,7 +243,7 @@ class PlayerStatistic extends Model
 
         // Goals Conceded breakdown
         // Logic inside calculatePoints adds this for G/D.
-        if (in_array($this->position, ['G', 'D']) && ($this->goals_conceded ?? 0) > 0) {
+        if (in_array($this->position, ['Goalkeeper', 'G', 'Defender', 'D']) && ($this->goals_conceded ?? 0) > 0) {
              $breakdown[] = [
                 'label' => 'Goals conceded',
                 'value' => $this->goals_conceded,
@@ -252,10 +252,10 @@ class PlayerStatistic extends Model
         }
 
         // Clean Sheet & Saves (GK/DEF)
-        if (in_array($this->position, ['G', 'D']) && ($this->minutes ?? 0) >= 65) {
+        if (in_array($this->position, ['Goalkeeper', 'G', 'Defender', 'D']) && ($this->minutes ?? 0) >= 60) {
             $goalsConceeded = $this->goals_conceded ?? 0;
 
-            if ($this->position === 'G') {
+            if ($this->position === 'G' || $this->position === 'Goalkeeper') {
                  // Saves
                 if (($this->goals_saves ?? 0) > 0) {
                     $breakdown[] = [
@@ -269,15 +269,15 @@ class PlayerStatistic extends Model
                      $breakdown[] = [
                         'label' => 'Clean sheet',
                         'value' => 1,
-                        'points' => config('point.clean_sheet_goalkeeper', 15)
+                        'points' => config('point.clean_sheet_goalkeeper', 30)
                     ];
                 }
-            } else if ($this->position === 'D') {
+            } else if ($this->position === 'D' || $this->position === 'Defender') {
                  if ($goalsConceeded === 0) {
                      $breakdown[] = [
                         'label' => 'Clean sheet',
                         'value' => 1,
-                        'points' => config('point.clean_sheet_defender', 10)
+                        'points' => config('point.clean_sheet_defender', 20)
                     ];
                 }
             }
