@@ -13,6 +13,7 @@ $id = (int)readline("Enter the league id: ");
 
 echo "Fetching leagues for league id: $id\n";
 
-dispatch(new FetchLeagues(id: $id));
+// dispatch(new FetchLeagues(id: $id));
+\App\Jobs\FetchTeams::dispatch($id, YEAR);
 
 echo "Done\n";
