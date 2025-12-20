@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Player;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Player\StorePlayerRequest as PlayerStorePlayerRequest;
 use App\Http\Requests\StorePlayerRequest;
-use App\Jobs\fetchPlayers;
+use App\Jobs\FetchPlayers;
 use App\Models\League;
 use App\Models\Player;
 use App\Models\Team;
@@ -121,11 +121,11 @@ class PlayerController extends Controller
 
     public function refetch(Request $request)
     {
-        $request->validate([
-            'league_id' => ['required']
-        ]);
-        $league = $request->league_id;
-        fetchPlayers::dispatch($league);
+        // $request->validate([
+        //     'league_id' => ['required']
+        // ]);
+        $league = '39';
+        FetchPlayers::dispatch($league, YEAR);
         return $this->respondWithCustomData([
             'message' => 'Players refetched successfully'
         ], 200);
