@@ -35,7 +35,7 @@ class FetchPlayers implements ShouldQueue
                 'x-rapidapi-key' => $apiKey
             ])->get($apiUrl, [
                 'league' => $leagueId,
-                'season' => $season,
+                'season' => YEAR,
                 'page' => $page
             ]);
 

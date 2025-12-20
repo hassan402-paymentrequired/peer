@@ -39,6 +39,7 @@ class FetchTeams implements ShouldQueue
             ])->get($apiUrl, [
                 'league' => $leagueId,
                 'season' => $season,
+                'page' => $page,
             ]);
 
             if (!$response->ok()) {
