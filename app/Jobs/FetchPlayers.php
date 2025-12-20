@@ -24,7 +24,7 @@ class FetchPlayers implements ShouldQueue
     public function handle(): void
     {
         $leagueId = $this->league;
-        $season = $this->year;
+        $season = $this->year ??= date('Y');
         $apiUrl = 'https://v3.football.api-sports.io/players';
         $apiKey = env('SPORT_API_KEY');
         $page = 1;
@@ -35,7 +35,7 @@ class FetchPlayers implements ShouldQueue
                 'x-rapidapi-key' => $apiKey
             ])->get($apiUrl, [
                 'league' => $leagueId,
-                'season' => YEAR,
+                'season' => $season,
                 'page' => $page
             ]);
 
