@@ -22,7 +22,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
     /**
      * The number of seconds the job can run before timing out.
      */
-    public int $timeout = 300; // 5 minutes
+    public int $timeout = 300;
 
     /**
      * The number of times the job may be attempted.
@@ -75,16 +75,12 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
             foreach ($participants as $participant) {
                 $totalPoints = $this->calculateParticipantScore($participant->squads);
-
                 $participant->update(['total_points' => $totalPoints]);
-
                 Log::info("Updated participant {$participant->user_id} with {$totalPoints} points");
             }
 
-            // Determine winners
             $winners = $this->determineTournamentWinners($participants);
 
-            // Update tournament status and mark as calculated
             $tournament->update([
                 'status' => 'close',
                 'scoring_calculated' => true,
@@ -167,18 +163,14 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         $totalPoints = 0;
 
         foreach ($squads as $squad) {
-            // Calculate main player points
-            $mainPlayerPoints = $this->getPlayerPoints($squad->main_player_id, $squad->main_player_match_id);
 
-            // Check if main player played (has points > 0 or played the match)
             $mainPlayerPlayed = $this->didPlayerPlay($squad->main_player_id, $squad->main_player_match_id);
 
             if ($mainPlayerPlayed) {
-                // Use main player points
+                $mainPlayerPoints = $this->getPlayerPoints($squad->main_player_id, $squad->main_player_match_id);
                 $squadPoints = $mainPlayerPoints;
                 $usedPlayer = 'main';
             } else {
-                // Use sub player points since main didn't play
                 $subPlayerPoints = $this->getPlayerPoints($squad->sub_player_id, $squad->sub_player_match_id);
                 $squadPoints = $subPlayerPoints;
                 $usedPlayer = 'sub';
@@ -205,13 +197,11 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             return 0;
         }
 
-        // Get the fixture_id from player_match
         $playerMatch = \App\Models\PlayerMatch::find($playerMatchId);
         if (!$playerMatch || !$playerMatch->fixture_id) {
             return 0;
         }
 
-        // Get player statistics for this fixture
         $statistic = PlayerStatistic::where('player_id', $playerId)
             ->where('fixture_id', $playerMatch->fixture_id)
             ->first();
@@ -220,8 +210,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             Log::warning("No statistics found for player {$playerId} in fixture {$playerMatch->fixture_id}");
             return 0;
         }
-
-        // Use the model's getPointsAttribute method
         return $statistic->points ?? 0;
     }
 
@@ -252,7 +240,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
     private function determineTournamentWinners($participants)
     {
-        // Sort participants by total points (descending)
         $sortedParticipants = $participants->sortByDesc('total_points');
 
         if ($sortedParticipants->isEmpty()) {
@@ -260,14 +247,12 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             return collect();
         }
 
-        // Get top 3 winners (handle ties by including all tied participants)
         $winners = collect();
         $currentPosition = 1;
         $previousScore = null;
         $participantsProcessed = 0;
 
         foreach ($sortedParticipants as $participant) {
-            // If score is different from previous, update position
             if ($previousScore !== null && $participant->total_points < $previousScore) {
                 $currentPosition = $participantsProcessed + 1;
             }
@@ -275,32 +260,20 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             // Only include top 3 positions (this may include ties)
             if ($currentPosition <= 3) {
                 $participant->update(['is_winner' => true]);
-
-                // Store the position for prize distribution
                 $participant->position = $currentPosition;
-
                 $winners->push($participant);
             } else {
-                // Stop processing after position 3
                 break;
             }
-
             $previousScore = $participant->total_points;
             $participantsProcessed++;
         }
-
-        Log::info("Tournament winners determined", [
-            'total_participants' => $sortedParticipants->count(),
-            'winners_count' => $winners->count(),
-            'top_3_scores' => $sortedParticipants->take(3)->pluck('total_points')->toArray(),
-            'positions_breakdown' => $winners->groupBy('position')->map->count()->toArray()
-        ]);
 
         return $winners;
     }
 
     private function determinePeerWinner($participants)
-    { 
+    {
         // Sort participants by total points (descending)
         $sortedParticipants = $participants->sortByDesc('total_points');
 
@@ -329,7 +302,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
         $netPrizePool = $totalPrizePool - $systemFee;
 
-        // Prize distribution percentages for top 3
         $prizeDistribution = [
             1 => 50, // 1st place gets 50%
             2 => 30, // 2nd place gets 30%
@@ -337,15 +309,13 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         ];
 
         foreach ($winners as $index => $winner) {
-            $position = $index + 1; // Position starts from 1
+            $position = $index + 1; 
 
             // Calculate prize based on position
             if (isset($prizeDistribution[$position])) {
                 $prizePercentage = $prizeDistribution[$position];
                 $prizeAmount = $netPrizePool * ($prizePercentage / 100);
             } else {
-                // If there are more than 3 winners, remaining winners get no prize
-                // Or you could split remaining amount equally
                 $prizeAmount = 0;
             }
 
@@ -356,7 +326,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 // Store prize amount for notifications
                 $winner->prize_amount = $prizeAmount;
 
-                // Create transaction record
                 Transaction::create([
                     'user_id' => $winner->user_id,
                     'amount' => $prizeAmount,
@@ -366,7 +335,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                     'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->id . time() . rand(100000, 999999),
                 ]);
 
-                // Send prize won notification
                 app(NotificationService::class)->notifyPrizeWon(
                     $winner->user,
                     $prizeAmount,
@@ -407,7 +375,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         $totalPrizePool = $peer->amount * $participants->count();
 
         // Deduct system fee (e.g., 5% for peer competitions)
-        $systemFeePercentage = config('peer.system_fee_percentage', 5); // 5% default for peers
+        $systemFeePercentage = config('peer.system_fee_percentage', 10);
         $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
         $netPrizePool = $totalPrizePool - $systemFee;
 

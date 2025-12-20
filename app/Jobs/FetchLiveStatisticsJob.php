@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enum\FixtureStatusEnum;
 use App\Models\Fixture;
 use App\Models\PlayerMatch;
 use App\Models\PlayerStatistic;
@@ -45,17 +46,13 @@ class FetchLiveStatisticsJob implements ShouldQueue
             Log::info('Found ' . $activeFixtures->count() . ' active fixtures to process');
 
             // Process fixtures in chunks to avoid timeout
-            $activeFixtures->chunk(100)->each(function ($fixtureChunk) {
+            $activeFixtures->chunk(500)->each(function ($fixtureChunk) {
                 foreach ($fixtureChunk as $fixture) {
                     $this->processFixture($fixture);
                     sleep(1);
                 }
-
-                // Log progress
-                Log::info("Processed chunk of " . $fixtureChunk->count() . " fixtures");
             });
-
-            // Check if any competitions are now complete
+            
             $this->checkCompletedCompetitions();
         } catch (\Exception $e) {
             Log::error('FetchLiveStatisticsJob failed: ' . $e->getMessage(), [
@@ -89,10 +86,6 @@ class FetchLiveStatisticsJob implements ShouldQueue
     private function processFixture(Fixture $fixture): void
     {
         try {
-            Log::info("Processing fixture {$fixture->external_id}");
-
-            // Lineup data should already be available from weekly fetch
-
             $statisticsData = $this->fetchFixtureStatistics($fixture->external_id);
 
             if (!$statisticsData) {
@@ -103,7 +96,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
             $this->updatePlayerStatistics($fixture, $statisticsData);
 
             // Mark player matches as completed if fixture is finished
-            if ($fixture->status === 'Match Finished') {
+            if ($fixture->status === FixtureStatusEnum::MATCH_FINISHED->value) {
                 $this->markPlayerMatchesCompleted($fixture);
             }
         } catch (\Exception $e) {
@@ -172,15 +165,13 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function updateOrCreatePlayerStatistic(Fixture $fixture, array $player, array $statistics): void
     {
-        // Find the player in our database using external_id
         $localPlayer = \App\Models\Player::where('external_id', $player['id'])->first();
 
         if (!$localPlayer) {
-            Log::warning("Player not found in database: {$player['id']}");
+            Log::warning("Player not found in our system: {$player['id']}");
             return;
         }
 
-        // Extract statistics from API response structure
         $games = $statistics['games'] ?? [];
         $goals = $statistics['goals'] ?? [];
         $passes = $statistics['passes'] ?? [];
@@ -189,7 +180,6 @@ class FetchLiveStatisticsJob implements ShouldQueue
         $tackles = $statistics['tackles'] ?? [];
         $fouls = $statistics['fouls'] ?? [];
 
-        // Prepare attributes for update and calculation
         $attributes = [
             'match_date' => $fixture->date,
 
@@ -268,7 +258,6 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function checkCompletedCompetitions(): void
     {
-        // Check tournaments that haven't been calculated yet
         $activeTournaments = Tournament::where('status', 'open')
             ->where('scoring_calculated', false)
             ->get();
@@ -316,7 +305,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
         // Check if all fixtures for these player matches are finished
         $unfinishedCount = PlayerMatch::whereIn('id', $playerMatchIds)
             ->whereHas('fixture', function ($query) {
-                $query->where('status', '!=', 'Match Finished');
+                $query->where('status', '!=', FixtureStatusEnum::MATCH_FINISHED->value);
             })
             ->count();
 
@@ -346,14 +335,12 @@ class FetchLiveStatisticsJob implements ShouldQueue
         // Check if all fixtures for these player matches are finished
         $unfinishedCount = PlayerMatch::whereIn('id', $playerMatchIds)
             ->whereHas('fixture', function ($query) {
-                $query->where('status', '!=', 'Match Finished');
+                $query->where('status', '!=', FixtureStatusEnum::MATCH_FINISHED->value);
             })
             ->count();
 
         return $unfinishedCount === 0;
     }
-
-
 
     private function markPlayerMatchesCompleted(Fixture $fixture): void
     {
@@ -369,4 +356,5 @@ class FetchLiveStatisticsJob implements ShouldQueue
             Log::error("Failed to mark player matches as completed for fixture {$fixture->external_id}: " . $e->getMessage());
         }
     }
+
 }

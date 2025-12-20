@@ -79,23 +79,24 @@ class PlayerStatistic extends Model
         $position = $attributes['position'] ?? '';
 
         // Handle full position names from API just in case (though DB script showed abbreviations, simple safety)
-        if (in_array($position, ['Goalkeeper', 'G', 'Defender', 'D']) && $minutes >= 65) {
+        if (in_array($position, ['Goalkeeper', 'G', 'Defender', 'D']) && $minutes >= 60) {
             $goalsConceded = $attributes['goals_conceded'] ?? 0;
             $goalsSaved = $attributes['goals_saves'] ?? 0;
 
             if (in_array($position, ['G', 'Goalkeeper'])) {
-                // GOALKEEPER LOGIC
                 if ($goalsConceded === 0) {
                     // Clean sheet: 15 points + (saves * 3 points each)
-                    $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 15);
+                    $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 30);
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
 
                     $totalCleanSheetPoints = $cleanSheetPoints + $savePoints;
                     $points += $totalCleanSheetPoints;
-                    $cleanSheet = $totalCleanSheetPoints;
+                    $cleanSheet = $cleanSheetPoints;
                 } else {
                     // Conceded goals: lose clean sheet bonus, only get save points
+                    $concedePoints = $goalsConceded * config('point.goals_conceded_goalkeeper', -2);
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
+                    $points += $concedePoints;
                     $points += $savePoints;
                     $cleanSheet = 0;
                 }
@@ -103,7 +104,7 @@ class PlayerStatistic extends Model
                 // DEFENDER LOGIC
                 if ($goalsConceded === 0) {
                     // Clean sheet: 10 points
-                    $cleanSheetPoints = config('point.clean_sheet_defender', 10);
+                    $cleanSheetPoints = config('point.clean_sheet_defender', 20);
                     $points += $cleanSheetPoints;
                     $cleanSheet = $cleanSheetPoints;
                 } else {
@@ -114,16 +115,6 @@ class PlayerStatistic extends Model
 
         // Tackles
         $points += ($attributes['tackles_total'] ?? 0) * config('point.tackle', 2);
-
-        // Goals Conceded (Penalty - usually for GK/DEF but applied if recorded)
-        // Note: Clean sheet logic already handles the bonus/loss of bonus. This is the raw penalty per goal.
-        // If strict GK/DEF is required for this penalty, we can check position.
-        // Assuming global application if the stat exists, or we can check position if 'goal_concede' config implies it.
-        // Given user request "we are not calculating tackle and goal concede", implies adding it.
-        // Often goal concede penalty is only for DEF/GK.
-        if (in_array($position, ['Goalkeeper', 'G', 'Defender', 'D'])) {
-             $points += ($attributes['goals_conceded'] ?? 0) * config('point.goal_concede', -2);
-        }
 
         // Fouls committed (penalty)
         $points += ($attributes['fouls_committed'] ?? 0) * config('point.fouls_committed', -1);
@@ -136,7 +127,6 @@ class PlayerStatistic extends Model
 
     public function getPointsAttribute()
     {
-        // Use the static calculation method with current model attributes
         $result = self::calculatePoints($this->attributes);
 
         $total = $result['points'];
@@ -146,11 +136,7 @@ class PlayerStatistic extends Model
         if ($this->total_point !== $total || $this->clean_sheet !== $cleanSheet) {
             $this->total_point = $total;
             $this->clean_sheet = $cleanSheet;
-            // $this->save(); // Side-effect kept for compatibility/self-healing but guarded
-
-            // NOTE: calling save() here is still risky but if we guard it, it reduces loop risk.
-            // Ideally, we move away from this, but to be safe with existing codebase:
-            $this->saveQuietly(); // Use saveQuietly to avoid triggering events if any
+            $this->saveQuietly(); 
         }
 
         return $total;

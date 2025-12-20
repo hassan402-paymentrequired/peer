@@ -22,6 +22,10 @@ return new class extends Migration
             $table->unsignedInteger('player_rating')->default(random_int(1,5));
             $table->boolean('status')->default(1);
             $table->timestamps();
+
+            $table->index('external_id');
+            $table->index('player_rating');
+
         });
     }
 
