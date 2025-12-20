@@ -73,6 +73,40 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
             Log::info("Calculating scores for {$participants->count()} tournament participants");
 
+            // Issue #1: Handle single participant - refund entry fee
+            if ($participants->count() === 1) {
+                $participant = $participants->first();
+                $refundAmount = $tournament->amount;
+
+                // Refund the entry fee
+                $participant->user->addBalance($refundAmount);
+
+                // Create transaction record
+                Transaction::create([
+                    'user_id' => $participant->user_id,
+                    'amount' => $refundAmount,
+                    'action_type' => 'credit',
+                    'description' => "Tournament entry fee refund (insufficient participants) - {$tournament->name}",
+                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                    'transaction_ref' => 'TournamentRefund' . $participant->user_id . $tournament->id . time() . rand(100000, 999999),
+                ]);
+
+                // Update tournament status
+                $tournament->update([
+                    'status' => 'close',
+                    'scoring_calculated' => true,
+                    'scoring_calculated_at' => now()
+                ]);
+
+                Log::info("Tournament {$this->competitionId} had only one participant. Entry fee refunded.", [
+                    'user_id' => $participant->user_id,
+                    'refund_amount' => $refundAmount
+                ]);
+
+                DB::commit();
+                return;
+            }
+
             foreach ($participants as $participant) {
                 $totalPoints = $this->calculateParticipantScore($participant->squads);
                 $participant->update(['total_points' => $totalPoints]);
@@ -122,6 +156,40 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
             Log::info("Calculating scores for {$participants->count()} peer participants");
 
+            // Issue #2: Handle single participant (creator only) - refund entry fee
+            if ($participants->count() === 1) {
+                $participant = $participants->first();
+                $refundAmount = $peer->amount;
+
+                // Refund the entry fee to the creator
+                $participant->user->addBalance($refundAmount);
+
+                // Create transaction record
+                Transaction::create([
+                    'user_id' => $participant->user_id,
+                    'amount' => $refundAmount,
+                    'action_type' => 'credit',
+                    'description' => "Peer entry fee refund (no opponents) - {$peer->name}",
+                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                    'transaction_ref' => 'PeerRefund' . $participant->user_id . $peer->id . time() . rand(100000, 999999),
+                ]);
+
+                // Update peer status
+                $peer->update([
+                    'status' => 'finished',
+                    'scoring_calculated' => true,
+                    'scoring_calculated_at' => now()
+                ]);
+
+                Log::info("Peer {$this->competitionId} had only one participant (creator). Entry fee refunded.", [
+                    'user_id' => $participant->user_id,
+                    'refund_amount' => $refundAmount
+                ]);
+
+                DB::commit();
+                return;
+            }
+
             foreach ($participants as $participant) {
                 $totalPoints = $this->calculateParticipantScore($participant->squads);
 
@@ -130,24 +198,24 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 Log::info("Updated participant {$participant->user_id} with {$totalPoints} points");
             }
 
-            // Determine winner
-            $winner = $this->determinePeerWinner($participants);
+            // Determine winner(s) based on sharing_ratio
+            $winners = $this->determinePeerWinners($peer, $participants);
 
             // Update peer status and mark as calculated
             $peer->update([
                 'status' => 'finished',
-                'winner_user_id' => $winner->user_id,
+                'winner_user_id' => $winners->first()->user_id,
                 'scoring_calculated' => true,
                 'scoring_calculated_at' => now()
             ]);
 
-            $totalPrizePool = $this->distributePeerPrizes($peer, $winner, $participants);
+            $totalPrizePool = $this->distributePeerPrizes($peer, $winners, $participants);
 
             // Broadcast peer completion event
-            event(new \App\Events\PeerCompleted($peer, $winner, $totalPrizePool));
+            event(new \App\Events\PeerCompleted($peer, $winners->first(), $totalPrizePool));
 
             // Create notifications for all participants
-            app(NotificationService::class)->notifyPeerCompletion($peer, $winner, $totalPrizePool);
+            app(NotificationService::class)->notifyPeerCompletion($peer, $winners->first(), $totalPrizePool);
 
             DB::commit();
 
@@ -240,12 +308,24 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
     private function determineTournamentWinners($participants)
     {
-        $sortedParticipants = $participants->sortByDesc('total_points');
-
-        if ($sortedParticipants->isEmpty()) {
+        if ($participants->isEmpty()) {
             Log::warning("No participants found for tournament");
             return collect();
         }
+
+        // Issue #4: Prevent duplicate winners from same user
+        // Group by user_id and select only the highest scoring entry per user
+        $bestEntriesPerUser = $participants->groupBy('user_id')->map(function ($userEntries) {
+            return $userEntries->sortByDesc('total_points')->first();
+        })->values();
+
+        Log::info("Filtered to best entries per user", [
+            'original_count' => $participants->count(),
+            'filtered_count' => $bestEntriesPerUser->count()
+        ]);
+
+        // Sort by total points descending
+        $sortedParticipants = $bestEntriesPerUser->sortByDesc('total_points');
 
         $winners = collect();
         $currentPosition = 1;
@@ -272,20 +352,54 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         return $winners;
     }
 
-    private function determinePeerWinner($participants)
+    private function determinePeerWinners(Peer $peer, $participants)
     {
         // Sort participants by total points (descending)
         $sortedParticipants = $participants->sortByDesc('total_points');
 
-        $winner = $sortedParticipants->first();
-        $winner->update(['is_winner' => true]);
+        // Issue #3: Determine winners based on sharing_ratio
+        if ($peer->sharing_ratio === 1) {
+            // Winner takes all
+            $winner = $sortedParticipants->first();
+            $winner->update(['is_winner' => true]);
 
-        Log::info("Peer winner determined", [
-            'winner_user_id' => $winner->user_id,
-            'winning_score' => $winner->total_points
-        ]);
+            Log::info("Peer winner determined (winner takes all)", [
+                'winner_user_id' => $winner->user_id,
+                'winning_score' => $winner->total_points
+            ]);
 
-        return $winner;
+            return collect([$winner]);
+        } else {
+            // sharing_ratio = 2: Distribute to top 3 positions
+            $winners = collect();
+            $currentPosition = 1;
+            $previousScore = null;
+            $participantsProcessed = 0;
+
+            foreach ($sortedParticipants as $participant) {
+                if ($previousScore !== null && $participant->total_points < $previousScore) {
+                    $currentPosition = $participantsProcessed + 1;
+                }
+
+                // Only include top 3 positions
+                if ($currentPosition <= 3) {
+                    $participant->update(['is_winner' => true]);
+                    $participant->position = $currentPosition;
+                    $winners->push($participant);
+                } else {
+                    break;
+                }
+                $previousScore = $participant->total_points;
+                $participantsProcessed++;
+            }
+
+            Log::info("Peer winners determined (top 3 distribution)", [
+                'winners_count' => $winners->count(),
+                'top_score' => $winners->first()->total_points
+            ]);
+
+            return $winners;
+        }
     }
 
     private function distributeTournamentPrizes(Tournament $tournament, $winners): float
@@ -370,54 +484,107 @@ class CalculateCompetitionScoresJob implements ShouldQueue
     }
 
 
-    private function distributePeerPrizes(Peer $peer, $winner, $participants): float
+    private function distributePeerPrizes(Peer $peer, $winners, $participants): float
     {
         $totalPrizePool = $peer->amount * $participants->count();
 
-        // Deduct system fee (e.g., 5% for peer competitions)
+        // Deduct system fee (e.g., 10% for peer competitions)
         $systemFeePercentage = config('peer.system_fee_percentage', 10);
         $systemFee = $totalPrizePool * ($systemFeePercentage / 100);
         $netPrizePool = $totalPrizePool - $systemFee;
 
         if ($peer->sharing_ratio === 1) {
             // Winner takes all (after system fee)
+            $winner = $winners->first();
             $prizeAmount = $netPrizePool;
+
+            // Add to winner's wallet
+            $winner->user->addBalance($prizeAmount);
+
+            // Store prize amount for notifications
+            $winner->prize_amount = $prizeAmount;
+
+            // Create transaction record
+            Transaction::create([
+                'user_id' => $winner->user_id,
+                'amount' => $prizeAmount,
+                'action_type' => 'credit',
+                'description' => "Peer competition prize (Winner Takes All) - {$peer->name}",
+                'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                'transaction_ref' => 'PeerPrize' . $winner->user_id . $peer->id . time() . rand(100000, 999999)
+            ]);
+
+            // Send prize won notification
+            app(NotificationService::class)->notifyPrizeWon(
+                $winner->user,
+                $prizeAmount,
+                'peer',
+                $peer->name,
+                ['peer_id' => $peer->id]
+            );
+
+            Log::info("Prize distributed to peer winner (winner takes all)", [
+                'user_id' => $winner->user_id,
+                'amount' => $prizeAmount,
+                'system_fee_deducted' => $systemFee,
+                'sharing_ratio' => $peer->sharing_ratio
+            ]);
         } else {
-            // Divide among participants (this logic might need adjustment based on your business rules)
-            $prizeAmount = $netPrizePool * 0.7; // Winner gets 70% of net pool, for example
+            // sharing_ratio = 2: Distribute to top 3 (50/30/20 split)
+            $prizeDistribution = [
+                1 => 50, // 1st place gets 50%
+                2 => 30, // 2nd place gets 30%
+                3 => 20, // 3rd place gets 20%
+            ];
+
+            foreach ($winners as $winner) {
+                $position = $winner->position ?? 1;
+
+                // Calculate prize based on position
+                if (isset($prizeDistribution[$position])) {
+                    $prizePercentage = $prizeDistribution[$position];
+                    $prizeAmount = $netPrizePool * ($prizePercentage / 100);
+                } else {
+                    $prizeAmount = 0;
+                }
+
+                if ($prizeAmount > 0) {
+                    // Add to user's wallet
+                    $winner->user->addBalance($prizeAmount);
+
+                    // Store prize amount for notifications
+                    $winner->prize_amount = $prizeAmount;
+
+                    Transaction::create([
+                        'user_id' => $winner->user_id,
+                        'amount' => $prizeAmount,
+                        'action_type' => 'credit',
+                        'description' => "Peer competition prize (Position {$position}) - {$peer->name}",
+                        'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                        'transaction_ref' => 'PeerPrize' . $winner->user_id . $peer->id . time() . rand(100000, 999999),
+                    ]);
+
+                    app(NotificationService::class)->notifyPrizeWon(
+                        $winner->user,
+                        $prizeAmount,
+                        'peer',
+                        $peer->name,
+                        [
+                            'peer_id' => $peer->id,
+                            'position' => $position,
+                            'percentage' => $prizePercentage
+                        ]
+                    );
+
+                    Log::info("Prize distributed to peer winner", [
+                        'user_id' => $winner->user_id,
+                        'position' => $position,
+                        'amount' => $prizeAmount,
+                        'percentage' => $prizePercentage,
+                    ]);
+                }
+            }
         }
-
-        // Add to winner's wallet
-        $winner->user->addBalance($prizeAmount);
-
-        // Store prize amount for notifications
-        $winner->prize_amount = $prizeAmount;
-
-        // Create transaction record
-        Transaction::create([
-            'user_id' => $winner->user_id,
-            'amount' => $prizeAmount,
-            'action_type' => 'credit',
-            'description' => "Peer competition prize - {$peer->name}",
-            'status' => TransactionStatusEnum::SUCCESSFUL->value,
-            'transaction_ref' => 'PeerPrize' .  $winner->user_id . time() . rand(100000, 999999)
-        ]);
-
-        // Send prize won notification
-        app(NotificationService::class)->notifyPrizeWon(
-            $winner->user,
-            $prizeAmount,
-            'peer',
-            $peer->name,
-            ['peer_id' => $peer->id]
-        );
-
-        Log::info("Prize distributed to peer winner", [
-            'user_id' => $winner->user_id,
-            'amount' => $prizeAmount,
-            'system_fee_deducted' => $systemFee,
-            'sharing_ratio' => $peer->sharing_ratio
-        ]);
 
         // Log system fee collection
         Log::info("System fee collected from peer", [
@@ -425,7 +592,8 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             'total_prize_pool' => $totalPrizePool,
             'system_fee' => $systemFee,
             'net_prize_pool' => $netPrizePool,
-            'fee_percentage' => $systemFeePercentage
+            'fee_percentage' => $systemFeePercentage,
+            'sharing_ratio' => $peer->sharing_ratio
         ]);
 
         return $totalPrizePool;
