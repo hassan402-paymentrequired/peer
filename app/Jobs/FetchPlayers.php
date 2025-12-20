@@ -41,9 +41,6 @@ class FetchPlayers implements ShouldQueue
 
             $body = $response->json();
 
-            Log::info('res from api: ', [$response->json()]);
-
-
             $players = $body['response'] ?? [];
             $paging = $body['paging'] ?? ['current' => $page, 'total' => $page];
             $currentPage = $paging['current'] ?? $page;
