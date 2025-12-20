@@ -38,7 +38,7 @@ class FetchPlayers implements ShouldQueue
             //     'season' => $season,
             //     'page' => $page
             // ]);
-            $players = players_data(39, 2021);
+            $players = players_data(39, YEAR);
 
 
             // $body = $response->json();
@@ -101,7 +101,7 @@ class FetchPlayers implements ShouldQueue
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
             CURLOPT_HTTPHEADER => array(
-                'x-rapidapi-key: YOUR_API_KEY_HERE'
+                'x-rapidapi-key: '. env('SPORT_API_KEY')
             ),
         ));
         $response = curl_exec($curl);
