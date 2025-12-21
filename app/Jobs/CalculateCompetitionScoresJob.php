@@ -57,7 +57,14 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
     private function calculateTournamentScores(): void
     {
-        $tournament = Tournament::findOrFail($this->competitionId);
+        // CRITICAL FIX #1: Use lockForUpdate to prevent race conditions
+        $tournament = Tournament::lockForUpdate()->findOrFail($this->competitionId);
+
+        // CRITICAL FIX #2: Check if already calculated BEFORE doing anything
+        if ($tournament->scoring_calculated) {
+            Log::info("Tournament {$this->competitionId} already calculated, skipping to prevent duplicates");
+            return;
+        }
 
         if ($tournament->status !== 'open') {
             Log::info("Tournament {$this->competitionId} is not open, skipping");
@@ -67,6 +74,12 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         DB::beginTransaction();
 
         try {
+            // CRITICAL FIX #3: Set flag IMMEDIATELY to prevent duplicate jobs
+            $tournament->update([
+                'scoring_calculated' => true,
+                'scoring_calculated_at' => now()
+            ]);
+
             $participants = TournamentUser::with(['squads.mainPlayer', 'squads.subPlayer', 'user'])
                 ->where('tournament_id', $tournament->id)
                 ->get();
@@ -78,30 +91,35 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 $participant = $participants->first();
                 $refundAmount = $tournament->amount;
 
-                // Refund the entry fee
-                $participant->user->addBalance($refundAmount);
+                // CRITICAL FIX #4: Use deterministic transaction reference
+                $transactionRef = 'TournamentRefund_' . $tournament->id . '_' . $participant->user_id;
 
-                // Create transaction record
-                Transaction::create([
-                    'user_id' => $participant->user_id,
-                    'amount' => $refundAmount,
-                    'action_type' => 'credit',
-                    'description' => "Tournament entry fee refund (insufficient participants) - {$tournament->name}",
-                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                    'transaction_ref' => 'TournamentRefund' . $participant->user_id . $tournament->id . time() . rand(100000, 999999),
-                ]);
+                // CRITICAL FIX #5: Check for existing transaction
+                $existingTransaction = Transaction::where('transaction_ref', $transactionRef)->first();
+                if (!$existingTransaction) {
+                    // Refund the entry fee
+                    $participant->user->addBalance($refundAmount);
+
+                    // Create transaction record
+                    Transaction::create([
+                        'user_id' => $participant->user_id,
+                        'amount' => $refundAmount,
+                        'action_type' => 'credit',
+                        'description' => "Tournament entry fee refund (insufficient participants) - {$tournament->name}",
+                        'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                        'transaction_ref' => $transactionRef,
+                    ]);
+
+                    Log::info("Tournament {$this->competitionId} had only one participant. Entry fee refunded.", [
+                        'user_id' => $participant->user_id,
+                        'refund_amount' => $refundAmount
+                    ]);
+                } else {
+                    Log::info("Refund already processed for tournament {$this->competitionId}");
+                }
 
                 // Update tournament status
-                $tournament->update([
-                    'status' => 'close',
-                    'scoring_calculated' => true,
-                    'scoring_calculated_at' => now()
-                ]);
-
-                Log::info("Tournament {$this->competitionId} had only one participant. Entry fee refunded.", [
-                    'user_id' => $participant->user_id,
-                    'refund_amount' => $refundAmount
-                ]);
+                $tournament->update(['status' => 'close']);
 
                 DB::commit();
                 return;
@@ -115,11 +133,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
 
             $winners = $this->determineTournamentWinners($participants);
 
-            $tournament->update([
-                'status' => 'close',
-                'scoring_calculated' => true,
-                'scoring_calculated_at' => now()
-            ]);
+            $tournament->update(['status' => 'close']);
 
             $totalPrizePool = $this->distributeTournamentPrizes($tournament, $winners);
 
@@ -134,13 +148,31 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             Log::info("Tournament {$this->competitionId} scoring completed successfully");
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // CRITICAL FIX #6: Reset flag on failure so job can be retried
+            $tournament->update([
+                'scoring_calculated' => false,
+                'scoring_calculated_at' => null
+            ]);
+            
+            Log::error("Tournament {$this->competitionId} calculation failed, flag reset for retry", [
+                'error' => $e->getMessage()
+            ]);
+            
             throw $e;
         }
     }
 
     private function calculatePeerScores(): void
     {
-        $peer = Peer::findOrFail($this->competitionId);
+        // CRITICAL FIX #1: Use lockForUpdate to prevent race conditions
+        $peer = Peer::lockForUpdate()->findOrFail($this->competitionId);
+
+        // CRITICAL FIX #2: Check if already calculated BEFORE doing anything
+        if ($peer->scoring_calculated) {
+            Log::info("Peer {$this->competitionId} already calculated, skipping to prevent duplicates");
+            return;
+        }
 
         if ($peer->status !== 'open') {
             Log::info("Peer {$this->competitionId} is not open, skipping");
@@ -150,6 +182,12 @@ class CalculateCompetitionScoresJob implements ShouldQueue
         DB::beginTransaction();
 
         try {
+            // CRITICAL FIX #3: Set flag IMMEDIATELY to prevent duplicate jobs
+            $peer->update([
+                'scoring_calculated' => true,
+                'scoring_calculated_at' => now()
+            ]);
+
             $participants = PeerUser::with(['squads.mainPlayer', 'squads.subPlayer', 'user'])
                 ->where('peer_id', $peer->id)
                 ->get();
@@ -161,30 +199,35 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 $participant = $participants->first();
                 $refundAmount = $peer->amount;
 
-                // Refund the entry fee to the creator
-                $participant->user->addBalance($refundAmount);
+                // CRITICAL FIX #4: Use deterministic transaction reference
+                $transactionRef = 'PeerRefund_' . $peer->id . '_' . $participant->user_id;
 
-                // Create transaction record
-                Transaction::create([
-                    'user_id' => $participant->user_id,
-                    'amount' => $refundAmount,
-                    'action_type' => 'credit',
-                    'description' => "Peer entry fee refund (no opponents) - {$peer->name}",
-                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                    'transaction_ref' => 'PeerRefund' . $participant->user_id . $peer->id . time() . rand(100000, 999999),
-                ]);
+                // CRITICAL FIX #5: Check for existing transaction
+                $existingTransaction = Transaction::where('transaction_ref', $transactionRef)->first();
+                if (!$existingTransaction) {
+                    // Refund the entry fee to the creator
+                    $participant->user->addBalance($refundAmount);
+
+                    // Create transaction record
+                    Transaction::create([
+                        'user_id' => $participant->user_id,
+                        'amount' => $refundAmount,
+                        'action_type' => 'credit',
+                        'description' => "Peer entry fee refund (no opponents) - {$peer->name}",
+                        'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                        'transaction_ref' => $transactionRef,
+                    ]);
+
+                    Log::info("Peer {$this->competitionId} had only one participant (creator). Entry fee refunded.", [
+                        'user_id' => $participant->user_id,
+                        'refund_amount' => $refundAmount
+                    ]);
+                } else {
+                    Log::info("Refund already processed for peer {$this->competitionId}");
+                }
 
                 // Update peer status
-                $peer->update([
-                    'status' => 'finished',
-                    'scoring_calculated' => true,
-                    'scoring_calculated_at' => now()
-                ]);
-
-                Log::info("Peer {$this->competitionId} had only one participant (creator). Entry fee refunded.", [
-                    'user_id' => $participant->user_id,
-                    'refund_amount' => $refundAmount
-                ]);
+                $peer->update(['status' => 'finished']);
 
                 DB::commit();
                 return;
@@ -205,8 +248,6 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             $peer->update([
                 'status' => 'finished',
                 'winner_user_id' => $winners->first()->user_id,
-                'scoring_calculated' => true,
-                'scoring_calculated_at' => now()
             ]);
 
             $totalPrizePool = $this->distributePeerPrizes($peer, $winners, $participants);
@@ -222,6 +263,17 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             Log::info("Peer {$this->competitionId} scoring completed successfully");
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // CRITICAL FIX #6: Reset flag on failure so job can be retried
+            $peer->update([
+                'scoring_calculated' => false,
+                'scoring_calculated_at' => null
+            ]);
+            
+            Log::error("Peer {$this->competitionId} calculation failed, flag reset for retry", [
+                'error' => $e->getMessage()
+            ]);
+            
             throw $e;
         }
     }
@@ -434,6 +486,24 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             }
 
             if ($prizeAmount > 0) {
+                // CRITICAL FIX: Use deterministic transaction reference
+                $transactionRef = 'TournamentPrize_' . $tournament->id . '_' . $winner->user_id . '_' . $position;
+
+                // CRITICAL FIX: Check for existing transaction before distributing prize
+                $existingTransaction = Transaction::where('transaction_ref', $transactionRef)->first();
+                
+                if ($existingTransaction) {
+                    Log::info("Prize already distributed to tournament winner", [
+                        'user_id' => $winner->user_id,
+                        'position' => $position,
+                        'transaction_ref' => $transactionRef
+                    ]);
+                    
+                    // Store prize amount for notifications (already distributed)
+                    $winner->prize_amount = $prizeAmount;
+                    continue;
+                }
+
                 // Add to user's wallet
                 $winner->user->addBalance($prizeAmount);
 
@@ -446,7 +516,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                     'action_type' => 'credit',
                     'description' => "Tournament prize (Position {$position}) - {$tournament->name}",
                     'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                    'transaction_ref' => 'TournamentPrize' . $winner->user_id . $tournament->id . time() . rand(100000, 999999),
+                    'transaction_ref' => $transactionRef,
                 ]);
 
                 app(NotificationService::class)->notifyPrizeWon(
@@ -498,37 +568,53 @@ class CalculateCompetitionScoresJob implements ShouldQueue
             $winner = $winners->first();
             $prizeAmount = $netPrizePool;
 
-            // Add to winner's wallet
-            $winner->user->addBalance($prizeAmount);
+            // CRITICAL FIX: Use deterministic transaction reference
+            $transactionRef = 'PeerPrize_' . $peer->id . '_' . $winner->user_id . '_WTA';
 
-            // Store prize amount for notifications
-            $winner->prize_amount = $prizeAmount;
+            // CRITICAL FIX: Check for existing transaction before distributing prize
+            $existingTransaction = Transaction::where('transaction_ref', $transactionRef)->first();
+            
+            if ($existingTransaction) {
+                Log::info("Prize already distributed to peer winner (winner takes all)", [
+                    'user_id' => $winner->user_id,
+                    'transaction_ref' => $transactionRef
+                ]);
+                
+                // Store prize amount for notifications (already distributed)
+                $winner->prize_amount = $prizeAmount;
+            } else {
+                // Add to winner's wallet
+                $winner->user->addBalance($prizeAmount);
 
-            // Create transaction record
-            Transaction::create([
-                'user_id' => $winner->user_id,
-                'amount' => $prizeAmount,
-                'action_type' => 'credit',
-                'description' => "Peer competition prize (Winner Takes All) - {$peer->name}",
-                'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                'transaction_ref' => 'PeerPrize' . $winner->user_id . $peer->id . time() . rand(100000, 999999)
-            ]);
+                // Store prize amount for notifications
+                $winner->prize_amount = $prizeAmount;
 
-            // Send prize won notification
-            app(NotificationService::class)->notifyPrizeWon(
-                $winner->user,
-                $prizeAmount,
-                'peer',
-                $peer->name,
-                ['peer_id' => $peer->id]
-            );
+                // Create transaction record
+                Transaction::create([
+                    'user_id' => $winner->user_id,
+                    'amount' => $prizeAmount,
+                    'action_type' => 'credit',
+                    'description' => "Peer competition prize (Winner Takes All) - {$peer->name}",
+                    'status' => TransactionStatusEnum::SUCCESSFUL->value,
+                    'transaction_ref' => $transactionRef
+                ]);
 
-            Log::info("Prize distributed to peer winner (winner takes all)", [
-                'user_id' => $winner->user_id,
-                'amount' => $prizeAmount,
-                'system_fee_deducted' => $systemFee,
-                'sharing_ratio' => $peer->sharing_ratio
-            ]);
+                // Send prize won notification
+                app(NotificationService::class)->notifyPrizeWon(
+                    $winner->user,
+                    $prizeAmount,
+                    'peer',
+                    $peer->name,
+                    ['peer_id' => $peer->id]
+                );
+
+                Log::info("Prize distributed to peer winner (winner takes all)", [
+                    'user_id' => $winner->user_id,
+                    'amount' => $prizeAmount,
+                    'system_fee_deducted' => $systemFee,
+                    'sharing_ratio' => $peer->sharing_ratio
+                ]);
+            }
         } else {
             // sharing_ratio = 2: Distribute to top 3 (50/30/20 split)
             $prizeDistribution = [
@@ -549,6 +635,24 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                 }
 
                 if ($prizeAmount > 0) {
+                    // CRITICAL FIX: Use deterministic transaction reference
+                    $transactionRef = 'PeerPrize_' . $peer->id . '_' . $winner->user_id . '_' . $position;
+
+                    // CRITICAL FIX: Check for existing transaction before distributing prize
+                    $existingTransaction = Transaction::where('transaction_ref', $transactionRef)->first();
+                    
+                    if ($existingTransaction) {
+                        Log::info("Prize already distributed to peer winner", [
+                            'user_id' => $winner->user_id,
+                            'position' => $position,
+                            'transaction_ref' => $transactionRef
+                        ]);
+                        
+                        // Store prize amount for notifications (already distributed)
+                        $winner->prize_amount = $prizeAmount;
+                        continue;
+                    }
+
                     // Add to user's wallet
                     $winner->user->addBalance($prizeAmount);
 
@@ -561,7 +665,7 @@ class CalculateCompetitionScoresJob implements ShouldQueue
                         'action_type' => 'credit',
                         'description' => "Peer competition prize (Position {$position}) - {$peer->name}",
                         'status' => TransactionStatusEnum::SUCCESSFUL->value,
-                        'transaction_ref' => 'PeerPrize' . $winner->user_id . $peer->id . time() . rand(100000, 999999),
+                        'transaction_ref' => $transactionRef,
                     ]);
 
                     app(NotificationService::class)->notifyPrizeWon(
