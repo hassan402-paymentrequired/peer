@@ -26,7 +26,7 @@ const PeerCard = ({ peer }: { peer: Peer }) => {
                         </Avatar>
                         <div className="flex flex-col items-start">
                             <div className="text-sm font-semibold text-gray-600 md:text-base">{peer.name}</div>
-                            <div className="text-[10px] text-gray-600 lg:text-xs">by @{peer.created_by.username}</div>
+                            <div className="text-[10px] text-gray-600 lg:text-xs">by @{peer.created_by.name}</div>
                         </div>
                     </div>
                     <span className="text-sm font-medium text-gray-600 md:text-base">{new Date(peer.created_at).toLocaleDateString()}</span>
