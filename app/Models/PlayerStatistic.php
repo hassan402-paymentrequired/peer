@@ -38,7 +38,7 @@ class PlayerStatistic extends Model
     ];
 
 
-    
+
     public static function calculatePoints(array $attributes): array
     {
         $points = 0;
@@ -111,9 +111,9 @@ class PlayerStatistic extends Model
                     $points += $cleanSheetPoints;
                     $cleanSheet = $cleanSheetPoints;
                 } else {
-                    // Conceded goals: Lose clean sheet but also get penalty of -2 per goal as per config 'goal_concede'
-                    $concedePenalty = $goalsConceded * config('point.goal_concede', -2);
-                    $points += $concedePenalty;
+                    // Conceded goals: defenders are not being penalized
+                    // $concedePenalty = $goalsConceded * config('point.goal_concede', -2);
+                    // $points += $concedePenalty;
                     $cleanSheet = 0;
                 }
             }
@@ -142,7 +142,7 @@ class PlayerStatistic extends Model
         if ($this->total_point !== $total || $this->clean_sheet !== $cleanSheet) {
             $this->total_point = $total;
             $this->clean_sheet = $cleanSheet;
-            $this->saveQuietly(); 
+            $this->saveQuietly();
         }
 
         return $total;
@@ -153,7 +153,7 @@ class PlayerStatistic extends Model
         $breakdown = [];
 
         if (!$this->did_play || $this->is_injured) {
-             return $breakdown;
+            return $breakdown;
         }
 
         // Minutes Played (Base points)
@@ -204,15 +204,15 @@ class PlayerStatistic extends Model
 
         // Shots on goal
         if (isset($this->shots_on_goal) && $this->shots_on_goal !== $this->shots_on_target && ($this->shots_on_goal ?? 0) > 0) {
-             $breakdown[] = [
+            $breakdown[] = [
                 'label' => 'Shots on goal',
                 'value' => $this->shots_on_goal,
                 'points' => $this->shots_on_goal * config('point.shot_on_goal', 2)
             ];
         }
 
-         // Yellow cards
-         if (($this->yellow_cards ?? 0) > 0) {
+        // Yellow cards
+        if (($this->yellow_cards ?? 0) > 0) {
             $breakdown[] = [
                 'label' => 'Yellow cards',
                 'value' => $this->yellow_cards,
@@ -250,7 +250,7 @@ class PlayerStatistic extends Model
         // Goals Conceded breakdown
         // Logic inside calculatePoints adds this for G/D.
         if (in_array($this->position, ['Goalkeeper', 'G', 'Defender', 'D']) && ($this->goals_conceded ?? 0) > 0) {
-             $breakdown[] = [
+            $breakdown[] = [
                 'label' => 'Goals conceded',
                 'value' => $this->goals_conceded,
                 'points' => $this->goals_conceded * config('point.goal_concede', -2)
@@ -262,7 +262,7 @@ class PlayerStatistic extends Model
             $goalsConceeded = $this->goals_conceded ?? 0;
 
             if ($this->position === 'G' || $this->position === 'Goalkeeper') {
-                 // Saves
+                // Saves
                 if (($this->goals_saves ?? 0) > 0) {
                     $breakdown[] = [
                         'label' => 'Saves',
@@ -272,15 +272,15 @@ class PlayerStatistic extends Model
                 }
 
                 if ($goalsConceeded === 0) {
-                     $breakdown[] = [
+                    $breakdown[] = [
                         'label' => 'Clean sheet',
                         'value' => 1,
                         'points' => config('point.clean_sheet_goalkeeper', 30)
                     ];
                 }
             } else if ($this->position === 'D' || $this->position === 'Defender') {
-                 if ($goalsConceeded === 0) {
-                     $breakdown[] = [
+                if ($goalsConceeded === 0) {
+                    $breakdown[] = [
                         'label' => 'Clean sheet',
                         'value' => 1,
                         'points' => config('point.clean_sheet_defender', 20)
