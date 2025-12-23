@@ -52,7 +52,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
                     sleep(1);
                 }
             });
-            
+
             $this->checkCompletedCompetitions();
         } catch (\Exception $e) {
             Log::error('FetchLiveStatisticsJob failed: ' . $e->getMessage(), [
@@ -77,8 +77,10 @@ class FetchLiveStatisticsJob implements ShouldQueue
         })
             ->where('date', '>=', now()->subHours(6)) // Only recent matches
             ->where('date', '<=', now()->addHours(3))  // Don't fetch future matches
-            ->whereHas('playerMatches.tournamentSquads')
-            ->orWhereHas('playerMatches.peerSquads')
+            ->where(function ($query) {
+                $query->whereHas('playerMatches.tournamentSquads')
+                    ->orWhereHas('playerMatches.peerSquads');
+            })
             ->distinct()
             ->get();
     }
