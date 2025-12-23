@@ -226,6 +226,7 @@ class PeerController extends Controller
                 ];
             });
 
+            return [
                 'id' => $user->id,
                 'username' => $user->name,
                 'avatar' => $user->avatar,
