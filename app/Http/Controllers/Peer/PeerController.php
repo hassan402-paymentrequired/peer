@@ -226,11 +226,10 @@ class PeerController extends Controller
                 ];
             });
 
-            return [
                 'id' => $user->id,
                 'username' => $user->name,
                 'avatar' => $user->avatar,
-                'total_points' => $peerUser->total_points,
+                'total_points' => $peerUser->calculateLiveScore(),
                 'email' => $user->email,
                 'created_at' => $user->created_at,
                 'squads' => $squads,

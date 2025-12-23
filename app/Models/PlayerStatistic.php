@@ -88,15 +88,15 @@ class PlayerStatistic extends Model
 
             if (in_array($position, ['G', 'Goalkeeper'])) {
                 if ($goalsConceded === 0) {
-                    // Clean sheet: 15 points + (saves * 3 points each)
+                    // Clean sheet: config value + (saves * save config value)
                     $cleanSheetPoints = config('point.clean_sheet_goalkeeper', 30);
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
 
-                    $totalCleanSheetPoints = $cleanSheetPoints + $savePoints;
-                    $points += $totalCleanSheetPoints;
+                    $points += $cleanSheetPoints;
+                    $points += $savePoints;
                     $cleanSheet = $cleanSheetPoints;
                 } else {
-                    // Conceded goals: lose clean sheet bonus, only get save points
+                    // Conceded goals: lose clean sheet bonus, get penalty + save points
                     $concedePoints = $goalsConceded * config('point.goals_conceded_goalkeeper', -2);
                     $savePoints = $goalsSaved * config('point.goals_saves', 3);
                     $points += $concedePoints;
@@ -106,11 +106,14 @@ class PlayerStatistic extends Model
             } else if (in_array($position, ['D', 'Defender'])) {
                 // DEFENDER LOGIC
                 if ($goalsConceded === 0) {
-                    // Clean sheet: 10 points
+                    // Clean sheet: 20 points
                     $cleanSheetPoints = config('point.clean_sheet_defender', 20);
                     $points += $cleanSheetPoints;
                     $cleanSheet = $cleanSheetPoints;
                 } else {
+                    // Conceded goals: Lose clean sheet but also get penalty of -2 per goal as per config 'goal_concede'
+                    $concedePenalty = $goalsConceded * config('point.goal_concede', -2);
+                    $points += $concedePenalty;
                     $cleanSheet = 0;
                 }
             }

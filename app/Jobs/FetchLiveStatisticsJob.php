@@ -154,6 +154,8 @@ class FetchLiveStatisticsJob implements ShouldQueue
                 }
             }
 
+            $this->updateCompetitionLiveScores($fixture);
+
             DB::commit();
             Log::info("Updated statistics for fixture {$fixture->external_id}");
         } catch (\Exception $e) {
@@ -357,4 +359,38 @@ class FetchLiveStatisticsJob implements ShouldQueue
         }
     }
 
+    private function updateCompetitionLiveScores(Fixture $fixture): void
+    {
+        try {
+            // Update tournament users' total points
+            $tournamentUsers = \App\Models\TournamentUser::with('squads')->whereHas('squads', function ($query) use ($fixture) {
+                $query->whereHas('mainPlayerMatch', function ($q) use ($fixture) {
+                    $q->where('fixture_id', $fixture->id);
+                })->orWhereHas('subPlayerMatch', function ($q) use ($fixture) {
+                    $q->where('fixture_id', $fixture->id);
+                });
+            })->get();
+
+            foreach ($tournamentUsers as $tUser) {
+                $tUser->update(['total_points' => $tUser->calculateLiveScore()]);
+            }
+
+            // Update peer users' total points
+            $peerUsers = \App\Models\PeerUser::with('squads')->whereHas('squads', function ($query) use ($fixture) {
+                $query->whereHas('mainPlayerMatch', function ($q) use ($fixture) {
+                    $q->where('fixture_id', $fixture->id);
+                })->orWhereHas('subPlayerMatch', function ($q) use ($fixture) {
+                    $q->where('fixture_id', $fixture->id);
+                });
+            })->get();
+
+            foreach ($peerUsers as $pUser) {
+                $pUser->update(['total_points' => $pUser->calculateLiveScore()]);
+            }
+
+            Log::info("Updated live scores for " . $tournamentUsers->count() . " tournament users and " . $peerUsers->count() . " peer users affected by fixture {$fixture->id}");
+        } catch (\Exception $e) {
+            Log::error("Failed to update competition live scores for fixture {$fixture->id}: " . $e->getMessage());
+        }
+    }
 }

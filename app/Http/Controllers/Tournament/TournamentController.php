@@ -160,7 +160,7 @@ class TournamentController extends Controller
             'email' => $user->email,
             'created_at' => $user->created_at,
             'squads' => $squads,
-            'total_point' => $tournamentUser->total_points,
+            'total_point' => $tournamentUser->calculateLiveScore(),
             'is_winner' => $tournamentUser->is_winner,
             'entry_number' => $entryNumber,
             'total_entries' => $totalEntries,
