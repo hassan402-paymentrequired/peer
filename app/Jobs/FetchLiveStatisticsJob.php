@@ -65,24 +65,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
 
     private function getActiveFixtures()
     {
-        return Fixture::where(function ($query) {
-            $query->whereIn('status', [
-                'First Half',
-                'Second Half',
-                'Halftime',
-                'Extra Time',
-                'Penalty In Progress',
-                'Match Finished'
-            ]);
-        })
-            ->where('date', '>=', now()->subHours(6)) // Only recent matches
-            ->where('date', '<=', now()->addHours(3))  // Don't fetch future matches
-            ->where(function ($query) {
-                $query->whereHas('playerMatches.tournamentSquads')
-                    ->orWhereHas('playerMatches.peerSquads');
-            })
-            ->distinct()
-            ->get();
+        return Fixture::active()->distinct()->get();
     }
 
     private function processFixture(Fixture $fixture): void

@@ -17,6 +17,14 @@ enum FixtureStatusEnum: string
     case MATCH_CANCELLED = 'Match Cancelled';
     case MATCH_POSTPONED = 'Match Postponed';
     case MATCH_SUSPENDED = 'Match Suspended';
+    case MATCH_ABANDONED = 'Match Abandoned';
+    case WALKOVER = 'WalkOver';
     case SECOND_HALF_STARTED = 'Second Half, 2nd Half Started';
     case KICK_OFF = 'First Half, Kick Off';
+
+
+    public static function getValues(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

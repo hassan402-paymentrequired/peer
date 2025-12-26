@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enum\FixtureStatusEnum;
 use App\Models\Fixture;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -58,24 +59,7 @@ class UpdateFixtureStatusJob implements ShouldQueue
      */
     private function getActiveFixtures()
     {
-        $now = Carbon::now();
-
-        return Fixture::where(function ($query) use ($now) {
-            // Fixtures starting soon or currently ongoing
-            $query->where('date', '>=', $now->copy()->subHours(3))  // Started up to 3 hours ago
-                ->where('date', '<=', $now->copy()->addHours(1)); // Or starting within 1 hour
-        })
-            ->whereIn('status', [
-                'Not Started',
-                'TBD',
-                'First Half',
-                'Halftime',
-                'Second Half',
-                'Extra Time',
-                'Penalty In Progress'
-            ])
-            ->whereHas('playerMatches') 
-            ->get();
+        return Fixture::active()->distinct()->get();
     }
 
     /**
@@ -118,7 +102,6 @@ class UpdateFixtureStatusJob implements ShouldQueue
             if ($newStatus && $newStatus !== $fixture->status) {
                 $oldStatus = $fixture->status;
 
-                // Update fixture with new status and scores
                 $fixture->update([
                     'status' => $newStatus,
                     'goals_home' => $goals['home'] ?? $fixture->goals_home,
@@ -131,10 +114,10 @@ class UpdateFixtureStatusJob implements ShouldQueue
 
                 Log::info("Updated fixture {$fixture->external_id} status: {$oldStatus} → {$newStatus}");
 
-                // If match just finished, trigger final statistics fetch
-                if ($newStatus === 'Match Finished' && $oldStatus !== 'Match Finished') {
+                if ($newStatus === FixtureStatusEnum::MATCH_FINISHED->value && $oldStatus !== FixtureStatusEnum::MATCH_FINISHED->value) {
                     Log::info("Match finished, will fetch final statistics for fixture {$fixture->external_id}");
                     // The FetchLiveStatisticsJob will handle this in its next run
+                    FetchLiveStatisticsJob::dispatch($fixture);
                 }
             }
         } catch (\Exception $e) {
