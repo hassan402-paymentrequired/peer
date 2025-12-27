@@ -127,6 +127,16 @@ class FetchLiveStatisticsJob implements ShouldQueue
             foreach ($statisticsData as $teamData) {
                 $players = $teamData['players'] ?? [];
 
+                // Find Goalkeeper (G) to determine team's goals conceded
+                $teamGoalsConceded = 0;
+                foreach ($players as $playerData) {
+                    $pos = $playerData['statistics'][0]['games']['position'] ?? '';
+                    if ($pos === 'G' || $pos === 'Goalkeeper') {
+                        $teamGoalsConceded = $playerData['statistics'][0]['goals']['conceded'] ?? 0;
+                        break;
+                    }
+                }
+
                 foreach ($players as $playerData) {
                     $player = $playerData['player'] ?? [];
                     $statistics = $playerData['statistics'][0] ?? [];
@@ -135,7 +145,8 @@ class FetchLiveStatisticsJob implements ShouldQueue
                         continue;
                     }
 
-                    $this->updateOrCreatePlayerStatistic($fixture, $player, $statistics);
+                    // Pass teamGoalsConceded to helper
+                    $this->updateOrCreatePlayerStatistic($fixture, $player, $statistics, $teamGoalsConceded);
                 }
             }
 
@@ -150,7 +161,7 @@ class FetchLiveStatisticsJob implements ShouldQueue
         }
     }
 
-    private function updateOrCreatePlayerStatistic(Fixture $fixture, array $player, array $statistics): void
+    private function updateOrCreatePlayerStatistic(Fixture $fixture, array $player, array $statistics, int $teamGoalsConceded): void
     {
         $localPlayer = \App\Models\Player::where('external_id', $player['id'])->first();
 
@@ -167,18 +178,21 @@ class FetchLiveStatisticsJob implements ShouldQueue
         $tackles = $statistics['tackles'] ?? [];
         $fouls = $statistics['fouls'] ?? [];
 
+        // SELECT * FROM fixtures WHERE created_at >= CURDATE() - INTERVAL 1 DAY AND created_at < CURDATE();
+
+
         $attributes = [
             'match_date' => $fixture->date,
 
             // Goals and assists (mapped correctly from API)
-            'goals_total' => is_null($goals['total']) ? 0 : (int)$goals['total'],
-            'goals_assists' => is_null($goals['assists']) ? 0 : (int)$goals['assists'],
-            'assists' => is_null($goals['assists']) ? 0 : (int)$goals['assists'],
+            'goals_total' => is_null($goals['total']) ? 0 : (int) $goals['total'],
+            'goals_assists' => is_null($goals['assists']) ? 0 : (int) $goals['assists'],
+            'assists' => is_null($goals['assists']) ? 0 : (int) $goals['assists'],
 
             // Shots (corrected mapping)
-            'shots_total' => is_null($shots['total']) ? 0 : (int)$shots['total'],
-            'shots_on_target' => is_null($shots['on']) ? 0 : (int)$shots['on'],
-            'shots_on_goal' => is_null($shots['on']) ? 0 : (int)$shots['on'],
+            'shots_total' => is_null($shots['total']) ? 0 : (int) $shots['total'],
+            'shots_on_target' => is_null($shots['on']) ? 0 : (int) $shots['on'],
+            'shots_on_goal' => is_null($shots['on']) ? 0 : (int) $shots['on'],
 
             // Cards
             'yellow_cards' => $cards['yellow'] ?? 0,
@@ -197,16 +211,17 @@ class FetchLiveStatisticsJob implements ShouldQueue
             'is_injured' => false,
 
             // Additional stats
-            'passes_total' => is_null($passes['total']) ? 0 : (int)$passes['total'],
-            'offsides' => is_null($statistics['offsides']) ? 0 : (int)$statistics['offsides'],
-            'tackles_total' => is_null($tackles['total']) ? 0 : (int)$tackles['total'],
+            'passes_total' => is_null($passes['total']) ? 0 : (int) $passes['total'],
+            'offsides' => is_null($statistics['offsides']) ? 0 : (int) $statistics['offsides'],
+            'tackles_total' => is_null($tackles['total']) ? 0 : (int) $tackles['total'],
 
             // Goalkeeper specific
-            'goals_conceded' => is_null($goals['conceded']) ? 0 : (int)$goals['conceded'],
-            'goals_saves' => is_null($goals['saves']) ? 0 : (int)$goals['saves'],
+            // 'goals_conceded' => is_null($goals['conceded']) ? 0 : (int) $goals['conceded'],
+            'goals_conceded' => $teamGoalsConceded,
+            'goals_saves' => is_null($goals['saves']) ? 0 : (int) $goals['saves'],
 
             // Fouls
-            'fouls_committed' => is_null($fouls['committed']) ? 0 : (int)$fouls['committed'],
+            'fouls_committed' => is_null($fouls['committed']) ? 0 : (int) $fouls['committed'],
         ];
 
         // Calculate points and clean sheet
@@ -347,27 +362,32 @@ class FetchLiveStatisticsJob implements ShouldQueue
     private function updateCompetitionLiveScores(Fixture $fixture): void
     {
         try {
+            // Get all player match IDs for this fixture
+            $playerMatchIds = PlayerMatch::where('fixture_id', $fixture->id)->pluck('id');
+
+            if ($playerMatchIds->isEmpty()) {
+                return;
+            }
+
             // Update tournament users' total points
-            $tournamentUsers = \App\Models\TournamentUser::with('squads')->whereHas('squads', function ($query) use ($fixture) {
-                $query->whereHas('mainPlayerMatch', function ($q) use ($fixture) {
-                    $q->where('fixture_id', $fixture->id);
-                })->orWhereHas('subPlayerMatch', function ($q) use ($fixture) {
-                    $q->where('fixture_id', $fixture->id);
-                });
-            })->get();
+            $tournamentUsers = \App\Models\TournamentUser::with('squads')
+                ->whereHas('squads', function ($query) use ($playerMatchIds) {
+                    $query->whereIn('main_player_match_id', $playerMatchIds)
+                        ->orWhereIn('sub_player_match_id', $playerMatchIds);
+                })
+                ->get();
 
             foreach ($tournamentUsers as $tUser) {
                 $tUser->update(['total_points' => $tUser->calculateLiveScore()]);
             }
 
             // Update peer users' total points
-            $peerUsers = \App\Models\PeerUser::with('squads')->whereHas('squads', function ($query) use ($fixture) {
-                $query->whereHas('mainPlayerMatch', function ($q) use ($fixture) {
-                    $q->where('fixture_id', $fixture->id);
-                })->orWhereHas('subPlayerMatch', function ($q) use ($fixture) {
-                    $q->where('fixture_id', $fixture->id);
-                });
-            })->get();
+            $peerUsers = \App\Models\PeerUser::with('squads')
+                ->whereHas('squads', function ($query) use ($playerMatchIds) {
+                    $query->whereIn('main_player_match_id', $playerMatchIds)
+                        ->orWhereIn('sub_player_match_id', $playerMatchIds);
+                })
+                ->get();
 
             foreach ($peerUsers as $pUser) {
                 $pUser->update(['total_points' => $pUser->calculateLiveScore()]);

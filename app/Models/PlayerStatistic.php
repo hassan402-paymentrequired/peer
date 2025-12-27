@@ -111,9 +111,6 @@ class PlayerStatistic extends Model
                     $points += $cleanSheetPoints;
                     $cleanSheet = $cleanSheetPoints;
                 } else {
-                    // Conceded goals: defenders are not being penalized
-                    // $concedePenalty = $goalsConceded * config('point.goal_concede', -2);
-                    // $points += $concedePenalty;
                     $cleanSheet = 0;
                 }
             }

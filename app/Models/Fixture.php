@@ -29,8 +29,8 @@ class Fixture extends Model
         return $query
             ->whereIn('status', FixtureStatusEnum::getValues())
             ->whereBetween('date', [
-                now()->subHours(4),
-                now()->addHours(4),
+                now()->subHours(5),
+                now()->addHours(5),
             ])
             ->where(function ($query) {
                 $query->whereHas('playerMatches.tournamentSquads')
